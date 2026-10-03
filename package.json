@@ -1,0 +1,8 @@
+{
+  "name": "bkstudio-dk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BK Studio — hjemmeside med formularer, der sender mail via Simply.com fra en Vercel-funktion.",
+  "engines": { "node": ">=18" },
+  "dependencies": { "nodemailer": "^6.9.16" }
+}

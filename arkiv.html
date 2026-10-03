@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arkiv — BK Studio</title>
+<meta name="description" content="Arkivet: alle billeder fra BK Studio samlet ét sted. Filtrér på projekt og åbn billederne i fuld størrelse.">
+<link rel="canonical" href="https://bkstudio.dk/arkiv.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BK Studio">
+<meta property="og:title" content="Arkiv — BK Studio">
+<meta property="og:description" content="Har du et projekt, en idé, eller vil du bare høre, hvad vi kan hjælpe med? Skriv til BK Studio.">
+<meta property="og:url" content="https://bkstudio.dk/arkiv.html">
+<meta property="og:image" content="https://bkstudio.dk/images/om/valdemar-2400.webp">
+<meta property="og:locale" content="da_DK">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Arkiv — BK Studio">
+<meta name="twitter:description" content="Har du et projekt, en idé, eller vil du bare høre, hvad vi kan hjælpe med? Skriv til BK Studio.">
+<meta name="twitter:image" content="https://bkstudio.dk/images/om/valdemar-2400.webp">
+<meta name="theme-color" content="#141414">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="v2.css">
+<script>try{if(sessionStorage.getItem('bkveil'))document.documentElement.classList.add('veil-cont')}catch(e){}</script></head><body>
+<div class="grain"></div><div class="cursor" id="cursor"></div>
+<header class="site-header"><a href="index.html" class="logo-mark" aria-label="BK Studio"><img src="images/logo/bk-blob.svg" alt="BK Studio"><img class="logo-wm" src="images/logo/studio-wordmark.svg" alt="" aria-hidden="true"></a>
+<div class="header-right"><nav class="primary-nav" id="primaryNav"><ul>
+<li><a href="arbejde.html" class="nav-link"><img class="nav-lt" src="images/logo/nav-arbejde.svg" alt="Arbejde"></a></li><li><a href="arkiv.html" class="nav-link"><img class="nav-lt" src="images/logo/nav-arkiv.svg" alt="Arkiv"></a></li><li><a href="index.html#team" class="nav-link"><img class="nav-lt" src="images/logo/nav-om-os.svg" alt="Om os"></a></li><li><a href="kontakt.html" class="nav-link"><img class="nav-lt" src="images/logo/nav-kontakt.svg" alt="Kontakt"></a></li><li class="nav-book-mobile"><a href="book.html" class="nav-link"><img class="nav-lt" src="images/logo/start-projekt.svg" alt="Start et projekt"></a></li>
+</ul></nav><a href="book.html" class="book-btn"><img class="nav-lt" src="images/logo/start-projekt.svg" alt="Start et projekt"></a><button class="menu-btn" id="menuBtn" aria-label="Menu"><span></span><span></span></button></div></header>
+<div id="intro"><div class="intro-mark"><img src="images/logo/bk-blob.svg" alt="BK Studio"></div></div>
+<main id="main"><section class="wall" id="wall" data-wall aria-label="Billedarkiv"><h2 class="sr-only">Billedarkiv</h2><div class="wall-stage"><div class="wall-world" id="wallWorld" aria-hidden="true"></div></div><div class="wall-vig" aria-hidden="true"></div><div class="wall-ui"><div class="wall-cap" id="wallCap" aria-live="off"></div><div class="wall-filter" id="wallFilter" role="group" aria-label="Filtrér billeder"></div><p class="wall-hint"><span class="h-mouse">Træk for at flytte · Klik for at åbne</span><span class="h-touch">Swipe for at flytte · Tryk for at åbne</span></p><a class="wall-cta" href="#alle">Se alle billeder ↓</a></div></section>
+<section class="ak-head" id="alle"><div class="ak-head-in"><h1 class="ak-title">Arkiv <sup id="akCount"></sup></h1><p class="ak-sub">Alle billeder samlet ét sted. Hold musen over for at se dem i farve, og klik for at åbne dem stort.</p><div class="ak-filter" id="akFilter" role="group" aria-label="Filtrér billeder"></div></div></section><section class="ak-wrap"><div class="ak-grid" id="akGrid"></div></section></main>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Billedvisning" hidden><div class="lb-top"><span class="lb-count" id="lbCount"></span><button class="lb-close" id="lbClose" aria-label="Luk">Luk ✕</button></div><button class="lb-nav lb-prev" id="lbPrev" aria-label="Forrige billede">←</button><figure class="lb-fig"><img id="lbImg" src="" alt=""><figcaption class="lb-cap"><span id="lbLabel"></span><a id="lbLink" href="arbejde.html">Se projektet</a></figcaption></figure><button class="lb-nav lb-next" id="lbNext" aria-label="Næste billede">→</button></div>
+<footer><div class="footer-top"><div class="footer-brand"><a class="fmark" href="index.html" aria-label="Til toppen af forsiden"><img src="images/logo/bk-blob.svg" alt="BK Studio"></a><span class="ftag">Foto / Video / Content</span><p class="ftagline">Vi skaber billeder, der bliver hængende.</p></div><div class="footer-links"><span class="footer-heading">Navigation</span><nav class="footer-nav"><a href="index.html">Forside</a><a href="arbejde.html">Arbejde</a><a href="arkiv.html">Arkiv</a><a href="index.html#team">Om os</a><a href="kontakt.html">Kontakt</a><a href="book.html">Start et projekt</a></nav></div><div class="footer-links"><span class="footer-heading">Sociale medier</span><div class="footer-social"><a href="https://www.instagram.com/bkstudiodk/" target="_blank" rel="noopener">Instagram — @bkstudiodk</a><a href="https://www.instagram.com/photo.basharat/" target="_blank" rel="noopener">Basharat — @photo.basharat</a><a href="https://www.instagram.com/kurevisuals/" target="_blank" rel="noopener">Valdemar — @kurevisuals</a></div></div><div class="footer-links"><span class="footer-heading">Kontakt</span><div class="footer-contact"><span>kontakt@bkstudio.dk</span><span>Midtsjælland, Danmark</span></div></div></div><div class="footer-bottom"><span class="fyear">© 2026 BK Studio. Alle rettigheder forbeholdes.</span><div class="footer-legal"><a href="privatlivspolitik.html">Privatlivspolitik</a><a href="privatlivspolitik.html">Cookies</a></div></div></footer>
+<script src="archive.js"></script><script src="thru.js"></script><script src="script.js"></script><script src="wall.js"></script><script src="arkiv.js"></script><script src="fx.js" defer></script></body></html>
