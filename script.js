@@ -76,7 +76,7 @@ if (cursor && !window.matchMedia('(any-hover:none)').matches) {
 }
 
 function cardHTML(p) {
-  return `<a class="work-item ${p.span} reveal cursor-target" href="arbejde.html#${p.id}" data-id="${p.id}">
+  return `<a class="work-item ${p.span} reveal cursor-target" href="/arbejde#${p.id}" data-id="${p.id}">
     <div class="frame">
       <img src="${p.cover}" alt="${p.title} — ${p.category}" loading="lazy" decoding="async" onerror="useProjectImageFallback(this, '${p.id}')">
       <div class="veil"></div>
@@ -91,7 +91,7 @@ const workGrid = $('#workGrid');
 if (workGrid) {
   const hasLimit = workGrid.dataset.limit !== undefined;
   // On the front page (data-limit set), skip projects marked home:false —
-  // they only appear in the full project list on arbejde.html.
+  // they only appear in the full project list on /arbejde.
   const source = hasLimit ? projects.filter(p => p.home !== false) : projects;
   const limit = Number(workGrid.dataset.limit || source.length);
   workGrid.innerHTML = source.slice(0, limit).map(cardHTML).join('');
@@ -124,7 +124,7 @@ if ('IntersectionObserver' in window) {
   $$('.reveal').forEach(el => el.classList.add('in'));
 }
 
-// Project detail overlay on arbejde.html
+// Project detail overlay on /arbejde
 const overlay = $('#overlay');
 const overlayClose = $('#overlayClose');
 let scrollLock = 0;
@@ -167,7 +167,7 @@ function openProject(id, pushHash=true) {
   overlay.dispatchEvent(new Event('projectchange'));
   scrollLock = window.scrollY;
   document.body.style.overflow = 'hidden';
-  if (pushHash) history.replaceState(null, '', `arbejde.html#${id}`);
+  if (pushHash) history.replaceState(null, '', `/arbejde#${id}`);
 }
 
 // billedopstilling til projektsiden: hver blok bruger de næste billeder (liggende/stående efter behov)
@@ -201,7 +201,7 @@ function closeProject() {
   if (!overlay) return;
   overlay.classList.remove('open');
   document.body.style.overflow = '';
-  history.replaceState(null, '', 'arbejde.html');
+  history.replaceState(null, '', '/arbejde');
   window.scrollTo(0, scrollLock);
 }
 

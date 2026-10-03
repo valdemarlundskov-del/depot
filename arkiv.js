@@ -6,7 +6,7 @@
   const count = document.getElementById('akCount');
   const lb = document.getElementById('lb'), lbImg = document.getElementById('lbImg'), lbCount = document.getElementById('lbCount');
   const lbLabel = document.getElementById('lbLabel'), lbLink = document.getElementById('lbLink');
-  const linkFor = p => (typeof projects !== 'undefined' && projects.some(x => x.id === p)) ? `arbejde.html#${p}` : 'arbejde.html';
+  const linkFor = p => (typeof projects !== 'undefined' && projects.some(x => x.id === p)) ? `/arbejde#${p}` : '/arbejde';
   let current = 'alle', list = [], idx = 0, opener = null;
 
   grid.innerHTML = ARCHIVE.map((a, i) => `<button class="ak-item" data-p="${a.p}" data-i="${i}" style="aspect-ratio:${a.w}/${a.h}" aria-label="Åbn billede: ${ARCHIVE_LABELS[a.p] || a.p}"><img src="${a.m}" srcset="${a.m} 480w, ${a.t} 1100w" sizes="(max-width:700px) 50vw, (max-width:1100px) 33vw, 20vw" width="${a.w}" height="${a.h}" alt="${ARCHIVE_LABELS[a.p] || a.p}" loading="lazy" decoding="async"><span class="ak-tag">${ARCHIVE_LABELS[a.p] || a.p}</span></button>`).join('');
@@ -29,7 +29,7 @@
     });
     list = items.filter(el => !el.hidden).map(el => +el.dataset.i);
     requestAnimationFrame(() => items.forEach(el => { if (!el.hidden) el.classList.add('in'); }));
-    if (push) history.replaceState(null, '', f === 'alle' ? 'arkiv.html' : `arkiv.html#${f}`);
+    if (push) history.replaceState(null, '', f === 'alle' ? '/arkiv' : `/arkiv#${f}`);
   }
   filt.addEventListener('click', e => { const c = e.target.closest('.chip'); if (c) { apply(c.dataset.f, true); document.dispatchEvent(new CustomEvent('arkfilter', { detail: c.dataset.f })); } });
   document.addEventListener('arkfilter', e => { if (e.detail !== current) apply(e.detail, true); });

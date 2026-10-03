@@ -21,7 +21,7 @@
     pool.forEach(it => { if (!seen.has(it.g)) { seen.add(it.g); picks.push(it); } });
     stage.innerHTML = slots.map((s, i) => {
       const it = picks[i % picks.length];
-      return `<a class="w3c" style="--x:${s[0]};--y:${s[1]};--z:${s[2]};--ry:${s[3]}deg;--rx:${s[4]}deg;--rz:${s[5]}deg;--w:${s[6]}vw;--a:${s[7]};--k:${(.45 + (s[2] + 400) / 700).toFixed(2)};--dl:${(-i * 1.3).toFixed(1)}s" href="arbejde.html#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" loading="lazy" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
+      return `<a class="w3c" style="--x:${s[0]};--y:${s[1]};--z:${s[2]};--ry:${s[3]}deg;--rx:${s[4]}deg;--rz:${s[5]}deg;--w:${s[6]}vw;--a:${s[7]};--k:${(.45 + (s[2] + 400) / 700).toFixed(2)};--dl:${(-i * 1.3).toFixed(1)}s" href="/arbejde#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" loading="lazy" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
     }).join('');
   }
 
@@ -48,9 +48,9 @@
       }).join('');
       return `<section class="burst"><div class="burst-stage" data-scrub>
         ${shards}
-        <a class="burst-cover" href="arbejde.html#${p.id}" data-open="${p.id}" aria-label="Se projektet ${p.title}"><img src="${th(p.cover)}" alt="${p.title}" decoding="async"></a>
+        <a class="burst-cover" href="/arbejde#${p.id}" data-open="${p.id}" aria-label="Se projektet ${p.title}"><img src="${th(p.cover)}" alt="${p.title}" decoding="async"></a>
         <span class="burst-count">${p.year}</span>
-        <div class="burst-copy"><h3>${p.title}</h3><p class="cat">${p.category} — ${p.year}</p><p>${p.summary}</p><a class="btn" href="arbejde.html#${p.id}" data-open="${p.id}"><span>Se hele projektet</span></a></div>
+        <div class="burst-copy"><h3>${p.title}</h3><p class="cat">${p.category} — ${p.year}</p><p>${p.summary}</p><a class="btn" href="/arbejde#${p.id}" data-open="${p.id}"><span>Se hele projektet</span></a></div>
       </div></section>`;
     }).join('');
     host.addEventListener('click', e => {

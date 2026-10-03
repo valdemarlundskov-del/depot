@@ -31,7 +31,7 @@
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const a = ARCHIVE[n++ % ARCHIVE.length];
       const el = document.createElement('a');
-      el.className = 'wc'; el.href = `arkiv.html#${a.p}`; el.tabIndex = -1;
+      el.className = 'wc'; el.href = `/arkiv#${a.p}`; el.tabIndex = -1;
       el.style.width = cw.toFixed(0) + 'px'; el.style.height = ch.toFixed(0) + 'px';
       el.innerHTML = `<img src="${a.m}" srcset="${a.m} 480w, ${a.t} 1100w" sizes="${Math.round(cw)}px" alt="" width="${a.w}" height="${a.h}" decoding="async" draggable="false">`;
       world.appendChild(el);

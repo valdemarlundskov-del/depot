@@ -116,11 +116,11 @@ function autoReply(site, d) {
     '<tr><td style="padding:20px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Hej ' + esc(fn) + ',<br><br>Vi har modtaget din ' + (isBooking ? 'foresp&oslash;rgsel' : 'besked') + ' og vender tilbage <b style="color:#141414;">hurtigst muligt</b>. Du beh&oslash;ver ikke g&oslash;re mere lige nu, og du kan altid svare direkte p&aring; denne mail, hvis du vil tilf&oslash;je noget.</td></tr>' +
     '<tr><td style="padding:26px 40px 0 40px;"><div style="font-family:' + FONT + ';font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#141414;padding-bottom:10px;">Det har du sendt til os</div>' + box(summary.replace(/padding-top:12px;/, 'padding-top:0;')) + '</td></tr>' +
     '<tr><td style="padding:28px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Mens du venter, kan du se, hvad vi har lavet:</td></tr>' +
-    '<tr><td style="padding:14px 40px 0 40px;">' + button(site + '/arbejde.html', 'Se vores arbejde') + '</td></tr>' +
+    '<tr><td style="padding:14px 40px 0 40px;">' + button(site + '/arbejde', 'Se vores arbejde') + '</td></tr>' +
     '<tr><td style="padding:30px 40px 30px 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Venlig hilsen<br><b style="color:#141414;">Valdemar &amp; Basharat</b><br><span style="color:#7a7a76;">BK Studio</span></td></tr>';
   const text = 'Hej ' + fn + ',\n\nTak for din ' + (isBooking ? 'forespørgsel' : 'henvendelse') + '. Vi har modtaget den og vender tilbage hurtigst muligt. Du behøver ikke gøre mere lige nu, og du kan altid svare direkte på denne mail, hvis du vil tilføje noget.\n\n' +
     '--- Det har du sendt til os ---\n' + (isBooking ? 'Hvad skal du bruge: ' + d.behov + '\nOpgaven: ' + short(d.opgave) + '\nØnsket tidsramme: ' + d.tidsramme + '\nBudget: ' + d.budget : short(d.besked)) + '\n\n' +
-    'Se vores arbejde: ' + site + '/arbejde.html\n\nVenlig hilsen\nValdemar & Basharat\nBK Studio — Foto, video og content\n' + site + '\n';
+    'Se vores arbejde: ' + site + '/arbejde\n\nVenlig hilsen\nValdemar & Basharat\nBK Studio — Foto, video og content\n' + site + '\n';
   return { subject: (isBooking ? 'Vi har modtaget din forespørgsel' : 'Tak for din henvendelse') + ' — BK Studio', html: layout(site, preheader, inner), text };
 }
 

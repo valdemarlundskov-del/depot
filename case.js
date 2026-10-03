@@ -1,5 +1,5 @@
 // BK Studio — projektsiden: skiftende hero, fælles overskrift der glider ned mod nederste venstre hjørne,
-// dynamisk billedopstilling med parallax og tekster der glider ind fra siderne. Bruger #overlay fra arbejde.html.
+// dynamisk billedopstilling med parallax og tekster der glider ind fra siderne. Bruger #overlay fra /arbejde.
 (function () {
   const ov = document.getElementById('overlay');
   if (!ov) return;

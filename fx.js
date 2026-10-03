@@ -97,7 +97,7 @@
   // tm-jump: på forsiden fører "Om os" ned til "Mød teamet" på samme side (portrætterne fører videre til Om os-siden)
   if ($('[data-thru]') && document.getElementById('team')) {
     document.addEventListener('click', e => {
-      const a = e.target.closest && e.target.closest('a[href="om-os.html"]'); if (!a) return;
+      const a = e.target.closest && e.target.closest('a[href="/om-os"]'); if (!a) return;
       e.preventDefault(); e.stopPropagation();
       if (body.classList.contains('menu-open')) { const mb = document.getElementById('menuBtn'); if (mb) mb.click(); }
       const y = document.getElementById('team').getBoundingClientRect().top + scrollY;
