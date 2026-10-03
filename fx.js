@@ -83,7 +83,7 @@
   }
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  // tm-arrive: kommer man fra en anden side via "Om os" (index.html#team), lander man på "Mød teamet", også mens billeder og skrifter stadig indlæses
+  // tm-arrive: kommer man fra en anden side via "Om os" (/#team), lander man på "Mød teamet", også mens billeder og skrifter stadig indlæses
   if ($('[data-thru]') && location.hash === '#team' && document.getElementById('team')) {
     let userMoved = false, tries = 0;
     const stop = () => { userMoved = true; };

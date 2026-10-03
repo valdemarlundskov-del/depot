@@ -1,11 +1,31 @@
 {
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/send-mail.php", "destination": "/api/send-mail" }
+    {
+      "source": "/send-mail.php",
+      "destination": "/api/send-mail"
+    }
   ],
   "functions": {
-    "api/send-mail.js": { "maxDuration": 15 }
+    "api/send-mail.js": {
+      "maxDuration": 15
+    }
   },
   "headers": [
-    { "source": "/api/(.*)", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] }
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ]
 }
