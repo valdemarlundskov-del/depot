@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://bkstudio.dk/sitemap.xml
+Sitemap: https://www.bkstudio.dk/sitemap.xml

@@ -19,7 +19,7 @@
  *   AUTOREPLY            valgfri    "off" slår bekræftelsesmailen fra (standard: slået til)
  *   AUTOREPLY_REPLY_TO   valgfri    hvem der svarer, når kunden trykker "Svar" (fx valdemar@bkstudio.dk; standard: første adresse i MAIL_TO)
  *   AUTOREPLY_FROM_NAME  valgfri    navn i afsenderfeltet (standard: BK Studio)
- *   SITE_URL             valgfri    standard: https://bkstudio.dk  (bruges til logo og links i mailen)
+ *   SITE_URL             valgfri    standard: https://www.bkstudio.dk  (bruges til logo og links i mailen)
  */
 'use strict';
 const nodemailer = require('nodemailer');
@@ -200,7 +200,7 @@ module.exports = async function handler(req, res) {
     subject = 'Ny henvendelse — ' + navn;
     body = 'Navn: ' + navn + '\n' + 'E-mail: ' + email + '\n' + 'Telefon: ' + telefon + '\n' + 'Virksomhed: ' + virksomhed + '\n\n' + 'Besked:\n' + besked + '\n';
   }
-  const site = (process.env.SITE_URL || 'https://bkstudio.dk').replace(/\/+$/, '');
+  const site = (process.env.SITE_URL || 'https://www.bkstudio.dk').replace(/\/+$/, '');
   const fromAddr = process.env.MAIL_FROM || process.env.SMTP_USER, toAddr = process.env.MAIL_TO || process.env.SMTP_USER;
 
   try {

@@ -95,8 +95,6 @@ body.menu-open .logo-mark img{filter:brightness(0) invert(1);}
 
 /* ---------- arbejde: to marquee-rækker ---------- */
 
-@keyframes wkx{to{transform:translateX(-50%)}}
-
 /* ---------- stablede ydelseskort ---------- */
 .pns{padding:var(--sp) 0;background:var(--white);}
 .pns .section-head{padding:0 var(--gut);margin-bottom:min(5vw,56px);}
@@ -191,8 +189,6 @@ footer{position:relative;overflow:hidden;}
 
 .page-hero::after{background:linear-gradient(180deg,rgba(20,20,20,.1),rgba(20,20,20,.8));}
 .contact{background:var(--white);}
-.founder-photo,.meet-media{background:var(--near-black);}
-.meet-media img,.founder-photo img{transition:transform 1.4s var(--ease-out);}
 
 .option-card{transition:transform .4s var(--ease-out),border-color .3s,background .3s,color .3s;}
 .option-card:hover{transform:translateY(-3px);}
@@ -243,9 +239,6 @@ footer{position:relative;overflow:hidden;}
 }
 
 /* ---------- pladsholdere til manglende billeder ---------- */
-.ph{position:relative;display:grid;place-items:center;text-align:center;background-color:var(--sand);
-  background-image:repeating-linear-gradient(135deg,rgba(20,20,20,.07) 0 1px,transparent 1px 16px);border:1px dashed rgba(20,20,20,.3);}
-.ph span{padding:8px 14px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--grey-500);background:var(--white);}
 
 :is(.wcard-img,.sc-img,.tcard,.strip-track div,.founder-photo,.meet-media,.work-item .frame):has(>img.image-error){
   background-color:var(--sand);background-image:repeating-linear-gradient(135deg,rgba(20,20,20,.07) 0 1px,transparent 1px 16px);}
@@ -254,14 +247,11 @@ img.image-error{visibility:hidden;}
 /* ---------- kundelogoer ---------- */
 .logos{background:var(--white);border-bottom:1px solid var(--line-light);padding:clamp(28px,3.4vw,48px) 0;overflow:hidden;}
 .logos-label{padding:0 var(--gut);margin-bottom:clamp(18px,2vw,28px);font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--grey-500);}
-.logos-marq{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
-.logos-track{display:flex;width:max-content;gap:clamp(28px,4vw,64px);animation:wkx 40s linear infinite;}
-.logos-marq:hover .logos-track{animation-play-state:paused;}
+
 .logo-slot{flex:none;height:clamp(44px,5vw,68px);width:clamp(120px,14vw,190px);display:flex;align-items:center;justify-content:center;}
 .logo-slot img{width:100%;height:100%;object-fit:contain;filter:grayscale(1);opacity:.7;transition:filter .4s,opacity .4s;}
 .logo-slot:hover img{filter:none;opacity:1;}
-.logo-slot.ph span{background:transparent;padding:0;}
-@media(prefers-reduced-motion:reduce){.logos-track{animation:none}.logos-marq{overflow-x:auto}}
+
 .logo-light img,.logo-light:hover img{filter:brightness(0);opacity:.75;}
 .logo-light:hover img{opacity:1;}
 
@@ -604,7 +594,7 @@ body[data-nohide].hdr-hide:not(.menu-open) header.site-header{transform:none;}
 .sv3{background:var(--white);}
 .sv-img{position:relative;flex:1 1 40%;min-height:0;overflow:hidden;background:var(--near-black);}
 .sv-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-.sv-img.ph{border:0;border-bottom:1px dashed rgba(20,20,20,.3);background-color:var(--sand);}
+
 .sv-txt{flex:none;display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px);padding:clamp(16px,2vw,28px);}
 .sv h3{font-size:clamp(20px,2.3vw,34px);font-weight:800;text-transform:uppercase;letter-spacing:-.025em;line-height:1.05;}
 .sv p{font-size:clamp(13px,1.1vw,16px);line-height:1.5;opacity:.85;}
@@ -1155,10 +1145,6 @@ html body .burst-cover::before{border-radius:22px 16px 24px 17px / 17px 24px 16p
 .sv3{border-radius:var(--r4);}
 .sv4{border-radius:var(--r5);}
 /* kundelogoer (pladsholdere) */
-.logo-slot.ph:nth-child(4n+1){border-radius:var(--r1);}
-.logo-slot.ph:nth-child(4n+2){border-radius:var(--r2);}
-.logo-slot.ph:nth-child(4n+3){border-radius:var(--r4);}
-.logo-slot.ph:nth-child(4n){border-radius:var(--r5);}
 
 /* ================= kontaktformularer: tykkere, mørkere tekster (de forsvandt ind i baggrunden) ================= */
 html body .hform label,html body .booking-form label{font-weight:700!important;color:var(--black)!important;font-size:12.5px!important;letter-spacing:.1em;}
@@ -1328,8 +1314,9 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 @media(max-width:800px){.about-bk-grid{grid-template-columns:1fr;}.about-bk-media{aspect-ratio:4/3;}}
 
 /* kundelogobåndet: afstanden ligger som margin på hvert element, så løkken (-50%) går præcist op og aldrig hopper */
-.logos-track{gap:0!important;}
-.logos-track>*{margin-right:clamp(28px,4vw,64px);}
 
 /* Danmark-kortet bag formularen glider på plads i stedet for at hoppe, når siden er færdigindlæst */
 .dk-bg{transition:left .5s var(--ease-out),top .5s var(--ease-out),width .5s var(--ease-out),height .5s var(--ease-out);}
+
+/* kundelogoer: en rolig række med de rigtige logoer (ingen pladsholdere) */
+.logos-row{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(28px,6vw,96px);padding:6px var(--gut) 4px;}

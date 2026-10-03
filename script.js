@@ -216,7 +216,7 @@ if (overlay) {
 // Der bruges ingen tredjepartstjeneste. Absolut sti, så det virker fra alle undersider.
 const MAIL_ENDPOINT = '/api/send-mail';
 const MAIL_ERROR_TEXT = 'Beskeden kunne ikke sendes lige nu. Prøv igen om lidt, eller skriv direkte til kontakt@bkstudio.dk.';
-const SHOW_MAIL_DEBUG = true;   // viser en kort teknisk årsag efter fejlbeskeden; sæt til false, når afsendelsen er afprøvet i drift
+const SHOW_MAIL_DEBUG = false;  // true viser en kort teknisk årsag efter fejlbeskeden (kun til fejlsøgning)
 const mailTech = (status, msg) => ' (Teknisk: ' + (status ? 'HTTP ' + status : 'ingen forbindelse') + (msg ? ' — ' + String(msg).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 110) : '') + ')';
 
 // Læser fetch-svaret som ren tekst og forsøger selv at parse det som JSON.
