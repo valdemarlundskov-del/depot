@@ -13,7 +13,7 @@
   try { internalNav = sessionStorage.getItem('bknav') === '1'; sessionStorage.removeItem('bknav'); } catch (e) {}
   try { const nt = performance.getEntriesByType('navigation')[0]; if (nt && nt.type === 'back_forward') internalNav = true; } catch (e) {}
   if (loaderMode) {
-    if (reduce || internalNav) return;
+    if (reduce || internalNav || document.body.hasAttribute('data-no-loader')) return;      // privatlivspolitik og fejlsiden vises altid direkte, uden åbning
     sec = document.createElement('div'); sec.className = 'veil-cv'; sec.setAttribute('aria-hidden', 'true');
     sec.appendChild(document.createElement('canvas')); document.body.appendChild(sec);
     document.documentElement.style.overflow = 'hidden';
