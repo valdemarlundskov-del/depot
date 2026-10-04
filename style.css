@@ -1,3 +1,5 @@
+/* Inter (variabel, 300–700, latin) — hostes selv, ingen forbindelse til Google. Licens: fonts/OFL.txt */
+@font-face{font-family:'Inter';font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/inter-latin-300-700.woff2) format('woff2');}
 :root{
     --black:#141414;
     --near-black:#0c0c0c;
@@ -433,7 +435,7 @@
     display:flex;justify-content:space-between;gap:44px;flex-wrap:wrap;
     padding-bottom:40px;border-bottom:1px solid var(--line-dark);margin-bottom:24px;
   }
-  .footer-brand .fmark{display:block;font-family:'Bebas Neue',sans-serif;color:var(--white);
+  .footer-brand .fmark{display:block;color:var(--white);
     font-size:22px;letter-spacing:.15em;margin-bottom:10px;}
   .footer-brand .ftag{display:block;font-size:11px;letter-spacing:.2em;
     color:var(--white);margin-bottom:16px;}

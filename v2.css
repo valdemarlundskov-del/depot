@@ -1320,3 +1320,8 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 
 /* kundelogoer: en rolig række med de rigtige logoer (ingen pladsholdere) */
 .logos-row{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(28px,6vw,96px);padding:6px var(--gut) 4px;}
+
+/* privatlivspolitik: afsnitsoverskrifter */
+.legal-body h2{font-size:13px;line-height:1.4;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--black);margin:40px 0 12px;}
+.legal-body h2:first-child{margin-top:0;}
+.legal-body p.legal-date{font-size:13px;color:var(--grey-500);margin-top:34px;}
