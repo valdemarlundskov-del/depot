@@ -33,7 +33,15 @@
     if (a.target && a.target !== '_self') return;
     const u = new URL(a.href, location.href);
     if (u.origin !== location.origin || a.hasAttribute('download')) return;
-    if (u.pathname === location.pathname && (u.hash || u.search === location.search)) return;
+    // samme side: et link til den side, man allerede er på, må ikke genindlæse den (ingen åbning, ingen animationer)
+    const norm = p => p.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/(.)\/+$/, '$1');
+    if (norm(u.pathname) === norm(location.pathname) && u.search === location.search) {
+      if (u.hash && u.hash !== '#') return;                                      // spring til et afsnit på samme side: som før
+      e.preventDefault();                                                        // ellers sker der ingenting
+      const nv = document.getElementById('primaryNav'), mb = document.getElementById('menuBtn');
+      if (nv && mb && nv.classList.contains('open')) mb.click();                 // men en åben mobilmenu lukkes
+      return;
+    }
     try { sessionStorage.setItem('bknav', '1'); } catch (err) {}
   });
 
