@@ -64,6 +64,13 @@
     if ('ResizeObserver' in window) bgs.forEach(bg => new ResizeObserver(fit).observe(bg.parentElement));
   })();
 
+  // fm-hop: footerlogoet hopper opad, når man peger på det (kun selve formen reagerer)
+  (function () {
+    const fm = document.querySelector('a.fmark'); if (!fm || reduce) return;
+    fm.addEventListener('pointerenter', () => { if (fm.classList.contains('hop')) return; fm.classList.add('hop'); });
+    fm.addEventListener('animationend', () => fm.classList.remove('hop'));
+  })();
+
   // logoet i bunden af footeren: op til toppen af forsiden (på forsiden ruller den blødt op)
   document.addEventListener('click', e => {
     const m = e.target.closest('a.fmark'); if (!m) return;

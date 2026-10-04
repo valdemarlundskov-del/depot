@@ -10,20 +10,26 @@
   // Forsiden: projektkort svævende i 3D-rum
   const stage = document.getElementById('w3dStage');
   const sec3d = document.querySelector('[data-w3d]');
-  const slots = [[-34,-14,120,28,4,-3,17,'3/4'],[-12,-30,-120,-18,6,2,15,'4/3'],[4,-6,260,-8,-3,-2,20,'4/5'],[30,-22,-60,-26,5,3,15,'3/4'],
-    [40,8,140,-32,-4,4,14,'1/1'],[-42,16,-200,34,3,-5,13,'3/4'],[-20,22,180,16,-4,3,19,'4/3'],[16,28,-100,-14,4,-2,16,'3/4'],
-    [33,36,60,-22,2,3,13,'4/3'],[-6,42,-260,10,5,-4,15,'1/1'],[-38,-38,-320,40,4,4,11,'3/4'],[42,-40,-280,-38,-3,-3,12,'3/4'],
-    [24,-2,-380,-10,2,0,11,'4/3'],[-28,44,-180,22,-3,3,12,'3/4']];
-  if (stage && hasData) {
+  // Kortene står på en cirkel i 3D-rum bag overskriften og kredser langsomt rundt (se "w3-ring" nederst). Her bygges kortene.
+  const RING = [[16, '3/4'], [19, '4/3'], [15, '4/5'], [17, '1/1'], [18, '3/4'], [20, '4/3'], [15, '3/4'], [17, '4/5'], [19, '4/3'], [16, '1/1'], [18, '3/4'], [17, '4/3']];
+  function buildRing() {
+    if (!stage || !hasData) return;
     const pool = [];
-    for (let k = 0; k < 6; k++) projects.forEach(p => { const g = p.gallery[(k * 2 + 1) % p.gallery.length]; pool.push({ p, g }); });
+    const DARK = ['DSC03359', 'DSC03361', 'DSC03363', 'DSC04197', 'DSC04209', 'DSC04225', 'DSC04234', 'DSC04240', 'DSC03610', 'DSC03802'];   // for mørke billeder i en ring, der skal ses bag overskriften
+    for (let k = 0; k < 8; k++) projects.forEach(p => { const g = p.gallery[(k * 3 + 1) % p.gallery.length]; if (!DARK.some(d => g.indexOf(d) >= 0)) pool.push({ p, g }); });
     const seen = new Set(), picks = [];
     pool.forEach(it => { if (!seen.has(it.g)) { seen.add(it.g); picks.push(it); } });
-    stage.innerHTML = slots.map((s, i) => {
-      const it = picks[i % picks.length];
-      return `<a class="w3c" style="--x:${s[0]};--y:${s[1]};--z:${s[2]};--ry:${s[3]}deg;--rx:${s[4]}deg;--rz:${s[5]}deg;--w:${s[6]}vw;--a:${s[7]};--k:${(.45 + (s[2] + 400) / 700).toFixed(2)};--dl:${(-i * 1.3).toFixed(1)}s" href="/arbejde#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" loading="lazy" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
+    const small = innerWidth <= 900, n = small ? 6 : 9, m = small ? 1.6 : .82;
+    stage.querySelectorAll('.w3c').forEach(c => c.remove());
+    const html = Array.from({ length: n }, (_, i) => {
+      const s = RING[i % RING.length], it = picks[i % picks.length];
+      return `<a class="w3c" style="--w:${(s[0] * m).toFixed(1)}vw;--a:${s[1]}" href="/arbejde#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
     }).join('');
+    stage.insertAdjacentHTML('beforeend', html);
+    if (window.__w3Layout) window.__w3Layout();
   }
+  buildRing();
+  window.__w3Rebuild = buildRing;
 
   // Reserve: en klasse følger musen, så blur og "Se projekt" vises, selv hvis browserens :hover ikke rammer de skrå 3D-kort
   document.addEventListener('pointerover', e => {
@@ -64,7 +70,7 @@
 
 
 
-  // Levende højdekurver (marching squares på bevægelig støj). Bruges bag "Arbejde, der taler højere end ord" og "Skriv til os".
+  // Levende højdekurver (marching squares på bevægelig støj). Bruges bag "Vi skaber billeder, der bliver hængende" og "Skriv til os".
   function initFlow(sec, cv, cfg) {
     if (!cv) return;
     const ctx = cv.getContext('2d');
@@ -232,11 +238,6 @@
     vel += ((y - lastY) - vel) * .18; lastY = y;
     const skew = clamp(vel * -.35, -9, 9);
     if (marq) marq.style.transform = `translate3d(${(-(y * .35) % (marqP || marq.scrollWidth / 4)).toFixed(1)}px,0,0) skewX(${skew.toFixed(2)}deg)`;
-    if (sec3d && stage) {
-      const r = sec3d.getBoundingClientRect();
-      const pp = clamp((vh - r.top) / (vh + r.height));
-      stage.style.setProperty('--fly', ((pp - .5) * 2 * 320).toFixed(1));
-    }
     if (words.length) {
       const r = wordsEl.getBoundingClientRect();
       const p = clamp((vh * .88 - r.top) / (vh * .88 - vh * .28));
@@ -280,40 +281,42 @@
   frame();
 })();
 
-/* w3-orbit: billederne i "Arbejde, der taler højere end ord" kredser rundt i cirkler og snurrer nogle gange rundt om sig selv */
+/* w3-ring: kortene står på en cirkel bag overskriften "Vi skaber billeder, der bliver hængende" og kredser langsomt rundt.
+   De bagerste er mindre og mørkere, de forreste større og lysere (dybde). Scroll drejer ringen, og den bremser, når man peger på et kort. */
 (function () {
   const stage = document.getElementById('w3dStage'), sec = document.querySelector('[data-w3d]');
-  if (!stage || !sec || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const cards = [...stage.querySelectorAll('.w3c')].map(el => ({
-    el, inner: el.querySelector('.w3c-in'),
-    r: rnd(.026, .062),                                              // radius som del af skærmbredden (ca. 37–90 px på en stor skærm)
-    ph: rnd(0, Math.PI * 2),                                         // hvor på cirklen kortet starter
-    sp: Math.PI * 2 / rnd(16, 30) * (Math.random() < .5 ? 1 : -1),   // en omgang tager 16–30 sekunder, tilfældig retning
-    k: 1, spinning: false, next: performance.now() + rnd(3500, 11000)
-  }));
-  if (!cards.length) return;
-  let vis = false, last = 0, raf = 0;
-  const held = c => c.el.matches(':hover') || c.el.classList.contains('is-hover');
-  function spin(c) {
-    if (c.spinning || !c.inner || !c.inner.animate) return;
-    c.spinning = true;
-    const axis = '0 1 0', dir = Math.random() < .5 ? 1 : -1;               // altid vandret: kortet drejer om den lodrette akse
-    const a = c.inner.animate([{ rotate: axis + ' 0deg' }, { rotate: axis + ' ' + (360 * dir) + 'deg' }], { duration: rnd(1300, 1900), easing: 'cubic-bezier(.65,0,.35,1)' });
-    a.onfinish = a.oncancel = () => { c.spinning = false; };
+  if (!stage || !sec) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let auto = 0, speed = 1, vis = false, last = 0, raf = 0;
+  const TAU = Math.PI * 2, held = c => c.matches(':hover') || c.classList.contains('is-hover');
+  function layout(t) {
+    const cards = stage.querySelectorAll('.w3c'), n = cards.length; if (!n) return;
+    const W = innerWidth, H = innerHeight, small = W <= 900;
+    const Rx = W * (small ? .44 : .46), Rz = W * (small ? .32 : .3), Ky = H * (small ? .1 : .15);
+    const rot = auto + scrollY * .0011;
+    for (let i = 0; i < n; i++) {
+      const c = cards[i], th = i * TAU / n + rot, s = Math.sin(th), co = Math.cos(th);   // co: 1 = forrest, -1 = bagerst
+      const hv = held(c) ? 1 : 0, depth = (co + 1) / 2;
+      const x = Rx * s, z = Rz * co + hv * 90, y = -Ky * co + Math.sin(t * .0011 + i * 1.7) * 7;
+      c.style.transform = 'translate(-50%,-50%) translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + (s * 24).toFixed(1) + 'deg)';
+      c.style.setProperty('--sh', (hv ? 1 : .5 + .5 * depth).toFixed(3));
+      c.style.setProperty('--bl', (hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2).toFixed(2) + 'px');
+      c.style.zIndex = Math.round(depth * 100);
+    }
   }
+  window.__w3Layout = () => layout(performance.now());
   function frame(t) {
     raf = 0; if (!vis) return;
     const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
-    const W = innerWidth;
-    for (const c of cards) {
-      c.k += ((held(c) ? 0 : 1) - c.k) * Math.min(1, dt * 6);       // kortet bremser op, når man holder musen over det
-      c.ph += c.sp * dt * c.k;
-      c.el.style.translate = (Math.cos(c.ph) * c.r * W).toFixed(1) + 'px ' + (Math.sin(c.ph) * c.r * W).toFixed(1) + 'px';
-      if (t > c.next) { c.next = t + rnd(7000, 16000); if (!held(c)) spin(c); }
-    }
+    let any = false; for (const c of stage.querySelectorAll('.w3c')) if (held(c)) { any = true; break; }
+    speed += ((any ? 0 : 1) - speed) * Math.min(1, dt * 4);                       // ringen bremser op, når man peger på et kort
+    auto += TAU / 85 * speed * dt;                                                 // en hel omgang tager ca. 85 sekunder
+    layout(t);
     raf = requestAnimationFrame(frame);
   }
+  layout(0);
+  addEventListener('resize', () => { clearTimeout(layout.t); layout.t = setTimeout(() => { const small = innerWidth <= 900; if (stage.querySelectorAll('.w3c').length !== (small ? 6 : 9)) window.__w3Rebuild(); else layout(performance.now()); }, 120); });
+  if (reduce) { addEventListener('scroll', () => layout(0), { passive: true }); return; }
   const start = () => { if (!raf && vis && !document.hidden) { last = 0; raf = requestAnimationFrame(frame); } };
   new IntersectionObserver(es => { vis = es[0].isIntersecting; start(); }, { threshold: 0 }).observe(sec);
   document.addEventListener('visibilitychange', start);

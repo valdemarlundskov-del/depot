@@ -258,15 +258,11 @@ img.image-error{visibility:hidden;}
 /* ---------- arbejde: kort der svæver i 3D-rum ---------- */
 .w3d{position:relative;overflow:hidden;background:var(--black);color:var(--white);min-height:max(130vh,900px);padding:clamp(90px,12vw,150px) 0 var(--sp);isolation:isolate;}
 
-.w3d-title{position:relative;z-index:1;padding:0 var(--gut);font-size:clamp(46px,8.6vw,150px);line-height:.92;letter-spacing:-.04em;max-width:none;text-align:center;}
-.w3d-scene{position:absolute;inset:0;perspective:1500px;perspective-origin:50% 42%;z-index:2;pointer-events:none;}
+.w3d-title{position:relative;pointer-events:none;padding:0 var(--gut);font-size:clamp(46px,8.6vw,150px);line-height:.92;letter-spacing:-.04em;max-width:none;text-align:center;}
+.w3d-scene{position:absolute;inset:0;perspective:1700px;perspective-origin:50% 40%;z-index:2;pointer-events:none;}
 .w3d-stage{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--tiltX,0deg)) rotateY(var(--tiltY,0deg));will-change:transform;}
-.w3c{position:absolute;left:50%;top:calc(50% + 4vh);width:var(--w);aspect-ratio:var(--a);pointer-events:auto;transform-style:preserve-3d;
-  transform:translate(-50%,-50%) translate3d(calc(var(--x)*1vw),calc(var(--y)*1vh),calc(var(--z)*1px + var(--fly,0)*var(--k)*1px + var(--hz,0)*1px)) rotateY(var(--ry)) rotateX(var(--rx)) rotateZ(var(--rz));
-  transition:transform .8s var(--ease-out);}
-.w3c:hover{--hz:140;}
-.w3c-in{position:absolute;inset:0;display:block;overflow:hidden;background:var(--near-black);box-shadow:0 30px 60px rgba(0,0,0,.45);animation:w3bob 9s ease-in-out var(--dl,0s) infinite alternate;}
-@keyframes w3bob{from{transform:translate3d(0,-10px,0) rotate(-.6deg)}to{transform:translate3d(0,12px,0) rotate(.6deg)}}
+.w3c{position:absolute;left:50%;top:50%;width:var(--w);aspect-ratio:var(--a);pointer-events:auto;transform-style:preserve-3d;will-change:transform;transform:translate(-50%,-50%);}
+.w3c-in{position:absolute;inset:0;display:block;overflow:hidden;background:var(--near-black);box-shadow:0 30px 60px rgba(0,0,0,.45);filter:brightness(var(--sh,1)) blur(var(--bl,0px));}
 .w3c-in img{transition:transform 1.2s var(--ease-out);filter:contrast(1.03) saturate(1.02);}
 .w3c:hover .w3c-in img{transform:scale(1.07);}
 .w3c-in::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,20,20,0) 62%,rgba(20,20,20,.72) 100%);}
@@ -277,9 +273,6 @@ img.image-error{visibility:hidden;}
 .w3d-btns{display:flex;align-items:center;gap:min(4vw,32px);flex-wrap:wrap;}
 @media(max-width:700px){
   .w3d{min-height:max(120vh,760px);}
-  .w3c:nth-child(n+10){display:none;}
-  .w3c{--w:calc(var(--wm,1)*30vw);}
-  .w3c{width:calc(var(--w)*1.7);}
   .w3d-title{font-size:clamp(40px,13vw,80px);}
 }
 @media(prefers-reduced-motion:reduce){.w3c-in{animation:none}.w3c{transition:none}}
@@ -617,7 +610,7 @@ body[data-nohide].hdr-hide:not(.menu-open) header.site-header{transform:none;}
 @media(max-width:900px) and (max-height:700px){.sv ul{display:none}}
 @media(prefers-reduced-motion:reduce){.pns{height:auto}.pns-pin{position:relative;height:auto;overflow:visible}.svc-row3{display:grid;grid-template-columns:1fr;}.sv{transform:none!important}.sv-img{flex:none;aspect-ratio:16/10}}
 
-/* levende mønster bag "Arbejde, der taler højere end ord" */
+/* levende mønster bag "Vi skaber billeder, der bliver hængende" */
 .w3d-flow{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
 
 /* billedbåndet (landskab, der kører fra højre mod venstre): i farver */
@@ -1060,7 +1053,6 @@ html[data-who="valdemar"] #basharat,html[data-who="basharat"] #valdemar{display:
 .mh{overflow:hidden;--w:clamp(170px,18vw,270px);--g:clamp(16px,2.4vw,40px);}
 .mh-grid{display:flex!important;justify-content:center;gap:var(--g);width:max-content!important;max-width:none!important;margin:0 auto!important;grid-template-columns:none!important;animation:mhpp 7.2s ease-in-out infinite;}
 .mh-p{flex:0 0 var(--w);width:var(--w);}
-.mh:hover .mh-grid,.mh-grid:focus-within{animation-play-state:paused;}
 @keyframes mhpp{0%,100%{transform:translateX(-8vw);}50%{transform:translateX(8vw);}}
 @media(prefers-reduced-motion:reduce){.mh-grid{animation:none;}}
 @media(max-width:700px){.mh{--w:clamp(140px,40vw,190px);}@keyframes mhpp{0%,100%{transform:translateX(-4vw);}50%{transform:translateX(4vw);}}}
@@ -1088,7 +1080,6 @@ html body.om-page nav.primary-nav a{color:#fff!important;}
   50%,64%{transform:translateX(-5%) scale(1.14);animation-timing-function:cubic-bezier(.65,0,.35,1);}
   100%{transform:translateX(5%) scale(1.14);}
 }
-.mh:hover .mh-grid,.mh:hover .mh-img img,.mh-grid:focus-within,.mh-grid:focus-within .mh-img img{animation-play-state:paused!important;}
 .mh-p:hover .mh-img img{filter:none;}
 @media(prefers-reduced-motion:reduce){.mh-grid,.mh-img img{animation:none!important;}.mh-img img{transform:scale(1.04);}}
 @media(max-width:700px){@keyframes mhpp{0%,14%{transform:translateX(-4vw);animation-timing-function:cubic-bezier(.65,0,.35,1);}50%,64%{transform:translateX(4vw);animation-timing-function:cubic-bezier(.65,0,.35,1);}100%{transform:translateX(-4vw);}}}
@@ -1220,8 +1211,7 @@ html body .wizard-next,html body .wizard-submit{white-space:nowrap;}
   html body .wiz-bottom .wizard-back{margin-right:auto;}
 }
 
-/* ================= "Arbejde, der taler højere end ord": billederne rykkes højere op og samles lidt ================= */
-.w3c{top:calc(50% - 8vh)!important;transform:translate(-50%,-50%) translate3d(calc(var(--x)*1vw),calc(var(--y)*.92vh),calc(var(--z)*1px + var(--fly,0)*var(--k)*1px + var(--hz,0)*1px)) rotateY(var(--ry)) rotateX(var(--rx)) rotateZ(var(--rz))!important;}
+/* ================= "Vi skaber billeder, der bliver hængende": billederne rykkes højere op og samles lidt ================= */
 
 /* ================= ydelseskort: firkantet outline om billederne; det sidste kort uden runde hjørner ================= */
 .sv1 .sv-img,.sv2 .sv-img,.sv3 .sv-img{border:1.5px solid var(--black)!important;box-sizing:border-box;}
@@ -1268,7 +1258,7 @@ html body .burst-cover::before{display:none!important;}
 .tm{min-height:100vh;min-height:100svh;display:flex!important;flex-direction:column;justify-content:center;padding-top:clamp(64px,8vh,110px)!important;padding-bottom:clamp(36px,6vh,80px)!important;}
 .tm .section-head{margin-bottom:clamp(16px,3.2vh,40px)!important;}
 .tm-grid{display:flex!important;justify-content:center;align-items:flex-start;gap:clamp(16px,3vw,44px)!important;}
-.tm .tcard{flex:0 0 auto;width:max(140px,min(34vw,460px,calc((100vh - 360px) * .8)))!important;width:max(140px,min(34vw,460px,calc((100svh - 360px) * .8)))!important;}
+.tm .tcard{flex:0 0 auto;width:max(140px,min(34vw,460px,calc((100vh - 320px) * .8)))!important;width:max(140px,min(34vw,460px,calc((100svh - 320px) * .8)))!important;}
 .tm .tcard img{aspect-ratio:4/5;}
 .tm .tcard-meta{padding:16px 2px 0!important;}
 .tm .tcard-meta h3{font-size:clamp(16px,1.6vw,24px)!important;}
@@ -1325,3 +1315,38 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 .legal-body h2{font-size:13px;line-height:1.4;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--black);margin:40px 0 12px;}
 .legal-body h2:first-child{margin-top:0;}
 .legal-body p.legal-date{font-size:13px;color:var(--grey-500);margin-top:34px;}
+
+/* kortene kredser i en ring bag overskriften: ringens midte ligger lidt under overskriften */
+.w3c{top:max(47vh,330px);}
+@media(max-width:900px){.w3c{top:max(46vh,330px);}}
+
+/* ================= "Vi skaber billeder, der bliver hængende": overskriften står midt i ringen ================= */
+/* titlen ligger i samme 3D-rum som kortene (planet z = 0): kort længere bagud er bag teksten (slørede), og kort, der kommer forrest, går foran den */
+.w3d-title{position:absolute;left:0;right:0;top:max(47vh,330px);transform:translate3d(0,-50%,0);z-index:auto;padding:0 var(--gut);pointer-events:none;margin:0;text-shadow:0 0 38px rgba(20,20,20,.75);}
+.w3d{padding-top:0;}
+@media(max-width:900px){.w3d-title{top:max(46vh,330px);}}
+
+/* ================= Mød resten af holdet: glidningen stopper kun, når man peger på selve billederne ================= */
+.mh-grid:has(.mh-img:hover),.mh-grid:has(.mh-img:hover) .mh-img img,.mh-grid:has(.mh-p:focus-visible),.mh-grid:has(.mh-p:focus-visible) .mh-img img{animation-play-state:paused!important;}
+/* to små prikker: den ene lyser, når billederne er nået helt over til den ene side, den anden, når de er nået helt over til den anden */
+.mh-dots{display:flex;justify-content:center;gap:14px;margin-top:clamp(28px,3.4vw,52px);}
+.mh-dots i{display:block;width:11px;height:11px;border-radius:50%;background:var(--black);opacity:.28;}
+.mh-dots i:nth-child(1){animation:mhd1 8.4s infinite;}
+.mh-dots i:nth-child(2){animation:mhd2 8.4s infinite;}
+@keyframes mhd1{0%,14%{opacity:1;transform:scale(1.3);}32%,82%{opacity:.28;transform:scale(1);}100%{opacity:1;transform:scale(1.3);}}
+@keyframes mhd2{0%,32%{opacity:.28;transform:scale(1);}50%,64%{opacity:1;transform:scale(1.3);}82%,100%{opacity:.28;transform:scale(1);}}
+.mh:has(.mh-img:hover) .mh-dots i,.mh:has(.mh-p:focus-visible) .mh-dots i{animation-play-state:paused;}
+@media(prefers-reduced-motion:reduce){.mh-dots i{animation:none;}.mh-dots i:nth-child(1){opacity:1;transform:scale(1.3);}}
+
+/* ================= footerlogoet: kun selve logoet kan trykkes (formen er trykfladen), og det hopper opad, så det ikke går ned i teksten ================= */
+.footer-brand .fmark{display:block!important;width:74.2px;height:64px;line-height:0;margin-bottom:12px;transition:none;transform:none;clip-path:path(evenodd,'M54.9 25.6 L55.0 26.8 L56.0 27.9 L58.8 29.5 L61.4 30.4 L63.5 30.7 L65.8 30.5 L67.3 29.8 L68.2 28.5 L68.1 27.1 L67.1 25.7 L65.2 24.5 L62.5 23.6 L60.0 23.4 L57.6 23.6 L55.8 24.4 Z M73.1 3.4 L70.7 1.7 L68.9 1.3 L66.6 1.3 L63.0 2.2 L60.3 4.1 L58.6 6.1 L57.3 8.9 L55.4 18.2 L55.8 19.2 L56.4 19.5 L57.3 19.1 L59.4 17.0 L61.8 15.3 L70.2 11.2 L72.6 9.6 L73.7 8.3 L74.2 6.8 L74.1 5.1 Z M0.4 17.3 L0.0 19.5 L0.9 21.6 L2.4 23.2 L7.3 26.9 L8.3 28.4 L8.9 30.2 L8.9 32.2 L8.1 34.5 L3.1 41.3 L1.9 44.4 L1.9 46.3 L2.6 48.3 L3.9 50.1 L5.5 51.4 L7.6 52.4 L9.6 52.8 L12.0 52.7 L14.3 52.1 L17.1 50.9 L25.0 46.3 L32.2 42.6 L36.2 40.1 L37.1 39.9 L37.7 40.3 L37.8 41.6 L36.5 44.0 L34.4 46.2 L28.8 51.1 L27.2 53.0 L26.2 54.9 L25.7 57.3 L26.2 59.8 L27.4 61.7 L29.4 63.2 L32.4 64.0 L35.7 63.7 L38.7 62.3 L41.1 60.0 L42.0 58.3 L42.2 56.5 L41.2 50.4 L41.3 47.0 L42.4 44.1 L44.2 42.7 L46.3 42.5 L48.8 43.5 L50.4 44.6 L56.8 50.9 L59.1 52.4 L61.5 53.2 L64.5 53.4 L67.4 52.6 L69.8 51.1 L71.5 48.8 L72.0 47.1 L71.8 45.3 L71.1 43.8 L69.7 42.3 L66.9 40.8 L61.6 39.3 L58.2 37.8 L49.5 32.8 L47.9 31.1 L47.5 29.8 L47.9 28.1 L52.2 23.0 L53.8 19.3 L53.9 17.3 L53.5 15.6 L52.6 14.2 L51.2 13.0 L49.2 12.5 L46.6 12.7 L43.8 13.9 L41.5 15.8 L39.5 19.1 L38.9 21.5 L38.6 26.1 L38.2 27.0 L37.6 27.5 L36.7 27.5 L33.1 25.8 L30.2 24.9 L27.0 24.4 L22.0 24.3 L20.2 23.4 L19.6 22.4 L19.6 21.2 L21.0 18.3 L23.2 16.2 L29.0 12.2 L30.5 10.6 L31.6 8.6 L31.9 6.5 L31.5 4.2 L30.2 2.3 L28.1 0.8 L25.6 0.0 L23.3 0.0 L21.1 0.6 L19.3 1.5 L16.6 3.6 L10.9 9.5 L2.5 14.8 L1.1 16.1 Z M25.7 30.6 L26.9 32.4 L27.0 34.7 L26.1 37.2 L24.2 39.5 L21.9 41.2 L19.3 42.0 L17.0 41.8 L15.2 40.8 L14.5 39.3 L14.7 37.4 L16.0 35.0 L18.0 32.6 L20.2 30.8 L22.2 29.9 L24.0 29.9 Z');}
+.footer-brand .fmark:hover{transform:none;}
+.footer-brand .fmark img{display:block;width:100%;height:100%;max-width:none;pointer-events:none;}
+.footer-brand .fmark.hop{animation:fmhop .8s cubic-bezier(.3,.6,.3,1);}
+@keyframes fmhop{0%{transform:translateY(0);}28%{transform:translateY(-17px) rotate(-6deg);}50%{transform:translateY(0) rotate(0);}66%{transform:translateY(-7px) rotate(2deg);}82%{transform:translateY(0);}100%{transform:translateY(0);}}
+@media(prefers-reduced-motion:reduce){.footer-brand .fmark.hop{animation:none;}}
+
+/* overskriften er længere end før: lidt mindre, så den passer på to linjer på computer */
+@media(min-width:901px){.w3d-title{font-size:clamp(44px,6.9vw,124px);}}
+
+.w3d-title{text-wrap:balance;}

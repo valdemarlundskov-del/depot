@@ -36,63 +36,25 @@
   const easeOut = v => 1 - Math.pow(1 - clamp(v), 3);
   const lerp = (a, b, v) => a + (b - a) * v;
 
-  // billeder: de samme ni forreste som før, og bag dem en tæt mosaik af skjulte billeder (som i arkivet), der først kommer til syne,
-  // når man zoomer ind, og de forreste billeder glider væk.
-  const A_ = typeof ARCHIVE !== 'undefined' ? ARCHIVE : [];
-  const find = k => A_.find(a => a.s.indexOf(k) >= 0) || A_[0];
-  const KEYS = ['landskab/20250916-A7S03440', 'porsche924/DSC03359', 'vildbjerg/DSC04183', 'thailand/DSC03771', 'vildbjerg/DSC04203', 'landskab/A7S07644', 'porsche924/DSC03358', 'porsche924/DSC03308', 'landskab/A7S07589'];
-  const usedF = KEYS.map(find), poolR = A_.filter(a => usedF.indexOf(a) < 0);
-  // De forreste billeder i logoet: mellemstore og med samme dynamik som ringen (dybde, let forskydning, små overlap) i stedet for et stift gitter.
-  const FCOLS = 4, FROWS = 4, MF = .02;
-  const cfxF = ((FX / LWd) - MF) / (1 - 2 * MF) * FCOLS - .5, cfyF = ((FY / LHt) - MF) / (1 - 2 * MF) * FROWS - .5;
-  const cellsF = [];
-  for (let r = 0; r < FROWS; r++) for (let c = 0; c < FCOLS; c++) cellsF.push({ c, r, dist: Math.hypot(c - cfxF, r - cfyF) });
-  cellsF.sort((p, q) => p.dist - q.dist);                                            // tættest på midten får de bedste billeder
-  let sdF = 777; const rndF = () => (sdF = (sdF * 16807) % 2147483647) / 2147483647;
-  const front = cellsF.map((cl, i) => {
-    const cw = (1 - 2 * MF) / FCOLS, ch = (1 - 2 * MF) / FROWS, z = rndF(), sz = cw * (.86 + .42 * z);
-    const cx = MF + (cl.c + .5) * cw + (rndF() - .5) * .03, cy = MF + (cl.r + .5) * ch + (rndF() - .5) * .03, rd = Math.hypot(cx - .5, cy - .5);
-    return { src: i < KEYS.length ? find(KEYS[i]) : poolR[(i * 5) % Math.max(1, poolR.length)], d: 250 + i * 110, z, rd, ring: false,
-      x: cx - sz / 2, y: cy - sz * .43, w: sz, h: sz * (.86 + .26 * rndF()),
-      ang: rndF() * 6.283, drift: .015 + rndF() * .07, grow: .25 + 1.2 * z + rndF() * .35, delay: rndF() * .3 };
-  });
-  // Ét lag: de ni store billeder i midten (de, der ses i logoet fra start) og mange små længere ude mod kanterne, i samme plan.
-  // De små ligger uden for logoets boks og er skjult af formen, indtil man zoomer ind og vinduet vokser.
+  // åbningen: logoet er et vindue ind til showreelen (ingen billedmosaik). Uden video (dataspare, reduceret bevægelse, indlæsningsskærm) vises i stedet første billede af reelen.
   let dirty = true;
-  // showreel: ligger bag logoet og kommer frem, når BK STUDIO afsløres; dækkes til sidst af resten af siden
+  // showreel: vises i logoformen fra start, fylder hele skærmen, når man er kommet igennem logoet, og dækkes til sidst af resten af siden
   const vid = loaderMode ? null : sec.querySelector('.thru-video');
   let vidReady = false, vidHold = false;
+  const poster = new Image(); poster.decoding = 'async'; poster.onload = () => { dirty = true; }; poster.src = 'video/showreel-poster.jpg';
   if (vid) {
-    vid.muted = true; vid.playsInline = true;
-    vid.addEventListener('canplay', () => { vidReady = true; dirty = true; });
+    vid.muted = true; vid.playsInline = true; vid.loop = true;
+    const small = innerWidth < 700, sd = navigator.connection && navigator.connection.saveData;
+    vid.addEventListener('canplay', () => { vidReady = true; dirty = true; if (!vidHold) vid.play().catch(() => {}); });
     vid.addEventListener('error', () => { vidReady = false; });
-    const sd = navigator.connection && navigator.connection.saveData;
-    if (!sd && !reduce) addEventListener('load', () => setTimeout(() => { vid.preload = 'auto'; vid.load(); }, 1200));
-  }
-  const imgOf = new Map();
-  const getImg = a => { let im = imgOf.get(a); if (!im) { im = new Image(); im.decoding = 'async'; im.onload = () => { dirty = true; }; im.src = a.m; imgOf.set(a, im); } return im; };
-  front.forEach((tl, k) => { tl.im = getImg(tl.src); tl.i = k; });
-  let ring = [], allT = front.slice();
-  const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
-  function buildRing(w, h) {
-    const [bw0, bh0] = boxSize(w, h), St0 = .55 * 1.06 * Math.max(w / bw0, h / bh0);
-    // det område (i boksens brøkdele) skærmen dækker ved start og ved fuld zoom, med ekstra plads til de billeder, der står længst fremme
-    const half = s => [(w / 2) / (bw0 * s) + .16, (h / 2) / (bh0 * s) + .16];
-    const [ax, ay] = half(1), [bx, by] = half(St0), hx = Math.max(ax, bx), hy = Math.max(ay, by);
-    const C = 1 / 9;                                                               // 9 celler pr. boks: ringen flugter med kanten, så der ikke er et hul
-    const i0 = Math.floor((.5 - hx) / C), i1 = Math.ceil((.5 + hx) / C), j0 = Math.floor((.5 - hy) / C), j1 = Math.ceil((.5 + hy) / C), out = [];
-    let sd = 4242; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-    for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-      if (i >= 0 && i < 9 && j >= 0 && j < 9) continue;                               // midten hører til de store billeder
-      const cx = (i + .5) * C, cy = (j + .5) * C, z = rnd(), sz = C * (.9 + .55 * z + rnd() * .1);   // nogle står længere fremme (større og hurtigere ved zoom) end andre
-      out.push({ x: cx - sz / 2 + (rnd() - .5) * .03, y: cy - sz / 2 + (rnd() - .5) * .03, w: sz, h: sz * (.85 + .3 * rnd()), rd: Math.hypot(cx - .5, cy - .5), z });
+    if (!sd && !reduce) {
+      const webm = !!vid.canPlayType && /(probably|maybe)/.test(vid.canPlayType('video/webm; codecs="vp9"')), mp4 = !!vid.canPlayType && /(probably|maybe)/.test(vid.canPlayType('video/mp4; codecs="avc1.64001f"'));
+      vid.preload = 'auto';
+      vid.src = window.__VIDEO_SRC || ('video/showreel' + (small ? '-sm' : '') + (mp4 || !webm ? '.mp4' : '.webm'));
+      vid.load();
     }
-    out.sort((p, q) => p.rd - q.rd);
-    ring = out.map((o, k) => { o.src = poolR[(k * 7) % Math.max(1, poolR.length)]; o.im = getImg(o.src); o.i = 20 + k; o.ang = rnd() * 6.283; o.drift = .015 + rnd() * .08; o.grow = .25 + 1.3 * o.z + rnd() * .4; o.delay = rnd() * .3; o.ring = true; return o; });
-    ring.sort((p, q) => p.z - q.z);                                                // de fjerneste tegnes først
-    allT = front.concat(ring).sort((p, q) => p.z - q.z);                              // forreste og ring i ét lag, sorteret efter dybde
   }
-  buildRing(innerWidth, innerHeight);
+  const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
   // ---------- liquid ved hover (forsiden) ----------
   // Markøren er som en finger i vand: den trækker logoet med sig, og efterlader ringe, der brer sig, svinger og dør ud. Smalt og blødt.
@@ -212,21 +174,13 @@
     dpr = Math.min(window.devicePixelRatio || 1, innerWidth < 700 ? 1.5 : 1.75);
     vw = cv.clientWidth; vh = cv.clientHeight;
     [cv, la, lm, lt].forEach(c => { c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr); });
-    buildRing(vw, vh); dirty = true; doneFinal = false;
+    dirty = true; doneFinal = false;
   }
   function progress() {
     if (loaderMode) return .55 * smooth(clamp((performance.now() - t0 - 900) / 1600));
     if (reduce) return 0;
     const r = spacer.getBoundingClientRect();
     return clamp((innerHeight - r.top) / Math.max(1, r.height));
-  }
-
-  // billede med "cover"-beskæring i (x, y, w, h)
-  function cover(c, im, tl, x, y, w, h, t, p) {
-    const sc = Math.max(w / im.naturalWidth, h / im.naturalHeight) * 1.16;
-    const iw = im.naturalWidth * sc, ih = im.naturalHeight * sc;
-    const dx = Math.sin(t * .35 + tl.i * 1.7) * (iw - w) * .35, dy = ((p * 1.4) * (tl.i % 2 ? 1 : -1) + Math.cos(t * .3 + tl.i)) * (ih - h) * .18;
-    c.drawImage(im, x + (w - iw) / 2 + dx, y + (h - ih) / 2 + dy, iw, ih);
   }
 
   function draw(now) {
@@ -251,31 +205,25 @@
     const txM = Fx - F0x * sM, tyM = Fy - F0y * sM;
     const e = smooth((p - .08) / .34);                                        // 0..1: billederne glider udad mod siderne — allerede mens man zoomer ind
     const baseFade = loaderMode ? smooth((p - .36) / .14) : smooth((p - .24) / .16);                               // 0..1: den sorte flade toner ud, når man er kommet godt ind
-    const rv = smooth((p - .18) / .26);                                      // 0..1: BK STUDIO kommer langsomt frem imens
+    const rv = smooth((p - .3) / .22);                                      // 0..1: BK STUDIO kommer langsomt frem imens
     const blur = (14 * (1 - .25 * zp) + (1 - intro) * 48) * dpr;      // blød kant der skærpes, mens logoet afsløres
     const t = now / 1000;
 
     // lag A: den sorte flade (går helt ud til siderne)
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'source-over'; cA.clearRect(0, 0, la.width, la.height);
     cA.fillStyle = DARK; cA.fillRect(0, 0, la.width, la.height);
-    // lag T: billederne. De skubbes udad fra midten allerede under zoomen og klippes stadig af logoformen
+    // lag T: showreelen (eller første billede af den), "cover"-beskåret til hele skærmen og klippet af logoformen.
+    // Den står stille på skærmen, mens logoformen vokser, så den fylder hele skærmen, når man er kommet igennem.
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'source-over'; cT.clearRect(0, 0, lt.width, lt.height);
     cT.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const drawTile = (c2, tl, ei, alpha) => {
-      const im = tl.im; if (!im.complete || !im.naturalWidth || alpha <= 0) return;
-      const sz = sT * (1 + (tl.z || 0) * .34 * smooth(zp));                                            // billeder længere fremme vokser hurtigere (dybde)
-      const X = Cx + (ox + tl.x * bw - Cx) * sz, Y = Cy + (oy + tl.y * bh - Cy) * sz, Wt = tl.w * bw * sz, Ht = tl.h * bh * sz;
-      // hvert billede driver sin egen vej og kommer mod en, mens det toner ud
-      const g = smooth(ei), gs = 1 + g * tl.grow;
-      const ccx = X + Wt / 2 + Math.cos(tl.ang) * tl.drift * vw * g, ccy = Y + Ht / 2 + Math.sin(tl.ang) * tl.drift * vw * .7 * g, nw = Wt * gs, nh = Ht * gs;
-      if (ccx + nw / 2 < -20 || ccx - nw / 2 > vw + 20 || ccy + nh / 2 < -20 || ccy - nh / 2 > vh + 20) return;
-      const fade = 1 - smooth((g - .25) / .75);
-      if (fade <= .003) return;
-      c2.save(); c2.globalAlpha = alpha * fade; c2.beginPath(); c2.rect(ccx - nw / 2, ccy - nh / 2, nw, nh); c2.clip();
-      cover(c2, im, tl, ccx - nw / 2, ccy - nh / 2, nw, nh, t, p); c2.restore();
-    };
-    const ringOn = zp > .02 || e > 0;                                        // de små ude mod kanterne er skjult af logoformen, indtil man zoomer
-    for (const tl of allT) { if (tl.ring && !ringOn) continue; drawTile(cT, tl, clamp(e * 1.3 - tl.delay), tl.ring ? 1 : (reduce || internalNav ? 1 : easeOut((tIn - tl.d) / 1100))); }
+    const vready = vid && vidReady && vid.readyState >= 2 && vid.videoWidth > 0;
+    const srcEl = vready ? vid : (poster.complete && poster.naturalWidth ? poster : null);
+    if (srcEl) {
+      const iw = vready ? vid.videoWidth : poster.naturalWidth, ih = vready ? vid.videoHeight : poster.naturalHeight;
+      const sc = Math.max(vw / iw, vh / ih) * (1 + .22 * (1 - smooth(zp)));            // en let indzoomning ved start, der lægger sig, mens man zoomer ind
+      const dy = (.5 - p) * vh * .02;
+      try { cT.drawImage(srcEl, Cx - iw * sc / 2, Cy - ih * sc / 2 + dy, iw * sc, ih * sc); } catch (err) {}
+    }
     // lag M: logoformen med blød kant + opløsning ved musen
     const D = lm.width + 4000;
     cM.setTransform(1, 0, 0, 1, 0, 0); cM.clearRect(0, 0, lm.width, lm.height);
@@ -288,28 +236,27 @@
     if (!loaderMode) applyLiquid(now, ox, oy, bw, bh, zp);                          // liquid virker kun på billederne i logoet; de hvide omkring og hullerne rører vi ikke
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
-    // sammensæt: hvid baggrund. BK STUDIO kommer frem bagved, mens den sorte flade toner ud, og billederne fortsætter udad mod siderne.
+    // sammensæt: hvid baggrund → showreelen i logoformen (vokser, til den fylder skærmen) → let mørk tone → BK STUDIO i lys skrift oven på.
+    // Når vinduet fylder skærmen, toner lærredets udgave ud, og den almindelige video bagved tager over (samme billede, så der ingen overgang er).
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-    const vm = (!loaderMode && vid && vidReady) ? smooth((rv - .12) / .55) : 0;                       // 0..1: hvor meget showreelen skinner igennem
-    ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - vm; ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
-    if (vm > .003) { ctx.globalAlpha = .34 * vm; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }   // let mørk tone, så logoet kan læses over videoen
+    const fadeLt = (!loaderMode && vid && vidReady) ? smooth((p - .44) / .1) : 0;               // 0..1: lærredets video → den almindelige video
+    const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
+    ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
+    if (!srcEl) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
+    ctx.globalAlpha = intro * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
+    if (toneAmt > .003) { ctx.globalAlpha = .34 * toneAmt; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }
     if (!loaderMode && rv > .003) {
       const Wl = Math.min(vw * (nar ? .86 : .58), 940), hb = Wl / 4.99, hw = hb * .7, gp = hb * .26;
       const wb = hb * (LWd / LHt), ww = hw * (WMW / WMH), tot = wb + gp + ww, sc = .92 + .08 * rv;
-      for (const pass of (vm > .003 ? [[DARK, rv * (1 - vm)], [LIGHT, rv * vm]] : [[DARK, rv]])) {         // mørkt logo på hvid → lyst logo over videoen
-        if (pass[1] <= .003) continue;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = pass[1]; ctx.fillStyle = pass[0];
-        ctx.save(); ctx.translate(Cx, Cy); ctx.scale(sc, sc); ctx.translate(-tot / 2, 0);
-        ctx.save(); ctx.translate(0, -hb / 2); ctx.scale(hb / LHt, hb / LHt); ctx.fill(LOGO, 'evenodd'); ctx.restore();
-        ctx.save(); ctx.translate(wb + gp, -hw / 2); ctx.scale(hw / WMH, hw / WMH); ctx.fill(WM, 'evenodd'); ctx.restore();
-        ctx.restore(); ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
-      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = rv; ctx.fillStyle = LIGHT;
+      ctx.save(); ctx.translate(Cx, Cy); ctx.scale(sc, sc); ctx.translate(-tot / 2, 0);
+      ctx.save(); ctx.translate(0, -hb / 2); ctx.scale(hb / LHt, hb / LHt); ctx.fill(LOGO, 'evenodd'); ctx.restore();
+      ctx.save(); ctx.translate(wb + gp, -hw / 2); ctx.scale(hw / WMH, hw / WMH); ctx.fill(WM, 'evenodd'); ctx.restore();
+      ctx.restore(); ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
-    ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0);
-    ctx.globalAlpha = intro * (1 - smooth((e - .9) / .1)); ctx.drawImage(lt, 0, 0);
-    ctx.globalAlpha = 1;
+
     // blød mørk tone foroven, så menuen kan læses over billederne
-    const gT = Math.max(smooth((p - .14) / .05) * (1 - smooth((p - .27) / .08)), vm * .9);       // også over showreelen, så menuen kan læses
+    const gT = Math.max(smooth((p - .14) / .05) * (1 - smooth((p - .27) / .08)), toneAmt * .9, fadeLt * .9);       // også over showreelen, så menuen kan læses
     if (!loaderMode && gT > .01) {
       const gr = ctx.createLinearGradient(0, 0, 0, 130 * dpr);
       gr.addColorStop(0, 'rgba(20,20,20,' + (.6 * gT).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(20,20,20,0)');
@@ -325,7 +272,7 @@
       }
     }
     if (hintEl) hintEl.style.opacity = (to * intro).toFixed(3);
-    if (vid) { vid.style.opacity = vm.toFixed(3); if (vm > .02 && vid.paused && !vidHold) vid.play().catch(() => {}); }
+    if (vid) { vid.style.opacity = fadeLt.toFixed(3); if (vidReady && vid.paused && !vidHold && visible) vid.play().catch(() => {}); }
   }
 
   // menuens farve følger scenen
@@ -335,7 +282,7 @@
     const p = progress(), nx = spacer.nextElementSibling, nt = nx ? nx.getBoundingClientRect().top : spacer.getBoundingClientRect().bottom;
     body.classList.toggle('hdr-ink', !(p > .14 && p < .36) && nt >= 90);
     body.classList.toggle('hdr-solid', nt < 90);
-    if (vid) { const covered = nt < 4; vidHold = covered; if (covered && !vid.paused) vid.pause(); else if (!covered && vid.paused && parseFloat(vid.style.opacity) > .02) vid.play().catch(() => {}); }
+    if (vid) { const covered = nt < 4; vidHold = covered; if (covered && !vid.paused) vid.pause(); else if (!covered && vid.paused && vidReady) vid.play().catch(() => {}); }
     if (nt > 0) body.setAttribute('data-nohide', ''); else body.removeAttribute('data-nohide');
   }
 

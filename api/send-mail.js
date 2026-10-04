@@ -87,7 +87,7 @@ function layout(site, preheader, inner) {
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f1f1ee;font-size:1px;line-height:1px;">' + esc(preheader) + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f1ee" style="background:#f1f1ee;"><tr><td align="center" style="padding:28px 14px;">' +
     '<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:18px;border:1px solid #e3e3df;">' +
-    '<tr><td style="padding:36px 40px 6px 40px;"><a href="' + site + '" style="text-decoration:none;"><img src="' + site + '/images/email/logo-email.png" width="190" alt="BK Studio" style="display:block;border:0;outline:none;height:auto;width:190px;max-width:100%;"></a></td></tr>' +
+    '<tr><td bgcolor="#141414" style="background:#141414;border-radius:17px 17px 0 0;padding:30px 40px;"><a href="' + site + '" style="text-decoration:none;"><img src="' + site + '/images/email/logo-email-hvid.png" width="170" alt="BK Studio" style="display:block;border:0;outline:none;height:auto;width:170px;max-width:100%;color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;"></a></td></tr>' +
     inner +
     '<tr><td style="padding:0 40px 34px 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #e6e6e2;padding-top:20px;font-family:' + FONT + ';font-size:12px;line-height:1.6;color:#7a7a76;">' +
     'BK Studio &mdash; Foto, video og content<br>Midtsj&aelig;lland, Danmark &nbsp;&middot;&nbsp; <a href="' + site + '" style="color:#7a7a76;text-decoration:underline;">bkstudio.dk</a> &nbsp;&middot;&nbsp; <a href="https://www.instagram.com/bkstudiodk/" style="color:#7a7a76;text-decoration:underline;">@bkstudiodk</a>' +
@@ -112,7 +112,7 @@ function autoReply(site, d) {
     if (d.budget !== '—') summary += field('Budget', d.budget);
   } else summary += field('Din besked', short(d.besked));
   const inner =
-    '<tr><td style="padding:22px 40px 0 40px;font-family:' + FONT + ';"><div style="font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-0.8px;text-transform:uppercase;color:#141414;">' + lead + '.</div></td></tr>' +
+    '<tr><td style="padding:34px 40px 0 40px;font-family:' + FONT + ';"><div style="font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-0.8px;text-transform:uppercase;color:#141414;">' + lead + '.</div></td></tr>' +
     '<tr><td style="padding:20px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Hej ' + esc(fn) + ',<br><br>Vi har modtaget din ' + (isBooking ? 'foresp&oslash;rgsel' : 'besked') + ' og vender tilbage <b style="color:#141414;">hurtigst muligt</b>. Du beh&oslash;ver ikke g&oslash;re mere lige nu, og du kan altid svare direkte p&aring; denne mail, hvis du vil tilf&oslash;je noget.</td></tr>' +
     '<tr><td style="padding:26px 40px 0 40px;"><div style="font-family:' + FONT + ';font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#141414;padding-bottom:10px;">Det har du sendt til os</div>' + box(summary.replace(/padding-top:12px;/, 'padding-top:0;')) + '</td></tr>' +
     '<tr><td style="padding:28px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Mens du venter, kan du se, hvad vi har lavet:</td></tr>' +
@@ -132,7 +132,7 @@ function notice(site, d) {
   else rows += field('Besked', d.besked);
   const who = field('Navn', d.navn) + '<div style="font-family:' + FONT + ';font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#7a7a76;padding-top:12px;">E-mail</div><div style="font-family:' + FONT + ';font-size:15px;color:#141414;padding-top:3px;"><a href="mailto:' + esc(d.email) + '" style="color:#141414;">' + esc(d.email) + '</a></div>' + field('Telefon', d.telefon) + field('Virksomhed', d.virksomhed);
   const inner =
-    '<tr><td style="padding:22px 40px 0 40px;font-family:' + FONT + ';"><div style="display:inline-block;background:#141414;color:#ffffff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">' + (isBooking ? 'Ny booking' : 'Ny henvendelse') + '</div>' +
+    '<tr><td style="padding:34px 40px 0 40px;font-family:' + FONT + ';"><div style="display:inline-block;background:#141414;color:#ffffff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">' + (isBooking ? 'Ny booking' : 'Ny henvendelse') + '</div>' +
     '<div style="font-size:28px;line-height:1.1;font-weight:800;letter-spacing:-0.6px;text-transform:uppercase;color:#141414;padding-top:14px;">' + esc(d.navn) + '</div></td></tr>' +
     '<tr><td style="padding:22px 40px 0 40px;">' + box(rows.replace(/padding-top:12px;/, 'padding-top:0;')) + '</td></tr>' +
     '<tr><td style="padding:16px 40px 0 40px;">' + box(who.replace(/padding-top:12px;/, 'padding-top:0;')) + '</td></tr>' +
