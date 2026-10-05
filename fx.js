@@ -87,7 +87,8 @@
   (function () {
     const cta = document.getElementById('ctaFloat'); if (!cta) return;
     const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('footer');
-    function limit() { return spacer ? spacer.offsetTop + spacer.offsetHeight - innerHeight * .4 : innerHeight * .9; }
+    // forsiden: når logoet er zoomet igennem (40 % af åbningen). Undersider: efter en lille scroll
+    function limit() { return spacer ? spacer.offsetHeight * .4 : 120; }          // åbningens fremdrift = scroll ÷ spacerens højde; ved 40 % er logoet zoomet igennem
     function upd() {
       const nearFoot = foot && foot.getBoundingClientRect().top < innerHeight * .92, menu = document.body.classList.contains('menu-open') || document.body.classList.contains('drop-open');
       cta.classList.toggle('show', scrollY > limit() && !nearFoot && !menu);
@@ -95,6 +96,40 @@
     addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd);
     new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     upd();
+  })();
+
+  // fit-roles: titlerne under navnene står på én linje, hvis de kan (skriften skrumper lidt, indtil de passer, og begge titler på forsiden får samme størrelse).
+  // Kan de ikke det uden at blive for små, brydes de i stedet.
+  (function () {
+    // prikken hører til ordet foran, så en titel brydes efter en prik og aldrig lige før den
+    document.querySelectorAll('.tm .tcard-meta p, .msp-name small, .mh-cap .r').forEach(el => { if (el.children.length === 0) el.textContent = el.textContent.replace(/\s+·\s+/g, '\u00a0· '); });
+    const groups = [[...document.querySelectorAll('.tm .tcard-meta p')], ...[...document.querySelectorAll('.msp-name small')].map(e => [e])].filter(g => g.length);
+    if (!groups.length) return;
+    function fitGroup(list) {
+      list.forEach(el => { el.style.removeProperty('font-size'); el.classList.remove('fit1'); });
+      const vis = list.filter(el => el.offsetParent !== null); if (!vis.length) return;
+      const base = parseFloat(getComputedStyle(vis[0]).fontSize), min = base * .85;                       // aldrig mere end ca. 15 % mindre
+      const wrap = () => vis.forEach(el => { el.style.removeProperty('font-size'); el.classList.remove('fit1'); });
+      const fits = () => vis.every(el => el.scrollWidth <= el.clientWidth + 1);
+      vis.forEach(el => el.classList.add('fit1'));
+      if (fits()) return;                                              // passer allerede på én linje
+      let fs = Math.min(...vis.map(el => base * el.clientWidth / el.scrollWidth));
+      for (let i = 0; i < 8; i++) {                                    // skriftens bredde følger ikke størrelsen helt lineært, så den strammes lidt, indtil den passer
+        if (fs < min) return wrap();
+        vis.forEach(el => el.style.setProperty('font-size', fs.toFixed(2) + 'px', 'important'));
+        if (fits()) return;
+        fs *= .97;
+      }
+      wrap();
+    }
+    const run = () => groups.forEach(fitGroup); let t;
+    const later = () => { clearTimeout(t); t = setTimeout(run, 100); };
+    run(); addEventListener('load', run); addEventListener('resize', later);
+    if (document.fonts) { document.fonts.ready.then(run); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', run); }
+    if ('ResizeObserver' in window) {                                   // også når et skjult afsnit bliver synligt, eller bredden ændres
+      const ro = new ResizeObserver(es => { let ch = false; es.forEach(en => { const el = en.target, w = Math.round(en.contentRect.width); if (w !== el.__fw) { el.__fw = w; ch = true; } }); if (ch) later(); });
+      groups.forEach(g => g.forEach(el => ro.observe(el)));
+    }
   })();
 
   // fm-hop: footerlogoet hopper opad, når man peger på det (kun selve formen reagerer)
