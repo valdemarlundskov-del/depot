@@ -1510,7 +1510,6 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 .menu-drop{gap:20px;}
 .menu-drop ul{margin:0;gap:20px;}
 .menu-drop .drop-book{margin-top:0;}
-<<<<<<< HEAD
 
 /* ================= Forsiden, "Mød teamet": samme glidning fra side til side som "Mød resten af holdet", med prikkerne ================= */
 .tm{overflow-x:clip;}
@@ -1527,5 +1526,3 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 .cta-float{left:auto;right:min(5.5vw,84px);padding:12px 0 12px 16px;transform:translateY(28px);}
 .cta-float.show{transform:none;}
 @media(max-width:820px){.cta-float{right:20px;padding:10px 0 10px 14px;}}
-=======
->>>>>>> 44cf53e150dfbf14c4e72de140be8f6b61e3d783
