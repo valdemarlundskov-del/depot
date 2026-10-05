@@ -56,7 +56,7 @@ window.__fontsGate = true;
 const menuBtn = $('#menuBtn');
 const nav = $('#primaryNav');
 if (menuBtn && nav) {
-  menuBtn.addEventListener('click', () => nav.classList.toggle('open'));
+  menuBtn.addEventListener('click', () => { if (window.matchMedia('(min-width:821px)').matches) return; nav.classList.toggle('open'); });      // computer: se dropdown i fx.js
   $$('.nav-link').forEach(link => link.addEventListener('click', () => nav.classList.remove('open')));
 }
 
@@ -164,11 +164,12 @@ function openProject(id, pushHash=true) {
   $('#ovNext').onclick = () => openProject(next.id);
 
   overlay.scrollTop = 0;
+  if (overlayClose) overlayClose.classList.remove('away');
   overlay.classList.add('open');
   overlay.dispatchEvent(new Event('projectchange'));
   scrollLock = window.scrollY;
   document.body.style.overflow = 'hidden';
-  if (pushHash) history.replaceState(null, '', `/arbejde#${id}`);
+  if (pushHash) { try { history.replaceState(null, '', `/arbejde#${id}`); } catch (e) {} }
 }
 
 // billedopstilling til projektsiden: hver blok bruger de næste billeder (liggende/stående efter behov)
@@ -203,12 +204,22 @@ function closeProject() {
   overlay.classList.remove('open');
   openId = null;
   document.body.style.overflow = '';
-  history.replaceState(null, '', '/arbejde');
+  try { history.replaceState(null, '', '/arbejde'); } catch (e) {}
   window.scrollTo(0, scrollLock);
 }
 
 if (overlay) {
   overlayClose?.addEventListener('click', closeProject);
+  // tilbage-knappen: skjules, når man scroller ned i et projekt, og kommer frem igen, så snart man scroller opad
+  if (overlayClose) {
+    let lastSt = 0;
+    overlay.addEventListener('scroll', () => {
+      const st = overlay.scrollTop, d = st - lastSt;
+      if (Math.abs(d) < 8) return;                                  // små rystelser ignoreres
+      overlayClose.classList.toggle('away', st > 140 && d > 0);
+      lastSt = st;
+    }, { passive: true });
+  }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProject(); });
   const hash = location.hash.replace('#', '');
   if (hash && projects.some(p => p.id === hash)) setTimeout(() => openProject(hash, false), 80);
