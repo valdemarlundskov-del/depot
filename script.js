@@ -295,7 +295,7 @@ if (contactForm) {
     if (submitLabel) submitLabel.textContent = 'Sender…';
     if (contactStatus) setFormStatus(contactStatus, '');
 
-    data.append('form_type', 'kontakt');
+    data.append('form_type', 'kontakt'); data.append('lang', window.BK_LANG || 'da');
     data.delete('website');
 
     sendMail(data)
@@ -449,7 +449,7 @@ if (bookingForm) {
     if (submitLabel) submitLabel.textContent = 'Sender…';
     if (bookStatus) setFormStatus(bookStatus, '');
 
-    data.append('form_type', 'booking');
+    data.append('form_type', 'booking'); data.append('lang', window.BK_LANG || 'da');
     data.delete('website'); // honeypot field, already checked above
 
     sendMail(data)

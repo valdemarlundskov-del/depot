@@ -304,18 +304,28 @@
       c.style.zIndex = Math.round(depth * 100);
     }
   }
-  // Arbejde: ringen får luft under menuen, og sektionen er kun så høj, som ringen og teksten nederst kræver (ingen stor tom plads under)
+  // Højden af ring-sektionen følger ringen: afstanden under ringen (til teksten og "Se alt arbejde") er lige så stor som afstanden over den.
+  // Kameraets midte (perspective-origin) ligger i ringens midte, så kortenes yderpunkter kan regnes ud præcist for alle vinkler.
   function fitSection() {
-    if (!document.body.classList.contains('work-page')) return;
     const cards = stage.querySelectorAll('.w3c'); if (!cards.length) return;
+    const work = document.body.classList.contains('work-page');
     const scene = stage.parentElement, P = parseFloat(getComputedStyle(scene).perspective) || 1700, W = innerWidth, H = innerHeight, small = W <= 900;
-    const Rz = W * (small ? .32 : .3), Ky = H * (small ? .1 : .15), sF = P / (P - Rz), sB = P / (P + Rz);       // forreste kort er størst, bageste mindst
-    let above = 0, below = 0; cards.forEach(c => { const h = c.offsetHeight; above = Math.max(above, Ky + h * sF / 2); below = Math.max(below, Ky + h * sB / 2); });
-    const hd = document.querySelector('header'), hb = hd ? hd.getBoundingClientRect().bottom : 73;
-    const center = Math.max(H * .47, 330, above + hb + 48);                                                        // kortenes top må aldrig ligge under menuen
+    const Rz = W * (small ? .32 : .3), Ky = H * (small ? .1 : .15);
+    let above = 0, below = 0;
+    cards.forEach(c => {
+      const h = c.offsetHeight;
+      for (let k = 0; k < 72; k++) {
+        const co = Math.cos(k / 72 * TAU), s = P / (P - Rz * co), yc = -Ky * co * s;                              // kortets midte i forhold til ringens midte
+        above = Math.max(above, -(yc - h * s / 2) + 8); below = Math.max(below, yc + h * s / 2 + 8);
+      }
+    });
+    const hd = document.querySelector('header'), hb = work && hd ? hd.getBoundingClientRect().bottom : 0;
+    const topGap = Math.round(Math.max(56, Math.min(96, W * .045)));                                             // luften over og under ringen på forsiden
+    const center = work ? Math.max(H * .47, 330, above + hb + 48) : Math.max(240, above + topGap);                // Arbejde: kortenes top må aldrig ligge under menuen. Forsiden: ringen står lige så langt fra sektionens top, som teksten står fra dens bund
+    const gap = work ? 26 : topGap;
     const foot = sec.querySelector('.w3d-foot'), footH = foot ? foot.offsetHeight : 0, footB = foot ? (parseFloat(getComputedStyle(foot).bottom) || 40) : 0;
     sec.style.setProperty('--rc', Math.round(center) + 'px');
-    sec.style.minHeight = Math.ceil(center + below + 26 + footH + footB) + 'px';
+    sec.style.minHeight = Math.ceil(center + below + gap + footH + footB) + 'px';
   }
   const fitAll = () => { fitSection(); layout(performance.now()); };
   window.__w3Layout = () => { fitSection(); layout(performance.now()); };

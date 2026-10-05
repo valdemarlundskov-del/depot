@@ -1365,3 +1365,22 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 .work-page .w3d{padding-bottom:0;}
 .work-page .w3d-foot{bottom:22px;}
 .work-page .burst-intro{padding-top:clamp(36px,4vw,60px);}
+
+/* kameraets midte ligger i ringens midte, så kortene nedenunder og ovenover vises symmetrisk */
+.w3d-scene{perspective-origin:50% var(--rc,max(47vh,330px));}
+@media(max-width:900px){.w3d-scene{perspective-origin:50% var(--rc,max(46vh,330px));}}
+
+/* teksten og "Se alt arbejde" starter på samme linje, lige under billederne */
+.w3d-foot{align-items:flex-start;}
+
+/* ================= sprogvalg (DA / EN): headeren, til højre for "Start et projekt", og footeren, til højre for "Cookies" ================= */
+.lang{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;line-height:1;white-space:nowrap;color:inherit;}
+.lang button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:8px 2px;margin:0;cursor:pointer;opacity:.5;transition:opacity .2s;text-transform:inherit;}
+.lang button:hover,.lang button:focus-visible{opacity:1;}
+.lang button.on{opacity:1;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:6px;}
+.lang span{opacity:.45;pointer-events:none;}
+.site-header .lang{color:var(--hc,inherit);}
+@media(min-width:901px){.header-right .lang{margin-left:-6px;}}
+@media(max-width:900px){.site-header .lang{margin-right:14px;font-size:11px;position:relative;z-index:600;}}
+.lang-foot{margin-left:22px;font-size:11px;letter-spacing:.14em;}
+.footer-legal{display:flex;align-items:center;}

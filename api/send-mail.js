@@ -81,8 +81,9 @@ const nl2br = v => esc(v).replace(/\n/g, '<br>');
 const FONT = "Arial,'Helvetica Neue',Helvetica,sans-serif";
 const firstName = n => (String(n).trim().split(/\s+/)[0] || n);
 
-function layout(site, preheader, inner) {
-  return '<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>BK Studio</title></head>' +
+function layout(site, preheader, inner, lang) {
+  const en = lang === 'en';
+  return '<!doctype html><html lang="' + (en ? 'en' : 'da') + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>BK Studio</title></head>' +
     '<body style="margin:0;padding:0;background:#f1f1ee;">' +
     '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f1f1ee;font-size:1px;line-height:1px;">' + esc(preheader) + '&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f1f1ee" style="background:#f1f1ee;"><tr><td align="center" style="padding:28px 14px;">' +
@@ -90,7 +91,7 @@ function layout(site, preheader, inner) {
     '<tr><td bgcolor="#141414" style="background:#141414;border-radius:17px 17px 0 0;padding:30px 40px;"><a href="' + site + '" style="text-decoration:none;"><img src="' + site + '/images/email/logo-email-hvid.png" width="170" alt="BK Studio" style="display:block;border:0;outline:none;height:auto;width:170px;max-width:100%;color:#ffffff;font-family:Arial,sans-serif;font-size:18px;font-weight:bold;"></a></td></tr>' +
     inner +
     '<tr><td style="padding:0 40px 34px 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:1px solid #e6e6e2;padding-top:20px;font-family:' + FONT + ';font-size:12px;line-height:1.6;color:#7a7a76;">' +
-    'BK Studio &mdash; Foto, video og content<br>Midtsj&aelig;lland, Danmark &nbsp;&middot;&nbsp; <a href="' + site + '" style="color:#7a7a76;text-decoration:underline;">bkstudio.dk</a> &nbsp;&middot;&nbsp; <a href="https://www.instagram.com/bkstudiodk/" style="color:#7a7a76;text-decoration:underline;">@bkstudiodk</a>' +
+    'BK Studio &mdash; ' + (en ? 'Photo, video and content<br>Central Zealand, Denmark' : 'Foto, video og content<br>Midtsj&aelig;lland, Danmark') + ' &nbsp;&middot;&nbsp; <a href="' + site + '" style="color:#7a7a76;text-decoration:underline;">bkstudio.dk</a> &nbsp;&middot;&nbsp; <a href="https://www.instagram.com/bkstudiodk/" style="color:#7a7a76;text-decoration:underline;">@bkstudiodk</a>' +
     '</td></tr></table></td></tr></table></td></tr></table></body></html>';
 }
 
@@ -101,6 +102,7 @@ const button = (href, label) => '<table role="presentation" cellpadding="0" cell
 
 // Bekræftelse til den besøgende
 function autoReply(site, d) {
+  if (d.lang === 'en') return autoReplyEn(site, d);
   const fn = firstName(d.navn), isBooking = d.formType === 'booking';
   const lead = isBooking ? 'Tak for din foresp&oslash;rgsel' : 'Tak for din henvendelse';
   const preheader = 'Vi har modtaget din besked og vender tilbage hurtigst muligt.';
@@ -124,13 +126,41 @@ function autoReply(site, d) {
   return { subject: (isBooking ? 'Vi har modtaget din forespørgsel' : 'Tak for din henvendelse') + ' — BK Studio', html: layout(site, preheader, inner), text };
 }
 
+
+// Bekræftelse til den besøgende på engelsk (sendes, når besøgende har valgt engelsk på siden)
+function autoReplyEn(site, d) {
+  const fn = firstName(d.navn), isBooking = d.formType === 'booking';
+  const lead = isBooking ? 'Thank you for your request' : 'Thank you for your message';
+  const preheader = "We've received your message and will get back to you as soon as possible.";
+  const short = t => (t.length > 600 ? t.slice(0, 600).trim() + '…' : t);
+  const needEn = { Fotografering: 'Photography', Videoproduktion: 'Video production', Andet: 'Other' }[d.behov] || d.behov;      // valgene sendes på dansk; kunden skal se dem på engelsk
+  let summary = '';
+  if (isBooking) {
+    summary += field('What you need', needEn) + field('The job', short(d.opgave));
+    if (d.tidsramme !== '—') summary += field('Preferred timeframe', d.tidsramme);
+    if (d.budget !== '—') summary += field('Budget', d.budget);
+  } else summary += field('Your message', short(d.besked));
+  const work = site + '/arbejde?lang=en';
+  const inner =
+    '<tr><td style="padding:34px 40px 0 40px;font-family:' + FONT + ';"><div style="font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-0.8px;text-transform:uppercase;color:#141414;">' + lead + '.</div></td></tr>' +
+    '<tr><td style="padding:20px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Hi ' + esc(fn) + ',<br><br>We\'ve received your ' + (isBooking ? 'request' : 'message') + ' and will get back to you <b style="color:#141414;">as soon as possible</b>. You don\'t need to do anything right now, and you\'re welcome to reply directly to this email if you want to add something.</td></tr>' +
+    '<tr><td style="padding:26px 40px 0 40px;"><div style="font-family:' + FONT + ';font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#141414;padding-bottom:10px;">What you sent us</div>' + box(summary.replace(/padding-top:12px;/, 'padding-top:0;')) + '</td></tr>' +
+    '<tr><td style="padding:28px 40px 0 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">While you wait, take a look at what we\'ve made:</td></tr>' +
+    '<tr><td style="padding:14px 40px 0 40px;">' + button(work, 'See our work') + '</td></tr>' +
+    '<tr><td style="padding:30px 40px 30px 40px;font-family:' + FONT + ';font-size:16px;line-height:1.65;color:#3a3a3a;">Kind regards<br><b style="color:#141414;">Valdemar &amp; Basharat</b><br><span style="color:#7a7a76;">BK Studio</span></td></tr>';
+  const text = 'Hi ' + fn + ',\n\nThank you for your ' + (isBooking ? 'request' : 'message') + ". We've received it and will get back to you as soon as possible. You don't need to do anything right now, and you're welcome to reply directly to this email if you want to add something.\n\n" +
+    '--- What you sent us ---\n' + (isBooking ? 'What you need: ' + needEn + '\nThe job: ' + short(d.opgave) + '\nPreferred timeframe: ' + d.tidsramme + '\nBudget: ' + d.budget : short(d.besked)) + '\n\n' +
+    'See our work: ' + work + '\n\nKind regards\nValdemar & Basharat\nBK Studio — Photo, video and content\n' + site + '\n';
+  return { subject: (isBooking ? "We've received your request" : 'Thank you for your enquiry') + ' — BK Studio', html: layout(site, preheader, inner, 'en'), text };
+}
+
 // Mailen til jer selv (overskuelig, med "Svar"-knap)
 function notice(site, d) {
   const isBooking = d.formType === 'booking';
   let rows = '';
   if (isBooking) rows += field('Hvad skal du bruge', d.behov) + field('Opgaven', d.opgave) + field('Ønsket tidsramme', d.tidsramme) + field('Budget', d.budget);
   else rows += field('Besked', d.besked);
-  const who = field('Navn', d.navn) + '<div style="font-family:' + FONT + ';font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#7a7a76;padding-top:12px;">E-mail</div><div style="font-family:' + FONT + ';font-size:15px;color:#141414;padding-top:3px;"><a href="mailto:' + esc(d.email) + '" style="color:#141414;">' + esc(d.email) + '</a></div>' + field('Telefon', d.telefon) + field('Virksomhed', d.virksomhed);
+  const who = field('Navn', d.navn) + '<div style="font-family:' + FONT + ';font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#7a7a76;padding-top:12px;">E-mail</div><div style="font-family:' + FONT + ';font-size:15px;color:#141414;padding-top:3px;"><a href="mailto:' + esc(d.email) + '" style="color:#141414;">' + esc(d.email) + '</a></div>' + field('Telefon', d.telefon) + field('Virksomhed', d.virksomhed) + field('Sprog', d.lang === 'en' ? 'Engelsk (svar gerne på engelsk)' : 'Dansk');
   const inner =
     '<tr><td style="padding:34px 40px 0 40px;font-family:' + FONT + ';"><div style="display:inline-block;background:#141414;color:#ffffff;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">' + (isBooking ? 'Ny booking' : 'Ny henvendelse') + '</div>' +
     '<div style="font-size:28px;line-height:1.1;font-weight:800;letter-spacing:-0.6px;text-transform:uppercase;color:#141414;padding-top:14px;">' + esc(d.navn) + '</div></td></tr>' +
@@ -188,17 +218,18 @@ module.exports = async function handler(req, res) {
 
   if (!cfgOk) { console.error('send-mail: mangler ' + missing.join(', ') + ' (miljø: ' + envName + ')'); return reply(res, 500, { success: false, message: 'Mailopsætningen mangler: ' + missing.join(' og ') + ' er ikke sat i miljøet "' + envName + '" (miljøvariabler er ikke sat, eller der mangler en ny udrulning).', code: 'CONFIG' }); }
 
-  let subject, body, data = { formType, navn, email, telefon, virksomhed, besked };
+  const lang = String(d.lang || '').toLowerCase() === 'en' ? 'en' : 'da';
+  let subject, body, data = { formType, navn, email, telefon, virksomhed, besked, lang };
   if (formType === 'booking') {
     const behov = line(d.behov, MAX.behov) || '—', opgave = text(d.opgave, MAX.opgave) || '—', tidsramme = line(d.tidsramme, MAX.tidsramme) || '—', budget = line(d.budget, MAX.budget) || '—';
     Object.assign(data, { behov, opgave, tidsramme, budget });
     subject = 'Ny booking — ' + navn;
     body = 'Hvad skal du bruge: ' + behov + '\n\n' + 'Opgaven:\n' + opgave + '\n\n' + 'Ønsket tidsramme: ' + tidsramme + '\n\n' + 'Budget: ' + budget + '\n\n' +
-      'Navn: ' + navn + '\n' + 'E-mail: ' + email + '\n' + 'Telefon: ' + telefon + '\n' + 'Virksomhed: ' + virksomhed + '\n\n' + 'Andet:\n' + besked + '\n';
+      'Navn: ' + navn + '\n' + 'E-mail: ' + email + '\n' + 'Telefon: ' + telefon + '\n' + 'Virksomhed: ' + virksomhed + '\n' + 'Sprog: ' + (lang === 'en' ? 'Engelsk' : 'Dansk') + '\n\n' + 'Andet:\n' + besked + '\n';
     data.besked = besked;
   } else {
     subject = 'Ny henvendelse — ' + navn;
-    body = 'Navn: ' + navn + '\n' + 'E-mail: ' + email + '\n' + 'Telefon: ' + telefon + '\n' + 'Virksomhed: ' + virksomhed + '\n\n' + 'Besked:\n' + besked + '\n';
+    body = 'Navn: ' + navn + '\n' + 'E-mail: ' + email + '\n' + 'Telefon: ' + telefon + '\n' + 'Virksomhed: ' + virksomhed + '\n' + 'Sprog: ' + (lang === 'en' ? 'Engelsk' : 'Dansk') + '\n\n' + 'Besked:\n' + besked + '\n';
   }
   const site = (process.env.SITE_URL || 'https://www.bkstudio.dk').replace(/\/+$/, '');
   const fromAddr = process.env.MAIL_FROM || process.env.SMTP_USER, toAddr = process.env.MAIL_TO || process.env.SMTP_USER;
