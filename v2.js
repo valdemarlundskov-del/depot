@@ -315,7 +315,7 @@
     const center = Math.max(H * .47, 330, above + hb + 48);                                                        // kortenes top må aldrig ligge under menuen
     const foot = sec.querySelector('.w3d-foot'), footH = foot ? foot.offsetHeight : 0, footB = foot ? (parseFloat(getComputedStyle(foot).bottom) || 40) : 0;
     sec.style.setProperty('--rc', Math.round(center) + 'px');
-    sec.style.minHeight = Math.ceil(center + below + 64 + footH + footB) + 'px';
+    sec.style.minHeight = Math.ceil(center + below + 26 + footH + footB) + 'px';
   }
   const fitAll = () => { fitSection(); layout(performance.now()); };
   window.__w3Layout = () => { fitSection(); layout(performance.now()); };

@@ -1360,3 +1360,8 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 .w3c-in{filter:none;}
 .w3c-in img{filter:contrast(1.03) saturate(1.05) brightness(var(--sh,1)) blur(var(--bl,0px));transform:scale(var(--bs,1));}
 .w3c:not(:hover):not(.is-hover) .w3c-in img{transition:none;}
+
+/* Arbejde: stram afstand under ringen og ind til næste sektion */
+.work-page .w3d{padding-bottom:0;}
+.work-page .w3d-foot{bottom:22px;}
+.work-page .burst-intro{padding-top:clamp(36px,4vw,60px);}
