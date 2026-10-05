@@ -1350,3 +1350,13 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 @media(min-width:901px){.w3d-title{font-size:clamp(44px,6.9vw,124px);}}
 
 .w3d-title{text-wrap:balance;}
+
+/* ringens midte kan flyttes (bruges af Arbejde, så kortene aldrig ligger under menuen) */
+.w3c{top:var(--rc,max(47vh,330px));}
+.w3d-title{top:var(--rc,max(47vh,330px));}
+@media(max-width:900px){.w3c{top:var(--rc,max(46vh,330px));}.w3d-title{top:var(--rc,max(46vh,330px));}}
+
+/* dybden (lysstyrke og sløring) lægges på selve billedet, ikke på hele kortet: det tegner stabilt i alle browsere */
+.w3c-in{filter:none;}
+.w3c-in img{filter:contrast(1.03) saturate(1.05) brightness(var(--sh,1)) blur(var(--bl,0px));transform:scale(var(--bs,1));}
+.w3c:not(:hover):not(.is-hover) .w3c-in img{transition:none;}

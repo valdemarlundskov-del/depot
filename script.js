@@ -127,11 +127,12 @@ if ('IntersectionObserver' in window) {
 // Project detail overlay on /arbejde
 const overlay = $('#overlay');
 const overlayClose = $('#overlayClose');
-let scrollLock = 0;
+let scrollLock = 0, openId = null;
 
 function openProject(id, pushHash=true) {
   const p = projects.find(project => project.id === id);
   if (!p || !overlay) return;
+  openId = id;
   const med = src => src.replace('images/', 'images/med/');
   $('#ovCat').textContent = `${p.category}  /  ${p.location}  /  ${p.year}`;
   $('#ovTitle').textContent = p.title;
@@ -200,6 +201,7 @@ function buildFlow(p, med) {
 function closeProject() {
   if (!overlay) return;
   overlay.classList.remove('open');
+  openId = null;
   document.body.style.overflow = '';
   history.replaceState(null, '', '/arbejde');
   window.scrollTo(0, scrollLock);
@@ -210,6 +212,11 @@ if (overlay) {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProject(); });
   const hash = location.hash.replace('#', '');
   if (hash && projects.some(p => p.id === hash)) setTimeout(() => openProject(hash, false), 80);
+  // et link til et projekt, mens man allerede er på siden (fx et kort øverst på Arbejde), åbner projektet uden at genindlæse siden
+  window.addEventListener('hashchange', () => {
+    const h = location.hash.replace('#', '');
+    if (h && h !== openId && projects.some(p => p.id === h)) openProject(h, false);
+  });
 }
 
 // Mail: formularerne sender direkte til sidens egen Vercel-funktion (api/send-mail.js), som sender videre via Simply.coms SMTP-server.
