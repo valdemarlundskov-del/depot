@@ -35,11 +35,12 @@
     if (u.origin !== location.origin || a.hasAttribute('download')) return;
     // samme side: et link til den side, man allerede er på, må ikke genindlæse den (ingen åbning, ingen animationer)
     const norm = p => p.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/(.)\/+$/, '$1');
-    if (norm(u.pathname) === norm(location.pathname) && u.search === location.search) {
+    const sq = s => { const q = new URLSearchParams(s); q.delete('lang'); const r = q.toString(); return r ? '?' + r : ''; };       // sprogvalget i adressen (?lang=en) tæller ikke med
+    if (norm(u.pathname) === norm(location.pathname) && sq(u.search) === sq(location.search)) {
       if (u.hash && u.hash !== '#') return;                                      // spring til et afsnit på samme side: som før
       e.preventDefault();                                                        // ellers sker der ingenting
       const nv = document.getElementById('primaryNav'), mb = document.getElementById('menuBtn');
-      if (nv && mb && nv.classList.contains('open')) mb.click();                 // men en åben mobilmenu lukkes
+      if (nv && mb && nv.classList.contains('open')) mb.click();                 // men en åben mobilmenu lukkes (dropdown'en lukker sig selv)
       return;
     }
     try { sessionStorage.setItem('bknav', '1'); } catch (err) {}
@@ -62,6 +63,43 @@
     }
     fit(); addEventListener('resize', fit); addEventListener('load', fit);
     if ('ResizeObserver' in window) bgs.forEach(bg => new ResizeObserver(fit).observe(bg.parentElement));
+  })();
+
+  // menu-drop: tre streger yderst til højre åbner en dropdown (computer). Mobil bruger den fulde menu.
+  (function () {
+    const mb = document.getElementById('menuBtn'), drop = document.getElementById('menuDrop'); if (!mb || !drop) return;
+    const desk = window.matchMedia('(min-width:821px)');
+    function set(v) {
+      drop.classList.toggle('open', v); mb.classList.toggle('open', v); document.body.classList.toggle('drop-open', v);
+      mb.setAttribute('aria-expanded', String(v)); drop.setAttribute('aria-hidden', String(!v));
+    }
+    mb.addEventListener('click', () => { if (desk.matches) set(!drop.classList.contains('open')); });
+    document.addEventListener('click', e => {
+      if (!drop.classList.contains('open')) return;
+      if (e.target.closest('#menuDrop a')) { set(false); return; }                    // et valg lukker menuen
+      if (!e.target.closest('#menuBtn, #menuDrop')) set(false);                         // klik udenfor lukker den
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && drop.classList.contains('open')) { set(false); mb.focus(); } });
+    (desk.addEventListener ? desk.addEventListener('change', e => { if (!e.matches) set(false); }) : null);
+  })();
+
+  // cta-float: "Start et projekt" nederst på skærmen. Vises først, når man er kommet et stykke ned (på forsiden: efter åbningen), og ikke ved bunden af siden
+  (function () {
+    const cta = document.getElementById('ctaFloat'); if (!cta) return;
+    const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('footer');
+<<<<<<< HEAD
+    // forsiden: når logoet er zoomet igennem (40 % af åbningen). Undersider: efter en lille scroll
+    function limit() { return spacer ? spacer.offsetHeight * .4 : 120; }          // åbningens fremdrift = scroll ÷ spacerens højde; ved 40 % er logoet zoomet igennem
+=======
+    function limit() { return spacer ? spacer.offsetTop + spacer.offsetHeight - innerHeight * .4 : innerHeight * .9; }
+>>>>>>> 44cf53e150dfbf14c4e72de140be8f6b61e3d783
+    function upd() {
+      const nearFoot = foot && foot.getBoundingClientRect().top < innerHeight * .92, menu = document.body.classList.contains('menu-open') || document.body.classList.contains('drop-open');
+      cta.classList.toggle('show', scrollY > limit() && !nearFoot && !menu);
+    }
+    addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd);
+    new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    upd();
   })();
 
   // fm-hop: footerlogoet hopper opad, når man peger på det (kun selve formen reagerer)

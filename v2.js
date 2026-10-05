@@ -149,7 +149,7 @@
   }
   const ctaSec = document.querySelector('.cta-big'), w3Sec = document.querySelector('.w3d');
   if (ctaSec) initFlow(ctaSec, ctaSec.querySelector('.cta-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
-  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1.8, bump: .8, reach: 200, ring: true, kink: 1.5, t0: 5.1 });
+  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });          // samme blide bølger som under "Har du noget, der skal skabes?"
 
 
   // Ydelserne side om side: det første står på siden, de andre kommer ind fra højre og går mod venstre, mens man scroller.
@@ -300,11 +300,36 @@
       const x = Rx * s, z = Rz * co + hv * 90, y = -Ky * co + Math.sin(t * .0011 + i * 1.7) * 7;
       c.style.transform = 'translate(-50%,-50%) translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + (s * 24).toFixed(1) + 'deg)';
       c.style.setProperty('--sh', (hv ? 1 : .5 + .5 * depth).toFixed(3));
-      c.style.setProperty('--bl', (hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2).toFixed(2) + 'px');
+      const bl = (hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2); c.style.setProperty('--bl', bl.toFixed(2) + 'px'); c.style.setProperty('--bs', (1 + bl * .014).toFixed(3));
       c.style.zIndex = Math.round(depth * 100);
     }
   }
-  window.__w3Layout = () => layout(performance.now());
+  // Højden af ring-sektionen følger ringen: afstanden under ringen (til teksten og "Se alt arbejde") er lige så stor som afstanden over den.
+  // Kameraets midte (perspective-origin) ligger i ringens midte, så kortenes yderpunkter kan regnes ud præcist for alle vinkler.
+  function fitSection() {
+    const cards = stage.querySelectorAll('.w3c'); if (!cards.length) return;
+    const work = document.body.classList.contains('work-page');
+    const scene = stage.parentElement, P = parseFloat(getComputedStyle(scene).perspective) || 1700, W = innerWidth, H = innerHeight, small = W <= 900;
+    const Rz = W * (small ? .32 : .3), Ky = H * (small ? .1 : .15);
+    let above = 0, below = 0;
+    cards.forEach(c => {
+      const h = c.offsetHeight;
+      for (let k = 0; k < 72; k++) {
+        const co = Math.cos(k / 72 * TAU), s = P / (P - Rz * co), yc = -Ky * co * s;                              // kortets midte i forhold til ringens midte
+        above = Math.max(above, -(yc - h * s / 2) + 8); below = Math.max(below, yc + h * s / 2 + 8);
+      }
+    });
+    const hd = document.querySelector('header'), hb = work && hd ? hd.getBoundingClientRect().bottom : 0;
+    const topGap = Math.round(Math.max(56, Math.min(96, W * .045)));                                             // luften over og under ringen på forsiden
+    const center = work ? Math.max(H * .47, 330, above + hb + 48) : Math.max(240, above + topGap);                // Arbejde: kortenes top må aldrig ligge under menuen. Forsiden: ringen står lige så langt fra sektionens top, som teksten står fra dens bund
+    const gap = work ? 26 : topGap;
+    const foot = sec.querySelector('.w3d-foot'), footH = foot ? foot.offsetHeight : 0, footB = foot ? (parseFloat(getComputedStyle(foot).bottom) || 40) : 0;
+    sec.style.setProperty('--rc', Math.round(center) + 'px');
+    sec.style.minHeight = Math.ceil(center + below + gap + footH + footB) + 'px';
+  }
+  const fitAll = () => { fitSection(); layout(performance.now()); };
+  window.__w3Layout = () => { fitSection(); layout(performance.now()); };
+  addEventListener('load', fitAll); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
   function frame(t) {
     raf = 0; if (!vis) return;
     const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
@@ -314,8 +339,8 @@
     layout(t);
     raf = requestAnimationFrame(frame);
   }
-  layout(0);
-  addEventListener('resize', () => { clearTimeout(layout.t); layout.t = setTimeout(() => { const small = innerWidth <= 900; if (stage.querySelectorAll('.w3c').length !== (small ? 6 : 9)) window.__w3Rebuild(); else layout(performance.now()); }, 120); });
+  fitSection(); layout(0);
+  addEventListener('resize', () => { clearTimeout(layout.t); layout.t = setTimeout(() => { const small = innerWidth <= 900; if (stage.querySelectorAll('.w3c').length !== (small ? 6 : 9)) window.__w3Rebuild(); else { fitSection(); layout(performance.now()); } }, 120); });
   if (reduce) { addEventListener('scroll', () => layout(0), { passive: true }); return; }
   const start = () => { if (!raf && vis && !document.hidden) { last = 0; raf = requestAnimationFrame(frame); } };
   new IntersectionObserver(es => { vis = es[0].isIntersecting; start(); }, { threshold: 0 }).observe(sec);

@@ -56,7 +56,7 @@ window.__fontsGate = true;
 const menuBtn = $('#menuBtn');
 const nav = $('#primaryNav');
 if (menuBtn && nav) {
-  menuBtn.addEventListener('click', () => nav.classList.toggle('open'));
+  menuBtn.addEventListener('click', () => { if (window.matchMedia('(min-width:821px)').matches) return; nav.classList.toggle('open'); });      // computer: se dropdown i fx.js
   $$('.nav-link').forEach(link => link.addEventListener('click', () => nav.classList.remove('open')));
 }
 
@@ -127,11 +127,12 @@ if ('IntersectionObserver' in window) {
 // Project detail overlay on /arbejde
 const overlay = $('#overlay');
 const overlayClose = $('#overlayClose');
-let scrollLock = 0;
+let scrollLock = 0, openId = null;
 
 function openProject(id, pushHash=true) {
   const p = projects.find(project => project.id === id);
   if (!p || !overlay) return;
+  openId = id;
   const med = src => src.replace('images/', 'images/med/');
   $('#ovCat').textContent = `${p.category}  /  ${p.location}  /  ${p.year}`;
   $('#ovTitle').textContent = p.title;
@@ -163,11 +164,12 @@ function openProject(id, pushHash=true) {
   $('#ovNext').onclick = () => openProject(next.id);
 
   overlay.scrollTop = 0;
+  if (overlayClose) overlayClose.classList.remove('away');
   overlay.classList.add('open');
   overlay.dispatchEvent(new Event('projectchange'));
   scrollLock = window.scrollY;
   document.body.style.overflow = 'hidden';
-  if (pushHash) history.replaceState(null, '', `/arbejde#${id}`);
+  if (pushHash) { try { history.replaceState(null, '', `/arbejde#${id}`); } catch (e) {} }
 }
 
 // billedopstilling til projektsiden: hver blok bruger de næste billeder (liggende/stående efter behov)
@@ -200,16 +202,32 @@ function buildFlow(p, med) {
 function closeProject() {
   if (!overlay) return;
   overlay.classList.remove('open');
+  openId = null;
   document.body.style.overflow = '';
-  history.replaceState(null, '', '/arbejde');
+  try { history.replaceState(null, '', '/arbejde'); } catch (e) {}
   window.scrollTo(0, scrollLock);
 }
 
 if (overlay) {
   overlayClose?.addEventListener('click', closeProject);
+  // tilbage-knappen: skjules, når man scroller ned i et projekt, og kommer frem igen, så snart man scroller opad
+  if (overlayClose) {
+    let lastSt = 0;
+    overlay.addEventListener('scroll', () => {
+      const st = overlay.scrollTop, d = st - lastSt;
+      if (Math.abs(d) < 8) return;                                  // små rystelser ignoreres
+      overlayClose.classList.toggle('away', st > 140 && d > 0);
+      lastSt = st;
+    }, { passive: true });
+  }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProject(); });
   const hash = location.hash.replace('#', '');
   if (hash && projects.some(p => p.id === hash)) setTimeout(() => openProject(hash, false), 80);
+  // et link til et projekt, mens man allerede er på siden (fx et kort øverst på Arbejde), åbner projektet uden at genindlæse siden
+  window.addEventListener('hashchange', () => {
+    const h = location.hash.replace('#', '');
+    if (h && h !== openId && projects.some(p => p.id === h)) openProject(h, false);
+  });
 }
 
 // Mail: formularerne sender direkte til sidens egen Vercel-funktion (api/send-mail.js), som sender videre via Simply.coms SMTP-server.
@@ -288,7 +306,7 @@ if (contactForm) {
     if (submitLabel) submitLabel.textContent = 'Sender…';
     if (contactStatus) setFormStatus(contactStatus, '');
 
-    data.append('form_type', 'kontakt');
+    data.append('form_type', 'kontakt'); data.append('lang', window.BK_LANG || 'da');
     data.delete('website');
 
     sendMail(data)
@@ -442,7 +460,7 @@ if (bookingForm) {
     if (submitLabel) submitLabel.textContent = 'Sender…';
     if (bookStatus) setFormStatus(bookStatus, '');
 
-    data.append('form_type', 'booking');
+    data.append('form_type', 'booking'); data.append('lang', window.BK_LANG || 'da');
     data.delete('website'); // honeypot field, already checked above
 
     sendMail(data)

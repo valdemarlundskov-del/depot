@@ -1350,3 +1350,182 @@ html body .wiz-bottom .wizard-back{margin-right:auto;}
 @media(min-width:901px){.w3d-title{font-size:clamp(44px,6.9vw,124px);}}
 
 .w3d-title{text-wrap:balance;}
+
+/* ringens midte kan flyttes (bruges af Arbejde, så kortene aldrig ligger under menuen) */
+.w3c{top:var(--rc,max(47vh,330px));}
+.w3d-title{top:var(--rc,max(47vh,330px));}
+@media(max-width:900px){.w3c{top:var(--rc,max(46vh,330px));}.w3d-title{top:var(--rc,max(46vh,330px));}}
+
+/* dybden (lysstyrke og sløring) lægges på selve billedet, ikke på hele kortet: det tegner stabilt i alle browsere */
+.w3c-in{filter:none;}
+.w3c-in img{filter:contrast(1.03) saturate(1.05) brightness(var(--sh,1)) blur(var(--bl,0px));transform:scale(var(--bs,1));}
+.w3c:not(:hover):not(.is-hover) .w3c-in img{transition:none;}
+
+/* Arbejde: stram afstand under ringen og ind til næste sektion */
+.work-page .w3d{padding-bottom:0;}
+.work-page .w3d-foot{bottom:22px;}
+.work-page .burst-intro{padding-top:clamp(36px,4vw,60px);}
+
+/* kameraets midte ligger i ringens midte, så kortene nedenunder og ovenover vises symmetrisk */
+.w3d-scene{perspective-origin:50% var(--rc,max(47vh,330px));}
+@media(max-width:900px){.w3d-scene{perspective-origin:50% var(--rc,max(46vh,330px));}}
+
+/* teksten og "Se alt arbejde" starter på samme linje, lige under billederne */
+.w3d-foot{align-items:flex-start;}
+
+/* ================= sprogvalg (DA / EN): headeren, til højre for "Start et projekt", og footeren, til højre for "Cookies" ================= */
+.lang{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;line-height:1;white-space:nowrap;color:inherit;}
+.lang button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:8px 2px;margin:0;cursor:pointer;opacity:.5;transition:opacity .2s;text-transform:inherit;}
+.lang button:hover,.lang button:focus-visible{opacity:1;}
+.lang button.on{opacity:1;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:6px;}
+.lang span{opacity:.45;pointer-events:none;}
+.site-header .lang{color:var(--hc,inherit);}
+@media(min-width:901px){.header-right .lang{margin-left:-6px;}}
+@media(max-width:900px){.site-header .lang{margin-right:14px;font-size:11px;position:relative;z-index:600;}}
+.lang-foot{margin-left:22px;font-size:11px;letter-spacing:.14em;}
+.footer-legal{display:flex;align-items:center;}
+
+/* ================= menu: tre streger yderst til højre, sprogvalget til venstre for dem, dropdown på computer ================= */
+.menu-btn{display:flex!important;flex-direction:column;justify-content:center;align-items:center;gap:6px;width:38px;height:38px;padding:0;margin:0 -7px 0 0;background:none;border:0;position:relative;z-index:600;cursor:pointer;}
+.menu-btn span{width:24px;height:1.5px;display:block;transform-origin:center;transition:transform .35s var(--ease-out),opacity .2s;}
+.menu-btn.open span:nth-child(1){transform:translateY(7.5px) rotate(45deg);}
+.menu-btn.open span:nth-child(2){opacity:0;}
+.menu-btn.open span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg);}
+@media(min-width:821px){
+  nav.primary-nav,.book-btn{display:none!important;}
+  .header-right{gap:16px;}
+  .header-right .lang{margin-left:0;}
+}
+body.drop-open.hdr-hide header.site-header{transform:none!important;}
+.menu-drop{position:fixed;top:78px;right:min(5.5vw,84px);z-index:480;width:min(330px,calc(100vw - 32px));background:#141414;color:#f7f7f5;padding:30px 32px 28px;
+  border-radius:22px 16px 24px 18px/18px 24px 16px 22px;box-shadow:0 30px 70px rgba(0,0,0,.35),0 0 0 1px rgba(247,247,245,.14);transform-origin:100% 0;
+  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-10px) scale(.97);
+  transition:opacity .25s,transform .35s var(--ease-out),visibility 0s .35s;}
+.menu-drop.open{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:opacity .25s,transform .35s var(--ease-out),visibility 0s;}
+.menu-drop ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:22px;}
+.menu-drop a{display:block;}
+.menu-drop .drop-lt{display:block;height:27px;width:auto;max-width:none;filter:brightness(0) invert(1);transition:transform .35s var(--ease-out),opacity .25s;}
+.menu-drop ul a:hover .drop-lt{transform:translateX(7px);}
+.menu-drop .drop-book{display:inline-block;margin-top:28px;padding:16px 22px;border:1.5px solid rgba(247,247,245,.85);border-radius:14px 11px 16px 12px/12px 16px 11px 14px;transition:background .25s;}
+.menu-drop .drop-book .drop-lt{height:16px;}
+.menu-drop .drop-book:hover{background:#f7f7f5;}
+.menu-drop .drop-book:hover .drop-lt{filter:brightness(0) invert(.08);transform:none;}
+@media(max-width:820px){.menu-drop{display:none;}}
+@media(prefers-reduced-motion:reduce){.menu-drop,.menu-drop.open,.menu-btn span{transition:none;}}
+
+/* ================= billedvisningen i Arkivet: samme omrids som alle andre bokse, og hele firkanten reagerer ================= */
+.lb-top{pointer-events:none;}
+.lb-top>*{pointer-events:auto;}
+.lb-fig{pointer-events:none;}
+.lb-fig img,.lb-cap{pointer-events:auto;}
+.lb-nav,.lb-close{overflow:hidden;isolation:isolate;cursor:pointer;background:transparent;border:1.5px solid rgba(247,247,245,.55);color:var(--white);z-index:6;
+  transition:color .25s,border-color .25s;-webkit-tap-highlight-color:transparent;}
+@media(min-width:701px){.lb-nav{position:relative;}}
+.lb-close{position:relative;}
+.lb-nav::before,.lb-close::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--white);opacity:0;transition:opacity .25s;}
+.lb-nav:hover,.lb-close:hover{background:transparent;color:var(--black);border-color:var(--white);}
+.lb-nav:hover::before,.lb-close:hover::before{opacity:1;}
+.lb-nav:focus-visible,.lb-close:focus-visible{outline:2px solid var(--white);outline-offset:4px;}
+.lb-nav{width:56px;height:56px;}
+.lb-close{border-radius:var(--r1);padding:12px 18px;}
+.lb-prev{border-radius:var(--r3);}
+.lb-next{border-radius:var(--r4);}
+
+/* ================= projektvisning på Arbejde: tilbage-knap, der følger med og kommer frem, når man scroller opad ================= */
+html body .overlay.open{transform:none;}                  /* en transform på visningen ville gøre knappens "fast" placering relativ til visningen, så den scrollede væk */
+html body #overlayClose{position:fixed;top:22px;right:min(5.5vw,84px);z-index:820;width:auto;height:46px;padding:0 22px;display:flex;align-items:center;gap:8px;
+  border:1.5px solid var(--black);border-radius:var(--r3);background:var(--black);color:var(--white);box-shadow:0 0 0 1px rgba(247,247,245,.32);
+  font:600 12px/1 'Inter',sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
+  transition:transform .45s var(--ease-out),opacity .3s,background .25s,color .25s;}
+html body #overlayClose:hover{background:var(--white);color:var(--black);}
+html body #overlayClose:focus-visible{outline:2px solid var(--black);outline-offset:4px;}
+html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-events:none;}
+@media(max-width:700px){html body #overlayClose{top:14px;right:14px;height:42px;padding:0 18px;}}
+@media(prefers-reduced-motion:reduce){html body #overlayClose{transition:none;}}
+
+/* ================= dropdown-menuen: ingen baggrund, ordene skifter farve efter det, de ligger over (som logoet) ================= */
+.menu-drop{top:86px;width:auto;padding:0;background:none;box-shadow:none;border-radius:0;color:#fff;
+  mix-blend-mode:difference;display:flex;flex-direction:column;align-items:flex-end;text-align:right;
+  transform:none;transition:visibility 0s .5s;}
+.menu-drop.open{transform:none;transition:visibility 0s;}
+.menu-drop ul{align-items:flex-end;gap:26px;}
+.menu-drop li,.menu-drop .drop-book{opacity:0;transform:translateY(-12px);transition:opacity .3s,transform .45s var(--ease-out);}
+.menu-drop.open li,.menu-drop.open .drop-book{opacity:1;transform:none;}
+.menu-drop.open li:nth-child(1){transition-delay:.03s}.menu-drop.open li:nth-child(2){transition-delay:.08s}
+.menu-drop.open li:nth-child(3){transition-delay:.13s}.menu-drop.open li:nth-child(4){transition-delay:.18s}
+.menu-drop.open .drop-book{transition-delay:.24s}
+.menu-drop .drop-lt{height:34px;filter:brightness(0) invert(1);}
+.menu-drop ul a:hover .drop-lt{transform:translateX(-9px) rotate(-2deg);}
+.menu-drop .drop-book{margin-top:34px;padding:16px 24px;border:1.5px solid #fff;background:none;}
+.menu-drop .drop-book .drop-lt{height:16px;}
+.menu-drop .drop-book:hover{background:#fff;}
+.menu-drop .drop-book:hover .drop-lt{filter:brightness(0) invert(0);transform:none;}
+@media(prefers-reduced-motion:reduce){.menu-drop li,.menu-drop .drop-book{transition:none;transform:none;}}
+
+/* "Start et projekt" i dropdown-menuen: ingen ring eller fyld, kun ordet, som de andre punkter */
+.menu-drop .drop-book{border:0;border-radius:0;padding:0;background:none;margin-top:36px;}
+.menu-drop .drop-book .drop-lt{height:20px;}
+.menu-drop .drop-book:hover{background:none;}
+.menu-drop .drop-book:hover .drop-lt{filter:brightness(0) invert(1);transform:translateX(-9px) rotate(-2deg);}
+
+/* dropdown: "Start et projekt" er lige så stort som de andre ord */
+.menu-drop .drop-book{margin-top:0;}
+.menu-drop .drop-book .drop-lt{height:34px;}
+.menu-drop ul{margin-bottom:26px;}
+
+/* ================= fast "Start et projekt" nederst på skærmen: kommer først frem, når man er kommet et stykke ned ================= */
+.cta-float{position:fixed;left:50%;bottom:26px;z-index:470;display:flex;align-items:center;justify-content:center;padding:18px 28px;
+  background:#141414;border:1.5px solid #141414;border-radius:var(--r3);box-shadow:0 0 0 1px rgba(247,247,245,.26),0 16px 44px rgba(0,0,0,.3);
+  opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,28px);
+  transition:opacity .35s,transform .55s var(--ease-out),background .25s,visibility 0s .55s;}
+.cta-float.show{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);transition:opacity .35s,transform .55s var(--ease-out),background .25s,visibility 0s;}
+.cta-float img{display:block;height:17px;width:auto;max-width:none;filter:brightness(0) invert(1);transition:filter .25s;}
+.cta-float:hover{background:#f7f7f5;}
+.cta-float:hover img{filter:none;}
+.cta-float:focus-visible{outline:2px solid #f7f7f5;outline-offset:4px;}
+@media(max-width:820px){.cta-float{bottom:18px;padding:16px 22px;}.cta-float img{height:15px;}}
+@media(prefers-reduced-motion:reduce){.cta-float,.cta-float.show{transition:none;}}
+
+/* "Start et projekt" i dropdown-menuen: lige så stor som de andre ord */
+.menu-drop .drop-book .drop-lt{height:34px;}
+.menu-drop .drop-book{margin-top:30px;}
+
+
+/* ================= flydende "Start et projekt" nederst: kun ordet, skifter farve efter baggrunden (som logoet), ingen pille eller ring ================= */
+.cta-float{padding:12px 16px;background:none;border:0;border-radius:0;box-shadow:none;mix-blend-mode:difference;}
+.cta-float:hover{background:none;}
+.cta-float img{height:26px;filter:brightness(0) invert(1);transition:transform .35s var(--ease-out);}
+.cta-float:hover img{filter:brightness(0) invert(1);transform:translateY(-4px) rotate(-1.5deg);}
+.cta-float:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+@media(max-width:820px){.cta-float{bottom:16px;padding:10px 14px;}.cta-float img{height:19px;}}
+
+/* dropdown-menuen: mindre tekst */
+.menu-drop .drop-lt,.menu-drop .drop-book .drop-lt{height:24px;}
+.menu-drop ul{gap:20px;}
+.menu-drop .drop-book{margin-top:26px;}
+.menu-drop ul a:hover .drop-lt,.menu-drop .drop-book:hover .drop-lt{transform:translateX(-7px) rotate(-2deg);}
+
+
+/* dropdown-menuen: præcis samme afstand mellem alle ord (også før "Start et projekt") */
+.menu-drop{gap:20px;}
+.menu-drop ul{margin:0;gap:20px;}
+.menu-drop .drop-book{margin-top:0;}
+<<<<<<< HEAD
+
+/* ================= Forsiden, "Mød teamet": samme glidning fra side til side som "Mød resten af holdet", med prikkerne ================= */
+.tm{overflow-x:clip;}
+.tm .tcard{width:max(140px,min(34vw,460px,calc((100vh - 380px) * .8)))!important;width:max(140px,min(34vw,460px,calc((100svh - 380px) * .8)))!important;}
+.tm-grid{animation:mhpp 8.4s infinite;}
+.tm-img{display:block;position:relative;overflow:hidden;aspect-ratio:4/5;}
+.tm-img img{position:absolute!important;inset:0;width:100%!important;height:100%!important;aspect-ratio:auto!important;object-fit:cover;animation:mhpar 8.4s infinite;will-change:transform;}
+.tm-grid:has(.tm-img:hover),.tm-grid:has(.tm-img:hover) .tm-img img,.tm-grid:has(.tcard:focus-visible),.tm-grid:has(.tcard:focus-visible) .tm-img img{animation-play-state:paused;}
+.tm:has(.tm-img:hover) .mh-dots i,.tm:has(.tcard:focus-visible) .mh-dots i{animation-play-state:paused;}
+.tm .mh-dots{margin-top:clamp(20px,3.2vh,40px);}
+@media(prefers-reduced-motion:reduce){.tm-grid,.tm-img img{animation:none!important;}.tm-img img{transform:scale(1.04);}}
+
+/* ================= flydende "Start et projekt": ude i højre side (ikke i midten) ================= */
+.cta-float{left:auto;right:min(5.5vw,84px);padding:12px 0 12px 16px;transform:translateY(28px);}
+.cta-float.show{transform:none;}
+@media(max-width:820px){.cta-float{right:20px;padding:10px 0 10px 14px;}}
+=======
+>>>>>>> 44cf53e150dfbf14c4e72de140be8f6b61e3d783
