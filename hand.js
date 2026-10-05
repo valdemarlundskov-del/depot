@@ -39,12 +39,17 @@
     for (let i = from; i <= to; i++) setChar(it.chars[i], clamp((f - i) / EDGE));
     it.lo = lo; it.hi = hi;
   }
+  // Før man har scrollet, vises ingen tekst: afsnit, der står på skærmen ved indlæsning, begynder først at blive skrevet, når man scroller.
+  // Det gøres ved at trække afsnittets startposition fra ("p0"). Afsnit uden for skærmen følger deres normale position.
+  let touched = false;
+  const rawP = it => { const vh = innerHeight, r = it.p.getBoundingClientRect(); return { p: clamp((vh * .9 - r.top) / (vh * .32 + r.height)), vis: r.bottom > 0 && r.top < vh }; };
+  function baseline() { items.forEach(it => { const r = rawP(it); it.p0 = r.vis ? r.p : 0; it.last = -1; it.hi = -1; }); }
+  ['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach(ev => addEventListener(ev, () => { touched = true; }, { passive: true, once: true }));
   function update() {
-    const vh = innerHeight;
     for (const it of items) {
-      const r = it.p.getBoundingClientRect(), N = it.chars.length;
-      // begynder at skrive, når afsnittets top når 90 % ned på skærmen; er færdigt, når bunden har nået 58 %
-      const p = clamp((vh * .9 - r.top) / (vh * .32 + r.height));
+      const N = it.chars.length;
+      let p = rawP(it).p;
+      if (it.p0 > 0) p = clamp((p - it.p0) / Math.max(.25, 1 - it.p0));
       const f = p * (N + EDGE);
       if (Math.abs(f - it.last) < .01) continue;
       it.last = f; paint(it, f);
@@ -53,8 +58,11 @@
   let ticking = false;
   const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; update(); }); } };
   addEventListener('scroll', req, { passive: true });
-  addEventListener('resize', () => { items.forEach(it => { it.last = -1; it.hi = -1; }); req(); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { items.forEach(it => { it.last = -1; it.hi = -1; }); req(); });
-  addEventListener('load', req);
+  const rebase = () => { if (!touched) baseline(); req(); };
+  addEventListener('resize', rebase);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(rebase);
+  addEventListener('load', rebase);
+  setTimeout(rebase, 400); setTimeout(rebase, 1200);
+  baseline();
   update();
 })();

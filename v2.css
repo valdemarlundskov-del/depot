@@ -1527,11 +1527,7 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 .cta-float.show{transform:none;}
 @media(max-width:820px){.cta-float{right:20px;padding:10px 0 10px 14px;}}
 
-/* ================= Om os: beskrivelserne i håndskrift (Adobe Fonts: "jinky"), skrevet i takt med scrollen ================= */
-:root{--hand-fs:clamp(27px,2.3vw,36px);}      /* Jinky er tynd og smal: den skal være større end almindelig tekst for at kunne læses */
-html body .msp-body p,html body .about-bk-copy p:not(.eyebrow){font-family:"jinky","Inter",sans-serif;font-weight:400;font-style:normal;font-size:var(--hand-fs);line-height:1.42;letter-spacing:.01em;max-width:min(34em,100%);}
-html body .msp-body p{color:#fff;}
-html body .about-bk-copy p:not(.eyebrow){color:var(--black);}
+/* Om os: teksten skrives i takt med scrollen (ordene må ikke brydes midt i) */
 .hw{display:inline-block;white-space:nowrap;}
 .hc{display:inline;}
 .hand-split{overflow-wrap:normal;}
