@@ -87,12 +87,8 @@
   (function () {
     const cta = document.getElementById('ctaFloat'); if (!cta) return;
     const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('footer');
-<<<<<<< HEAD
     // forsiden: når logoet er zoomet igennem (40 % af åbningen). Undersider: efter en lille scroll
     function limit() { return spacer ? spacer.offsetHeight * .4 : 120; }          // åbningens fremdrift = scroll ÷ spacerens højde; ved 40 % er logoet zoomet igennem
-=======
-    function limit() { return spacer ? spacer.offsetTop + spacer.offsetHeight - innerHeight * .4 : innerHeight * .9; }
->>>>>>> 44cf53e150dfbf14c4e72de140be8f6b61e3d783
     function upd() {
       const nearFoot = foot && foot.getBoundingClientRect().top < innerHeight * .92, menu = document.body.classList.contains('menu-open') || document.body.classList.contains('drop-open');
       cta.classList.toggle('show', scrollY > limit() && !nearFoot && !menu);
