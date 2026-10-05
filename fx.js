@@ -83,6 +83,20 @@
     (desk.addEventListener ? desk.addEventListener('change', e => { if (!e.matches) set(false); }) : null);
   })();
 
+  // cta-float: "Start et projekt" nederst på skærmen. Vises først, når man er kommet et stykke ned (på forsiden: efter åbningen), og ikke ved bunden af siden
+  (function () {
+    const cta = document.getElementById('ctaFloat'); if (!cta) return;
+    const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('footer');
+    function limit() { return spacer ? spacer.offsetTop + spacer.offsetHeight - innerHeight * .4 : innerHeight * .9; }
+    function upd() {
+      const nearFoot = foot && foot.getBoundingClientRect().top < innerHeight * .92, menu = document.body.classList.contains('menu-open') || document.body.classList.contains('drop-open');
+      cta.classList.toggle('show', scrollY > limit() && !nearFoot && !menu);
+    }
+    addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd);
+    new MutationObserver(upd).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    upd();
+  })();
+
   // fm-hop: footerlogoet hopper opad, når man peger på det (kun selve formen reagerer)
   (function () {
     const fm = document.querySelector('a.fmark'); if (!fm || reduce) return;

@@ -1461,3 +1461,52 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 .menu-drop .drop-book:hover{background:#fff;}
 .menu-drop .drop-book:hover .drop-lt{filter:brightness(0) invert(0);transform:none;}
 @media(prefers-reduced-motion:reduce){.menu-drop li,.menu-drop .drop-book{transition:none;transform:none;}}
+
+/* "Start et projekt" i dropdown-menuen: ingen ring eller fyld, kun ordet, som de andre punkter */
+.menu-drop .drop-book{border:0;border-radius:0;padding:0;background:none;margin-top:36px;}
+.menu-drop .drop-book .drop-lt{height:20px;}
+.menu-drop .drop-book:hover{background:none;}
+.menu-drop .drop-book:hover .drop-lt{filter:brightness(0) invert(1);transform:translateX(-9px) rotate(-2deg);}
+
+/* dropdown: "Start et projekt" er lige så stort som de andre ord */
+.menu-drop .drop-book{margin-top:0;}
+.menu-drop .drop-book .drop-lt{height:34px;}
+.menu-drop ul{margin-bottom:26px;}
+
+/* ================= fast "Start et projekt" nederst på skærmen: kommer først frem, når man er kommet et stykke ned ================= */
+.cta-float{position:fixed;left:50%;bottom:26px;z-index:470;display:flex;align-items:center;justify-content:center;padding:18px 28px;
+  background:#141414;border:1.5px solid #141414;border-radius:var(--r3);box-shadow:0 0 0 1px rgba(247,247,245,.26),0 16px 44px rgba(0,0,0,.3);
+  opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,28px);
+  transition:opacity .35s,transform .55s var(--ease-out),background .25s,visibility 0s .55s;}
+.cta-float.show{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);transition:opacity .35s,transform .55s var(--ease-out),background .25s,visibility 0s;}
+.cta-float img{display:block;height:17px;width:auto;max-width:none;filter:brightness(0) invert(1);transition:filter .25s;}
+.cta-float:hover{background:#f7f7f5;}
+.cta-float:hover img{filter:none;}
+.cta-float:focus-visible{outline:2px solid #f7f7f5;outline-offset:4px;}
+@media(max-width:820px){.cta-float{bottom:18px;padding:16px 22px;}.cta-float img{height:15px;}}
+@media(prefers-reduced-motion:reduce){.cta-float,.cta-float.show{transition:none;}}
+
+/* "Start et projekt" i dropdown-menuen: lige så stor som de andre ord */
+.menu-drop .drop-book .drop-lt{height:34px;}
+.menu-drop .drop-book{margin-top:30px;}
+
+
+/* ================= flydende "Start et projekt" nederst: kun ordet, skifter farve efter baggrunden (som logoet), ingen pille eller ring ================= */
+.cta-float{padding:12px 16px;background:none;border:0;border-radius:0;box-shadow:none;mix-blend-mode:difference;}
+.cta-float:hover{background:none;}
+.cta-float img{height:26px;filter:brightness(0) invert(1);transition:transform .35s var(--ease-out);}
+.cta-float:hover img{filter:brightness(0) invert(1);transform:translateY(-4px) rotate(-1.5deg);}
+.cta-float:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+@media(max-width:820px){.cta-float{bottom:16px;padding:10px 14px;}.cta-float img{height:19px;}}
+
+/* dropdown-menuen: mindre tekst */
+.menu-drop .drop-lt,.menu-drop .drop-book .drop-lt{height:24px;}
+.menu-drop ul{gap:20px;}
+.menu-drop .drop-book{margin-top:26px;}
+.menu-drop ul a:hover .drop-lt,.menu-drop .drop-book:hover .drop-lt{transform:translateX(-7px) rotate(-2deg);}
+
+
+/* dropdown-menuen: præcis samme afstand mellem alle ord (også før "Start et projekt") */
+.menu-drop{gap:20px;}
+.menu-drop ul{margin:0;gap:20px;}
+.menu-drop .drop-book{margin-top:0;}
