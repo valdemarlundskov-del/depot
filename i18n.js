@@ -213,7 +213,7 @@
  "F.eks. inden for 2 uger, medio juni…": "E.g. within 2 weeks, mid-June…",
  "F.eks. 1.500-3.000 kr., eller et cirka-tal": "E.g. DKK 1,500–3,000, or a rough figure",
  "Referencer, ønsker, særlige detaljer…": "References, wishes, special details…",
- "BK Studio — foto, video og content skabt af Basharat Ullah Dar og Valdemar Kure Lundskov i Danmark.": "BK Studio — photo, video and content by Basharat Ullah Dar and Valdemar Kure Lundskov in Denmark.",
+ "BK Studio — foto, video og content skabt af Valdemar Kure Lundskov og Basharat Ullah Dar i Danmark.": "BK Studio — photo, video and content by Valdemar Kure Lundskov and Basharat Ullah Dar in Denmark.",
  "Foto / Video / Content — BK Studio": "Photo / Video / Content — BK Studio",
  "BK Studio — Foto, video og content": "BK Studio — Photo, video and content",
  "BK Studio — dansk foto, video og content af Basharat Ullah Dar og Valdemar Kure Lundskov.": "BK Studio — Danish photo, video and content by Basharat Ullah Dar and Valdemar Kure Lundskov.",
