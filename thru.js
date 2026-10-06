@@ -203,6 +203,8 @@
     const F0x = ox + FX * k, F0y = oy + FY * k;
     const Fx = F0x + (Cx - F0x) * smooth(zp), Fy = F0y + (Cy - F0y) * smooth(zp);
     const txM = Fx - F0x * sM, tyM = Fy - F0y * sM;
+    // del logo-maskens placering med 3D-åbningen (logo3d.min.js), så 3D-logoet kan lande præcist i den
+    if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, vw, vh };
     const e = smooth((p - .08) / .34);                                        // 0..1: billederne glider udad mod siderne — allerede mens man zoomer ind
     const baseFade = loaderMode ? smooth((p - .36) / .14) : smooth((p - .24) / .16);                               // 0..1: den sorte flade toner ud, når man er kommet godt ind
     const rv = smooth((p - .3) / .22);                                      // 0..1: BK STUDIO kommer langsomt frem imens
