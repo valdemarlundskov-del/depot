@@ -1535,13 +1535,3 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 /* beskyt billederne: kan ikke trækkes ud eller holdes inde for at gemme (mobil) */
 img,video{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 
-/* ================= "Start et projekt"-bånd over footeren: jeres håndtegnede bogstaver og klatten, gentaget ================= */
-.cta-marq{display:block;overflow:hidden;background:var(--black);padding:clamp(34px,4.5vw,64px) 0;text-decoration:none;}
-.cta-marq-track{display:flex;align-items:center;gap:clamp(30px,3.4vw,60px);width:max-content;animation:ctamarq 46s linear infinite;}
-.cta-marq img{display:block;width:auto;max-width:none;filter:brightness(0) invert(1);}
-.cta-marq img.l{height:clamp(40px,6.4vw,104px);}
-.cta-marq img.b{height:clamp(24px,3.4vw,54px);opacity:.85;transition:transform 1.2s var(--ease-out);}
-.cta-marq:hover .cta-marq-track{animation-duration:110s;}
-.cta-marq:hover img.b{transform:rotate(90deg);}
-@keyframes ctamarq{to{transform:translateX(-50%);}}
-@media(prefers-reduced-motion:reduce){.cta-marq-track{animation:none;}}
