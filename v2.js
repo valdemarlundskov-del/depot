@@ -147,7 +147,9 @@
     addEventListener('resize', () => { resize(); drawn = false; });
     resize(); if (reduce) draw(0); else requestAnimationFrame(loop);
   }
-  // højdekurverne er afløst af malingsklatter, der følger musen (ink.js), men initFlow er bevaret her, hvis de skal tilbage
+  const ctaSec = document.querySelector('.cta-big'), w3Sec = document.querySelector('.w3d');
+  if (ctaSec) initFlow(ctaSec, ctaSec.querySelector('.cta-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
+  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });          // samme blide bølger som under "Har du noget, der skal skabes?"
 
 
   // Ydelserne side om side: det første står på siden, de andre kommer ind fra højre og går mod venstre, mens man scroller.
