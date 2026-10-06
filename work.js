@@ -1,5 +1,5 @@
-/* BK Studio — Arbejde: kvalitet frem for kvantitet.
-   Arkivet viser alt; her vises hvert projekt som en lille, kurateret case: ét stort hovedbillede, tre udvalgte billeder og teksten.
+/* BK Studio — Arbejde: kvalitet frem for kvantitet, fortalt i billeder.
+   Arkivet viser alt; her får hvert projekt et billede i fuld skærm og tre udvalgte billeder i stort format, med så lidt tekst som muligt.
    Udvalget styres af `lead` og `pick` på hvert projekt i script.js. Klik åbner hele projektet i den samme visning som før (openProject). */
 (function () {
   'use strict';
@@ -9,43 +9,33 @@
   const pad = n => String(n).padStart(2, '0');
   const med = src => src.replace('images/', 'images/med/'), th = src => src.replace('images/', 'images/thumbs/');
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  const total = pad(projects.length);
 
   const img = (src, alt, sizes, eager) => `<img src="${med(src)}" srcset="${th(src)} 1100w, ${med(src)} 1920w" sizes="${sizes}" alt="${esc(alt)}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" onerror="this.classList.add('image-error')">`;
   const shot = (p, src, cls, sizes) => `<a class="case-shot ${cls}" href="/arbejde#${p.id}" data-open="${p.id}" tabindex="-1" aria-hidden="true"><span class="case-frame">${img(src, '', sizes)}</span></a>`;
 
-  // øverst: en rolig indholdsfortegnelse over projekterne
-  if (index) index.innerHTML = projects.map((p, i) => `<li><a class="sel-row" href="#case-${p.id}" data-to="case-${p.id}">
-      <span class="sel-n">${pad(i + 1)}</span><span class="sel-t">${esc(p.title)}</span><span class="sel-c">${esc(p.category)}</span><span class="sel-y">${esc(p.year)}</span><span class="sel-a" aria-hidden="true">↓</span>
+  // øverst: projekterne som tre store billeder (forsidebilledet), titlen står småt nedenunder
+  if (index) index.innerHTML = projects.map((p, i) => `<li><a class="sel-card" href="#case-${p.id}" data-to="case-${p.id}">
+      <span class="case-frame">${img(p.cover, p.title, '(max-width: 820px) 100vw, 33vw', true)}</span>
+      <span class="sel-cap"><span class="sel-n">${pad(i + 1)}</span><span class="sel-t">${esc(p.title)}</span><span class="sel-y">${esc(p.year)}</span></span>
     </a></li>`).join('');
 
   host.innerHTML = projects.map((p, i) => {
     const lead = p.lead || p.hero || p.cover;
     const pick = (p.pick && p.pick.length ? p.pick : p.gallery.filter(g => g !== lead)).slice(0, 3);
-    const flip = i % 2 ? ' is-flip' : '';
-    return `<article class="case${flip}" id="case-${p.id}" aria-labelledby="case-t-${p.id}">
-      <header class="case-head" data-cr>
-        <p class="case-n"><span>${pad(i + 1)}</span><span class="case-of">/ ${total}</span></p>
-        <h2 class="case-title" id="case-t-${p.id}">${esc(p.title)}</h2>
-        <dl class="case-meta">
-          <div><dt>Kategori</dt><dd>${esc(p.category)}</dd></div>
-          <div><dt>Sted</dt><dd>${esc(p.location || '')}</dd></div>
-          <div><dt>År</dt><dd>${esc(p.year)}</dd></div>
-        </dl>
-      </header>
-      <a class="case-lead" href="/arbejde#${p.id}" data-open="${p.id}" aria-label="Se projektet ${esc(p.title)}" data-cr>
-        <span class="case-frame">${img(lead, p.title + ' — ' + p.category, '(max-width: 820px) 100vw, 92vw', i === 0)}</span>
+    return `<article class="case" id="case-${p.id}" aria-labelledby="case-t-${p.id}">
+      <a class="case-lead" href="/arbejde#${p.id}" data-open="${p.id}" aria-label="Se projektet ${esc(p.title)}">
+        <span class="case-frame">${img(lead, p.title + ' — ' + p.category, '100vw')}</span>
+        <span class="case-over"><span class="case-n">${pad(i + 1)} / ${pad(projects.length)}</span><h2 class="case-title" id="case-t-${p.id}">${esc(p.title)}</h2><span class="case-cat">${esc(p.category)}</span></span>
         <span class="case-view" aria-hidden="true">Se projekt</span>
       </a>
-      <div class="case-body">
-        <div class="case-text" data-cr>
-          <p class="case-sum">${esc(p.summary || '')}</p>
-          <a class="case-link" href="/arbejde#${p.id}" data-open="${p.id}"><span>Se hele projektet</span><i aria-hidden="true">→</i></a>
-          <p class="case-count">${p.gallery.length} billeder</p>
-        </div>
-        ${pick[0] ? shot(p, pick[0], 'case-a', '(max-width: 820px) 50vw, 26vw') : ''}
-        ${pick[2] ? shot(p, pick[2], 'case-c', '(max-width: 820px) 50vw, 24vw') : ''}
-        ${pick[1] ? shot(p, pick[1], 'case-b', '(max-width: 820px) 100vw, 64vw') : ''}
+      <div class="case-grid">
+        ${pick[0] ? shot(p, pick[0], 'case-a', '(max-width: 820px) 50vw, 50vw') : ''}
+        ${pick[2] ? shot(p, pick[2], 'case-c', '(max-width: 820px) 50vw, 50vw') : ''}
+        ${pick[1] ? shot(p, pick[1], 'case-b', '100vw') : ''}
+      </div>
+      <div class="case-foot">
+        <span>${esc(p.location || '')} — ${esc(p.year)}</span>
+        <a class="case-link" href="/arbejde#${p.id}" data-open="${p.id}"><span>Se hele projektet</span><i aria-hidden="true">→</i></a>
       </div>
     </article>`;
   }).join('');
@@ -62,16 +52,16 @@
     e.preventDefault(); el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
-  // billeder og tekst toner ind, når de kommer frem
-  const els = host.querySelectorAll('[data-cr], .case-shot');
+  // billederne åbner sig, når de kommer frem
+  const els = document.querySelectorAll('.sel-card, .case-lead, .case-shot');
   if ('IntersectionObserver' in window && !reduce) {
-    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: .08 });
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -6% 0px', threshold: .06 });
     els.forEach(el => io.observe(el));
   } else els.forEach(el => el.classList.add('in'));
 
-  // let dybde: hovedbillederne glider en smule langsommere end siden
+  // let dybde: billederne glider en smule langsommere end siden
   if (!reduce) {
-    const frames = [...host.querySelectorAll('.case-lead .case-frame img, .case-b .case-frame img')];
+    const frames = [...host.querySelectorAll('.case-frame img')];
     let raf = 0;
     const tick = () => {
       raf = 0; const H = innerHeight;
