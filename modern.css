@@ -91,32 +91,25 @@ html[lang="en"] .hours li.today span:first-child::after{content:'  today';}
 .foot-meta .m-clock{color:var(--white);}
 @media(max-width:600px){.foot-mega{gap:8px}.foot-meta{flex-direction:column}}
 
-/* ---------- blækstreger fra sektionsetiketterne og ringe om Proces-trinnene (ink.js) ---------- */
+/* ---------- blækstreger fra sektionsetiketterne (ink.js) ---------- */
 .m-idx.ink-on{position:relative;}
 .m-idx.ink-on::after{visibility:hidden;}
-.proc.ink-on{position:relative;}
-.proc.ink-on .proc-rows{border-bottom-color:transparent;}
-.proc.ink-on .pr{border-top-color:transparent!important;}
-.proc.ink-on .proc-rows,.proc.ink-on .section-head{position:relative;z-index:1;}
-.ink-line{position:absolute;z-index:3;overflow:visible;pointer-events:none;}
-.ink-proc{mix-blend-mode:difference;}
+.ink-line{position:absolute;left:0;z-index:3;overflow:visible;pointer-events:none;}
 .ink-stroke{fill:none;stroke:var(--black);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
 .ink-tip,.ink-blot{fill:var(--black);}
-.ink-proc .ink-stroke{stroke:#fff;stroke-width:2.6;}
-.ink-proc .ink-tip,.ink-proc .ink-blot{fill:#fff;}
 .ink-tip{transition:opacity .3s;}
 .ink-blot{transform:scale(0);transition:transform .55s cubic-bezier(.2,1.6,.4,1);}
 .ink-blot.on{transform:scale(1);}
-@media(max-width:820px){.ink-stroke,.ink-proc .ink-stroke{stroke-width:2;}}
+@media(max-width:820px){.ink-stroke{stroke-width:2;}}
 @media(prefers-reduced-motion:reduce){.ink-blot{transition:none;}}
 
 /* ---------- billedbåndet som filmstrimmel ---------- */
-.strip-track{--film:#24221f;position:relative;padding:34px 0 34px var(--gut);margin-left:0;background-color:var(--film);
+.strip-track{--film:#262626;position:relative;padding:34px 0 34px var(--gut);margin-left:0;background-color:var(--film);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12'%3E%3Crect x='7' y='0' width='12' height='12' rx='2.5' fill='%23141414'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12'%3E%3Crect x='7' y='0' width='12' height='12' rx='2.5' fill='%23141414'/%3E%3C/svg%3E");
   background-repeat:repeat-x;background-position:0 7px,0 calc(100% - 7px);counter-reset:frame;}
 .strip-track>div{position:relative;overflow:visible!important;counter-increment:frame;}
 .strip-track>div img{border-radius:2px;}
-.strip-track>div::before,.strip-track>div::after{position:absolute;left:2px;font-family:var(--mono);font-size:9px;line-height:1;letter-spacing:.12em;color:#e3a03c;opacity:.85;white-space:nowrap;pointer-events:none;}
+.strip-track>div::before,.strip-track>div::after{position:absolute;left:2px;font-family:var(--mono);font-size:9px;line-height:1;letter-spacing:.12em;color:var(--grey-300);opacity:.7;white-space:nowrap;pointer-events:none;}
 .strip-track>div::before{content:'BK 400';top:-14px;}
 .strip-track>div::after{content:'\25B8 ' counter(frame) 'A';bottom:-14px;}
 .strip-track>div:nth-child(even)::before{content:'BK 400 \2022 ' counter(frame);}
