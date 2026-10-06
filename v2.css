@@ -1532,37 +1532,5 @@ html body #overlayClose.away{transform:translateY(-170%);opacity:0;pointer-event
 .hc{display:inline;}
 .hand-split{overflow-wrap:normal;}
 
-/* ================= BK-magi: håndtegnede streger, filmstrimmel og klat-markør ================= */
-.bk-mark{position:absolute;overflow:visible;pointer-events:none;z-index:2;}
-.bk-mark path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;transition:stroke-dashoffset 1.1s cubic-bezier(.65,.05,.36,1);}
-.bk-mark.drawn path{stroke-dashoffset:0!important;}
-.bk-lastw{display:inline;}
-/* filmstrimmel: perforering, kantnumre og et indringet billede */
-.strip-track{position:relative;padding-top:42px;padding-bottom:52px;counter-reset:fr 11;}
-.strip-track::before,.strip-track::after{content:"";position:absolute;left:0;right:0;height:11px;background-image:linear-gradient(90deg,rgba(247,247,245,.86) 0 12px,transparent 12px 27px);background-size:27px 11px;background-repeat:repeat-x;border-radius:2px;pointer-events:none;}
-.strip-track::before{top:12px;}.strip-track::after{bottom:12px;}
-.strip-track > div{position:relative;overflow:visible!important;counter-increment:fr;}
-.strip-track > div img{display:block;}
-.strip-track > div::after{content:"BK 400  \25B8 " counter(fr) "A";position:absolute;left:2px;bottom:-24px;font:600 10px/1 'Inter',sans-serif;letter-spacing:.26em;color:rgba(247,247,245,.5);white-space:nowrap;pointer-events:none;}
-.strip-track > div.picked .bk-mark{color:#f7f7f5;filter:drop-shadow(0 0 2px rgba(0,0,0,.55));z-index:3;}
-/* markøren: BK-klatten, der skifter farve efter baggrunden */
-.bk-cur{position:fixed;left:0;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;z-index:9000;pointer-events:none;mix-blend-mode:difference;opacity:0;transition:opacity .3s;}
-.bk-cur.on{opacity:1;}
-.bk-cur img{display:block;width:100%;height:100%;filter:brightness(0) invert(1);transition:transform .5s cubic-bezier(.2,.8,.2,1);}
-.bk-cur.link img{transform:scale(1.9) rotate(-16deg);}
-.bk-cur.media img{transform:scale(3) rotate(10deg);}
-.bk-ink{position:fixed;width:40px;height:40px;margin:-20px 0 0 -20px;z-index:8999;pointer-events:none;mix-blend-mode:difference;animation:bkink .85s cubic-bezier(.2,.8,.2,1) forwards;}
-.bk-ink img{display:block;width:100%;height:100%;filter:brightness(0) invert(1);}
-@keyframes bkink{0%{transform:scale(.2) rotate(var(--r,0deg));opacity:.9}100%{transform:scale(2.4) rotate(var(--r,0deg));opacity:0}}
-@media (hover:none),(pointer:coarse){.bk-cur,.bk-ink{display:none;}}
-@media(prefers-reduced-motion:reduce){.bk-mark path{transition:none;}.bk-cur,.bk-ink{display:none;}}
-
-/* mørkekammer: negativ → fremkaldt (kun når "reducer bevægelse" er slået fra; magic.js sætter klasserne) */
-/* blæk: farvelaget over de sort-hvide portrætter */
-.ink-mv{position:absolute;inset:0;display:block;}
-.tm-img .ink-mv,.mh-img .ink-mv{animation:mhpar 8.4s infinite;will-change:transform;}
-.ink-ready .ink-mv img{animation:none!important;}
-.ink-ready img:not(.ink-col){filter:grayscale(1) contrast(1.06)!important;}
-.ink-col{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:none!important;opacity:1!important;pointer-events:none;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:0 auto;mask-size:0 auto;}
-.tm-grid:has(.tm-img:hover) .ink-mv,.mh-grid:has(.mh-img:hover) .ink-mv{animation-play-state:paused!important;}
-@media(prefers-reduced-motion:reduce){.tm-img .ink-mv,.mh-img .ink-mv{animation:none!important;}}
+/* beskyt billederne: kan ikke trækkes ud eller holdes inde for at gemme (mobil) */
+img,video{-webkit-user-drag:none;user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}

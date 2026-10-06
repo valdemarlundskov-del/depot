@@ -132,6 +132,13 @@
     }
   })();
 
+  // protect-images: billederne kan ikke gemmes med højreklik eller trækkes ud af siden (det stopper ikke skærmbilleder; teksten kan stadig markeres og kopieres)
+  (function () {
+    const IMG_SEL = 'img, picture, video, canvas, .w3c, .tcard, .mh-p, .work-item, .lb-fig, .strip-track';
+    document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest(IMG_SEL)) e.preventDefault(); });
+    document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('img, picture, video')) e.preventDefault(); });
+  })();
+
   // fm-hop: footerlogoet hopper opad, når man peger på det (kun selve formen reagerer)
   (function () {
     const fm = document.querySelector('a.fmark'); if (!fm || reduce) return;
