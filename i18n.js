@@ -33,6 +33,12 @@
   var EN = {
  "Foto, video & content til virksomheder, events og private.": "Photo, video & content for businesses, events and private clients.",
  "Scroll ned": "Scroll down",
+ "Ledige til nye opgaver": "Available for new projects",
+ "Midtsjælland, DK": "Central Zealand, DK",
+ "Lokal tid i Midtsjælland": "Local time in Central Zealand",
+ "Ydelser": "Services",
+ "Proces": "Process",
+ "Teamet": "Team",
  "Foto": "Photo",
  "Vi har arbejdet for": "We've worked for",
  "Foto, video og content til virksomheder, events og private. Vi står selv bag kameraet og følger opgaven fra den første idé til det færdige resultat.": "Photo, video and content for businesses, events and private clients. We stand behind the camera ourselves and follow every job from the first idea to the finished result.",
