@@ -141,6 +141,8 @@
  "Seneste projekt": "Latest project",
  "Scroll videre — projektet folder sig ud, så du kan se mere end forsiden.": "Keep scrolling — the project unfolds so you can see more than the front page.",
  "Alle projekter": "All projects",
+ "Udvalgte projekter": "Selected projects",
+ "Se alt i arkivet →": "See everything in the archive →",
  "Klik på et projekt for at se billeder og detaljer.": "Click a project to see images and details.",
  "Om projektet": "About the project",
  "Når billederne betyder noget, skal de tages ordentligt.": "When the images matter, they should be done properly.",
