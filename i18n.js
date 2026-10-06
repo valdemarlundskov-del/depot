@@ -33,6 +33,7 @@
   var EN = {
  "Foto, video & content til virksomheder, events og private.": "Photo, video & content for businesses, events and private clients.",
  "Scroll ned": "Scroll down",
+ "Træk for at dreje": "Drag to spin",
  "Ledige nu": "Available now",
  "Optaget lige nu": "Busy right now",
  "Åbningstider": "Opening hours",

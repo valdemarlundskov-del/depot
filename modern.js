@@ -105,4 +105,11 @@
   });
 
   refresh(); setInterval(refresh, 15000);
+
+  // 3D-logoet: three.js (logo3d.min.js) hentes først, når logoet nærmer sig skærmen
+  const l3 = document.querySelectorAll('.logo3d');
+  if (l3.length && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(function (es) { if (es.some(e => e.isIntersecting)) { io.disconnect(); import('/logo3d.min.js').catch(function () { l3.forEach(n => n.classList.add('logo3d-fallback')); }); } }, { rootMargin: '600px 0px' });
+    l3.forEach(n => io.observe(n));
+  }
 })();
