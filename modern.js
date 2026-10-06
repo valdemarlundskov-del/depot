@@ -7,9 +7,13 @@
 (function () {
   'use strict';
 
+  // på engelsk vises klokkeslæt med AM/PM (8:43 PM), på dansk som 20:43
+  const EN = window.BK_LANG === 'en';
   function clockText() {
-    try { return new Intl.DateTimeFormat('da-DK', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Copenhagen' }).format(new Date()).replace('.', ':'); }
-    catch (e) { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+    try {
+      return EN ? new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Copenhagen' }).format(new Date())
+        : new Intl.DateTimeFormat('da-DK', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Copenhagen' }).format(new Date()).replace('.', ':');
+    } catch (e) { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   }
   function el(tag, cls, html) { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
 
@@ -32,6 +36,7 @@
   const HOURS = [[10, 17], [8, 20], [8, 20], [8, 20], [8, 20], [8, 20], [10, 17]];
   const DAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
   const p2 = n => String(n).padStart(2, '0');
+  const hh = h => EN ? ((h % 12) || 12) + ' ' + (h < 12 ? 'AM' : 'PM') : p2(h);       // et helt klokkeslæt: 20 / 8 PM
   function nowCph() {
     try {
       const parts = {}; new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Copenhagen' }).formatToParts(new Date()).forEach(x => { parts[x.type] = x.value; });
@@ -40,9 +45,10 @@
   }
   function status() {
     const n = nowCph(), h = HOURS[n.d];
-    if (n.m >= h[0] * 60 && n.m < h[1] * 60) return { open: true, day: n.d, main: 'Ledige nu', sub: 'Ledige til kl. ' + p2(h[1]) };
-    if (n.m < h[0] * 60) return { open: false, day: n.d, main: 'Optaget lige nu', sub: 'Tilbage i dag kl. ' + p2(h[0]) };
-    return { open: false, day: n.d, main: 'Optaget lige nu', sub: 'Tilbage i morgen kl. ' + p2(HOURS[(n.d + 1) % 7][0]) };
+    if (n.m >= h[0] * 60 && n.m < h[1] * 60) return { open: true, day: n.d, main: 'Ledige nu', sub: EN ? 'Available until ' + hh(h[1]) : 'Ledige til kl. ' + hh(h[1]) };
+    if (n.m < h[0] * 60) return { open: false, day: n.d, main: 'Optaget lige nu', sub: EN ? 'Back today at ' + hh(h[0]) : 'Tilbage i dag kl. ' + hh(h[0]) };
+    const o = HOURS[(n.d + 1) % 7][0];
+    return { open: false, day: n.d, main: 'Optaget lige nu', sub: EN ? 'Back tomorrow at ' + hh(o) : 'Tilbage i morgen kl. ' + hh(o) };
   }
   // tekster, der skifter med tiden: den danske udgave huskes, så oversættelsen (i18n.js) ikke får dem til at blive sat igen og igen
   const live = [];
@@ -72,12 +78,13 @@
     const host = document.querySelector(s[0]); if (!host || host.querySelector('.hours')) return;
     const box = el('div', 'hours');
     const top = el('div', 'hours-top'); top.appendChild(el('span', 'hours-lab', 'Åbningstider'));
-    const now = el('span', 'hours-now'); now.appendChild(dot()); now.appendChild(liveText(null, 'main')); now.appendChild(el('span', 'hs-sep', '·')); now.appendChild(liveText(null, 'sub'));
+    const now = el('span', 'hours-now'); now.appendChild(dot()); now.appendChild(liveText(null, 'main'));
     top.appendChild(now); box.appendChild(top);
+    const sub = liveText('hours-sub', 'sub'); box.appendChild(sub);
     const ul = el('ul');
     [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
       const li = el('li'); li.dataset.d = d;
-      li.appendChild(el('span', null, DAYS[d])); li.appendChild(el('span', 'hours-t', p2(HOURS[d][0]) + '–' + p2(HOURS[d][1])));
+      li.appendChild(el('span', null, DAYS[d])); li.appendChild(el('span', 'hours-t', hh(HOURS[d][0]) + '–' + hh(HOURS[d][1])));
       ul.appendChild(li);
     });
     box.appendChild(ul);
@@ -92,7 +99,7 @@
     mega.innerHTML = '<img class="fm-blob" src="images/logo/bk-blob.svg" alt="" loading="lazy"><img class="fm-word" src="images/logo/studio-wordmark.svg" alt="" loading="lazy">';
     const meta = el('div', 'foot-meta');
     const a = el('span'); a.appendChild(dot()); a.appendChild(liveText(null, 'main')); a.appendChild(el('span', 'hs-sep', '·')); a.appendChild(liveText(null, 'sub'));
-    const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Midtsjælland')); b.appendChild(liveText('m-clock', 'clock'));
+    const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Danmark')); b.appendChild(liveText('m-clock', 'clock'));
     meta.appendChild(a); meta.appendChild(b);
     f.insertBefore(mega, bottom); f.insertBefore(meta, bottom);
   });
