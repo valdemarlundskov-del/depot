@@ -1,0 +1,71 @@
+/* BK Studio — Arbejde: billederne fører (se work.js). Store formater, smalle mellemrum, næsten ingen tekst. */
+.work-page main{background:var(--white);color:var(--black);}
+.sel-eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--grey-500);margin:0;line-height:1.4;}
+
+/* ---------- intro: de tre projekter som billeder ---------- */
+.sel-intro{padding:clamp(96px,9vw,130px) var(--gut) clamp(10px,1vw,16px);}
+.sel-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:clamp(14px,1.4vw,20px);}
+.sel-arkiv{color:var(--black);transition:opacity .3s;}
+.sel-arkiv:hover{opacity:.55;}
+.sel-index{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,1vw,16px);}
+.sel-card{display:block;color:var(--black);}
+.sel-card .case-frame{aspect-ratio:3/4;height:min(72vh,46vw);width:100%;}
+.sel-cap{display:flex;gap:14px;align-items:baseline;padding-top:12px;}
+.sel-n,.sel-y{font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--grey-500);}
+.sel-t{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;flex:1;}
+
+/* ---------- billeder ---------- */
+.case-frame{display:block;position:relative;overflow:hidden;background:var(--grey-100);}
+.case-frame img{display:block;width:100%;height:100%;object-fit:cover;transform:scale(1.1);will-change:transform;}
+@media (hover:hover){
+  .sel-card .case-frame img,.case-shot .case-frame img{transition:filter .6s var(--ease-out);}
+  .sel-index:hover .sel-card:not(:hover) .case-frame img{filter:grayscale(1) brightness(.92);}
+}
+
+/* ---------- case ---------- */
+.sel-cases{padding:clamp(8px,1vw,16px) 0 0;}
+.case{padding-bottom:clamp(90px,12vw,200px);}
+.case-lead{display:block;position:relative;color:#fff;cursor:pointer;}
+.case-lead .case-frame{height:100vh;height:100svh;min-height:520px;}
+.case-lead .case-frame::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0) 38%);pointer-events:none;}
+.case-over{position:absolute;left:var(--gut);right:var(--gut);bottom:clamp(24px,3.4vw,52px);display:grid;grid-template-columns:auto 1fr auto;align-items:end;gap:clamp(16px,2.4vw,40px);}
+.case-n,.case-cat{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.82);padding-bottom:.6em;}
+.case-title{font-size:clamp(34px,5.4vw,88px);line-height:.9;letter-spacing:-.035em;margin:0;color:#fff;}
+.case-view{position:absolute;left:50%;top:50%;translate:-50% -50%;padding:14px 22px;border-radius:999px;background:var(--white);color:var(--black);
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:0;scale:.85;transition:opacity .4s,scale .6s var(--ease-out);pointer-events:none;}
+@media (hover:hover){ .case-lead:hover .case-view{opacity:1;scale:1;} }
+
+.case-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(8px,1vw,16px);padding:clamp(8px,1vw,16px) var(--gut) 0;}
+.case-shot{display:block;cursor:pointer;}
+.case-a .case-frame,.case-c .case-frame{aspect-ratio:4/5;}
+.case-b{grid-column:1/-1;}
+.case-b .case-frame{aspect-ratio:16/9;}
+
+.case-foot{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:clamp(16px,1.6vw,24px) var(--gut) 0;}
+.case-foot>span{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--grey-500);}
+.case-link{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--black);border-bottom:1px solid currentColor;padding-bottom:4px;}
+.case-link i{font-style:normal;transition:transform .5s var(--ease-out);}
+.case-link:hover i{transform:translateX(5px);}
+
+/* indtoning: billederne åbner sig nedefra */
+.sel-card,.case-lead,.case-shot{clip-path:inset(10% 0 0 0);opacity:0;transition:opacity .8s var(--ease-out),clip-path 1.4s var(--ease-out);}
+.sel-card.in,.case-lead.in,.case-shot.in{clip-path:inset(0 0 0 0);opacity:1;}
+.sel-index li:nth-child(2) .sel-card{transition-delay:.08s;}
+.sel-index li:nth-child(3) .sel-card{transition-delay:.16s;}
+
+/* ---------- mobil ---------- */
+@media (max-width:820px){
+  .sel-index{grid-template-columns:1fr;gap:24px;}
+  .sel-card .case-frame{height:auto;aspect-ratio:4/5;}
+  .case-lead .case-frame{height:86svh;min-height:460px;}
+  .case-over{grid-template-columns:1fr;gap:6px;}
+  .case-n,.case-cat{padding-bottom:0;}
+  .case-cat{order:3;}
+  .case-grid{gap:6px;padding:6px var(--gut) 0;}
+  .case-b .case-frame{aspect-ratio:3/2;}
+}
+@media (prefers-reduced-motion:reduce){
+  .sel-card,.case-lead,.case-shot{opacity:1!important;clip-path:none!important;transition:none;}
+  .case-frame img{transform:none;}
+}
+.case:last-child{padding-bottom:clamp(48px,6vw,96px);}
