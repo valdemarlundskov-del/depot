@@ -1,7 +1,7 @@
 /* BK Studio — modernisering (lag ovenpå style.css og v2.css).
    Beholder logoet, blobben, topografi-linjerne, kortet og båndene, men strammer det hele op:
    små "(01) Sektion"-etiketter i mono, bedre læsbar brødtekst, en rolig pille som "Start et projekt"-knap,
-   status + lokal tid i åbningen og et kæmpe ordmærke nederst i footeren. Elementerne bygges af modern.js. */
+   status + lokal tid (header, kontakt og footer) og et kæmpe ordmærke nederst i footeren. Elementerne bygges af modern.js. */
 
 :root{
   --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,'Liberation Mono',monospace;
@@ -37,14 +37,34 @@
 .cta-float:focus-visible{outline:2px solid var(--black);outline-offset:3px;}
 @media(max-width:820px){.cta-float{padding:12px 18px 12px 14px!important;}.cta-float img{height:12px!important;}.cta-float::before{width:19px;height:16px;}}
 
-/* ---------- åbningen: status + lokal tid ---------- */
-.thru-meta{position:absolute;right:var(--gut);top:calc(clamp(24px,5vh,56px) + 92px);z-index:3;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--black);pointer-events:none;}
-.thru-meta span{display:flex;align-items:center;gap:8px;}
-.m-dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(62,207,110,.55);animation:mlive 2.4s ease-out infinite;}
+/* ---------- status (ledig/optaget efter åbningstiderne) + lokal tid ---------- */
+.m-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(62,207,110,.55);animation:mlive 2.4s ease-out infinite;}
+.m-dot.off{background:#e3a03c;animation:none;box-shadow:none;}
 @keyframes mlive{0%{box-shadow:0 0 0 0 rgba(62,207,110,.55)}70%,100%{box-shadow:0 0 0 9px rgba(62,207,110,0)}}
 .m-clock{font-variant-numeric:tabular-nums;}
-@media(max-width:820px){.thru-meta{display:none}}
+.hs-sep{opacity:.5;}
 @media(prefers-reduced-motion:reduce){.m-dot{animation:none}}
+
+/* i headeren, til venstre for DA / EN (følger headerens farve) */
+.hdr-status{display:flex;align-items:center;gap:8px;margin-right:clamp(18px,2.2vw,34px);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--hc,inherit);}
+@media(max-width:1000px){.hdr-status{display:none}}
+/* headeren inverterer farverne (mix-blend-mode), så prikken her er sort/hvid: fyldt med puls = ledig, hul ring = optaget */
+.hdr-status .m-dot{position:relative;background:currentColor;animation:none;box-shadow:none;}
+.hdr-status .m-dot.off{background:transparent;border:1.5px solid currentColor;}
+.hdr-status .m-dot:not(.off)::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid currentColor;animation:hring 2.4s ease-out infinite;}
+@keyframes hring{0%{transform:scale(.5);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+@media(prefers-reduced-motion:reduce){.hdr-status .m-dot::after{animation:none;opacity:0}}
+
+/* åbningstider ved kontaktoplysningerne */
+.hours{max-width:420px;margin-top:clamp(24px,3vw,36px);font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;}
+.hours-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 16px;padding-bottom:10px;border-bottom:1px solid var(--black);}
+.hours-lab{color:var(--black);font-weight:600;}
+.hours-now{display:flex;align-items:center;gap:8px;color:var(--grey-700);}
+.hours ul{list-style:none;margin:0;padding:0;}
+.hours li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line-light);color:var(--grey-500);transition:color .3s;}
+.hours li.today{color:var(--black);font-weight:600;}
+.hours li.today span:first-child::before{content:'→ ';}
+.hours-t{font-variant-numeric:tabular-nums;}
 
 /* ---------- ydelser: renere kort ---------- */
 .sv-img{position:relative;}
@@ -66,3 +86,26 @@
 .foot-meta span{display:flex;align-items:center;gap:8px;}
 .foot-meta .m-clock{color:var(--white);}
 @media(max-width:600px){.foot-mega{gap:8px}.foot-meta{flex-direction:column}}
+
+/* ---------- Proces: håndtegnet blækstreg (ink.js) ---------- */
+.proc.ink-on .proc-rows{position:relative;border-bottom-color:transparent;}
+.proc.ink-on .pr{border-top-color:transparent!important;}
+.ink-line{position:absolute;z-index:3;overflow:visible;pointer-events:none;mix-blend-mode:difference;}
+.ink-stroke{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+.ink-tip{fill:#fff;transition:opacity .3s;}
+.ink-blot{fill:#fff;transform:scale(0);transition:transform .55s cubic-bezier(.2,1.6,.4,1);}
+.ink-blot.on{transform:scale(1);}
+@media(max-width:820px){.ink-stroke{stroke-width:2;}}
+@media(prefers-reduced-motion:reduce){.ink-blot{transition:none;}}
+
+/* ---------- billedbåndet som filmstrimmel ---------- */
+.strip-track{--film:#24221f;position:relative;padding:34px 0 34px var(--gut);margin-left:0;background-color:var(--film);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12'%3E%3Crect x='7' y='0' width='12' height='12' rx='2.5' fill='%23141414'/%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12'%3E%3Crect x='7' y='0' width='12' height='12' rx='2.5' fill='%23141414'/%3E%3C/svg%3E");
+  background-repeat:repeat-x;background-position:0 7px,0 calc(100% - 7px);counter-reset:frame;}
+.strip-track>div{position:relative;overflow:visible!important;counter-increment:frame;}
+.strip-track>div img{border-radius:2px;}
+.strip-track>div::before,.strip-track>div::after{position:absolute;left:2px;font-family:var(--mono);font-size:9px;line-height:1;letter-spacing:.12em;color:#e3a03c;opacity:.85;white-space:nowrap;pointer-events:none;}
+.strip-track>div::before{content:'BK 400';top:-14px;}
+.strip-track>div::after{content:'\25B8 ' counter(frame) 'A';bottom:-14px;}
+.strip-track>div:nth-child(even)::before{content:'BK 400 \2022 ' counter(frame);}
+@media(max-width:820px){.strip-track{padding:28px 0 28px var(--gut);background-size:20px 9px,20px 9px;background-position:0 6px,0 calc(100% - 6px);}.strip-track>div::before{top:-12px}.strip-track>div::after{bottom:-12px}}

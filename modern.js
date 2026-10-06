@@ -1,8 +1,8 @@
 /* BK Studio — modernisering: bygger de små ekstra elementer, som modern.css styler.
    - "(01) Ydelser"-etiketter over sektionerne på forsiden
-   - status ("Ledige til nye opgaver") og lokal tid i åbningen; de følger "Scroll ned" og forsvinder, når man scroller
+   - ledig/optaget ud fra åbningstiderne + lokal tid: i headeren, ved kontaktoplysningerne (med ugens tider) og i footeren
    - numre på ydelseskortene
-   - kæmpe ordmærke, status og lokal tid i bunden af footeren på alle sider
+   - kæmpe ordmærke i bunden af footeren på alle sider
    Teksterne er på dansk og oversættes af i18n.js som resten af siden. */
 (function () {
   'use strict';
@@ -12,8 +12,6 @@
     catch (e) { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   }
   function el(tag, cls, html) { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
-  const clocks = [];
-  function clock() { const t = el('time', 'm-clock', clockText()); clocks.push(t); return t; }
 
   // sektionsetiketter på forsiden
   [['#ydelser .head-title', 'Ydelser'], ['#proces .head-title', 'Proces'], ['#team .head-title', 'Teamet'], ['#kontakt .ct-copy', 'Kontakt']].forEach(function (s, i) {
@@ -30,18 +28,62 @@
     const n = el('span', 'sv-num', String(i + 1).padStart(2, '0')); n.setAttribute('aria-hidden', 'true'); img.appendChild(n);
   });
 
-  // åbningen: status og tid, som følger "Scroll ned"-teksten (thru.js styrer dens synlighed)
-  const thru = document.getElementById('thru'), hint = thru && thru.querySelector('.thru-scroll');
-  if (thru && !thru.querySelector('.thru-meta')) {
-    const meta = el('div', 'thru-meta'); meta.setAttribute('aria-hidden', 'true');
-    const a = el('span'); a.appendChild(el('i', 'm-dot')); a.appendChild(el('span', null, 'Ledige til nye opgaver'));
-    const b = el('span'); b.appendChild(el('span', null, 'Midtsjælland, DK')); b.appendChild(clock());
-    meta.appendChild(a); meta.appendChild(b); thru.appendChild(meta);
-    if (hint) {
-      const sync = function () { meta.style.opacity = hint.style.opacity; meta.style.visibility = hint.style.opacity === '0.000' ? 'hidden' : ''; };
-      new MutationObserver(sync).observe(hint, { attributes: true, attributeFilter: ['style'] }); sync();
-    }
+  // ledig/optaget ud fra åbningstiderne (dansk tid). Søndag = 0.
+  const HOURS = [[10, 17], [8, 20], [8, 20], [8, 20], [8, 20], [8, 20], [10, 17]];
+  const DAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
+  const p2 = n => String(n).padStart(2, '0');
+  function nowCph() {
+    try {
+      const parts = {}; new Intl.DateTimeFormat('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Copenhagen' }).formatToParts(new Date()).forEach(x => { parts[x.type] = x.value; });
+      return { d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(parts.weekday), m: (+parts.hour) * 60 + (+parts.minute) };
+    } catch (e) { const t = new Date(); return { d: t.getDay(), m: t.getHours() * 60 + t.getMinutes() }; }
   }
+  function status() {
+    const n = nowCph(), h = HOURS[n.d];
+    if (n.m >= h[0] * 60 && n.m < h[1] * 60) return { open: true, day: n.d, main: 'Ledige nu', sub: 'Ledige til kl. ' + p2(h[1]) };
+    if (n.m < h[0] * 60) return { open: false, day: n.d, main: 'Optaget lige nu', sub: 'Tilbage i dag kl. ' + p2(h[0]) };
+    return { open: false, day: n.d, main: 'Optaget lige nu', sub: 'Tilbage i morgen kl. ' + p2(HOURS[(n.d + 1) % 7][0]) };
+  }
+  // tekster, der skifter med tiden: den danske udgave huskes, så oversættelsen (i18n.js) ikke får dem til at blive sat igen og igen
+  const live = [];
+  function liveText(cls, key) { const s = el('span', cls); s.dataset.key = key; live.push(s); return s; }
+  function dot() { const i = el('i', 'm-dot'); live.push(i); return i; }
+  function refresh() {
+    const st = status(), t = clockText();
+    live.forEach(function (n) {
+      if (n.classList.contains('m-dot')) { n.classList.toggle('off', !st.open); return; }
+      const v = n.dataset.key === 'clock' ? t : st[n.dataset.key];
+      if (n.dataset.da !== v) { n.dataset.da = v; n.textContent = v; }
+    });
+    document.querySelectorAll('.hours li').forEach(function (li) { li.classList.toggle('today', +li.dataset.d === st.day); });
+  }
+
+  // headeren: status og lokal tid på alle sider (computer)
+  const hr = document.querySelector('.site-header .header-right'), lang = hr && hr.querySelector('.lang');
+  if (hr && !hr.querySelector('.hdr-status')) {
+    const hs = el('div', 'hdr-status');
+    hs.appendChild(dot()); hs.appendChild(liveText('hs-txt', 'main'));
+    hs.appendChild(el('span', 'hs-sep', '·')); hs.appendChild(liveText('m-clock', 'clock'));
+    hr.insertBefore(hs, lang || hr.firstChild);
+  }
+
+  // åbningstider ved kontaktoplysningerne (forsiden og /kontakt)
+  [['#kontakt .ct-copy', '.ct-lines'], ['.booking-intro', '.contact-people']].forEach(function (s) {
+    const host = document.querySelector(s[0]); if (!host || host.querySelector('.hours')) return;
+    const box = el('div', 'hours');
+    const top = el('div', 'hours-top'); top.appendChild(el('span', 'hours-lab', 'Åbningstider'));
+    const now = el('span', 'hours-now'); now.appendChild(dot()); now.appendChild(liveText(null, 'main')); now.appendChild(el('span', 'hs-sep', '·')); now.appendChild(liveText(null, 'sub'));
+    top.appendChild(now); box.appendChild(top);
+    const ul = el('ul');
+    [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
+      const li = el('li'); li.dataset.d = d;
+      li.appendChild(el('span', null, DAYS[d])); li.appendChild(el('span', 'hours-t', p2(HOURS[d][0]) + '–' + p2(HOURS[d][1])));
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    const after = host.querySelector(s[1]);
+    if (after) after.after(box); else host.appendChild(box);
+  });
 
   // footer: kæmpe ordmærke + status og lokal tid
   document.querySelectorAll('footer').forEach(function (f) {
@@ -49,11 +91,11 @@
     const mega = el('a', 'foot-mega'); mega.href = '/'; mega.setAttribute('aria-label', 'BK Studio — til forsiden');
     mega.innerHTML = '<img class="fm-blob" src="images/logo/bk-blob.svg" alt="" loading="lazy"><img class="fm-word" src="images/logo/studio-wordmark.svg" alt="" loading="lazy">';
     const meta = el('div', 'foot-meta');
-    const a = el('span'); a.appendChild(el('i', 'm-dot')); a.appendChild(el('span', null, 'Ledige til nye opgaver'));
-    const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Midtsjælland')); b.appendChild(clock());
+    const a = el('span'); a.appendChild(dot()); a.appendChild(liveText(null, 'main')); a.appendChild(el('span', 'hs-sep', '·')); a.appendChild(liveText(null, 'sub'));
+    const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Midtsjælland')); b.appendChild(liveText('m-clock', 'clock'));
     meta.appendChild(a); meta.appendChild(b);
     f.insertBefore(mega, bottom); f.insertBefore(meta, bottom);
   });
 
-  if (clocks.length) setInterval(function () { const t = clockText(); clocks.forEach(function (c) { if (c.textContent !== t) c.textContent = t; }); }, 15000);
+  refresh(); setInterval(refresh, 15000);
 })();
