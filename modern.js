@@ -96,7 +96,7 @@
   document.querySelectorAll('footer').forEach(function (f) {
     const bottom = f.querySelector('.footer-bottom'); if (!bottom || f.querySelector('.foot-mega')) return;
     const mega = el('a', 'foot-mega'); mega.href = '/'; mega.setAttribute('aria-label', 'BK Studio — til forsiden');
-    mega.innerHTML = '<img class="fm-blob" src="images/logo/bk-blob.svg" alt="" loading="lazy"><img class="fm-word" src="images/logo/studio-wordmark.svg" alt="" loading="lazy">';
+    mega.innerHTML = '<span class="fm-type" aria-hidden="true">BK Studio</span>';
     const meta = el('div', 'foot-meta');
     const a = el('span'); a.appendChild(dot()); a.appendChild(liveText(null, 'main')); a.appendChild(el('span', 'hs-sep', '·')); a.appendChild(liveText(null, 'sub'));
     const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Danmark')); b.appendChild(liveText('m-clock', 'clock'));
