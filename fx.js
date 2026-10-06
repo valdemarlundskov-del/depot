@@ -86,7 +86,7 @@
   // cta-float: "Start et projekt" nederst på skærmen. Vises først, når man er kommet et stykke ned (på forsiden: efter åbningen), og ikke ved bunden af siden
   (function () {
     const cta = document.getElementById('ctaFloat'); if (!cta) return;
-    const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('footer');
+    const spacer = document.querySelector('.thru-spacer'), foot = document.querySelector('.cta-marq') || document.querySelector('footer');
     // forsiden: når logoet er zoomet igennem (40 % af åbningen). Undersider: efter en lille scroll
     function limit() { return spacer ? spacer.offsetHeight * .4 : 120; }          // åbningens fremdrift = scroll ÷ spacerens højde; ved 40 % er logoet zoomet igennem
     function upd() {
