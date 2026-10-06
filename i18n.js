@@ -33,10 +33,6 @@
   var EN = {
  "Foto, video & content til virksomheder, events og private.": "Photo, video & content for businesses, events and private clients.",
  "Scroll ned": "Scroll down",
- "Udstilling": "Showcase",
- "Indeks": "Index",
- "Visning": "View",
- "Før musen hen over": "Hover to browse",
  "Ledige til nye opgaver": "Available for new projects",
  "Midtsjælland, DK": "Central Zealand, DK",
  "Lokal tid i Midtsjælland": "Local time in Central Zealand",
@@ -255,7 +251,7 @@
  "Tak! Din forespørgsel er sendt — vi vender tilbage hurtigst muligt.": "Thank you! Your request has been sent — we'll get back to you as soon as possible.",
  "Bookingen kunne ikke sendes. Prøv igen senere.": "The booking could not be sent. Please try again later."
 };
-  var PATTERNS = [["^Projekt (\\d+) / (\\d+)$", "Project $1 / $2"], ["^(\\d+) projekter$", "$1 projects"], ["^(\\d+) billeder$", "$1 images"], ["^Se projektet (.+)$", "View project $1"], ["^Åbn billede: (.+)$", "Open image: $1"], ["^Der opstod en fejl ved afsendelsen: (.*)$", "An error occurred while sending: $1"], ["^(.+) — Om os \\| BK Studio$", "$1 — About us | BK Studio"]], TOKENS = {"Fotografi": "Photography", "Danmark": "Denmark", "Landskab": "Landscape"}, IMGS = {"images/logo/nav-arbejde.svg": ["images/logo/nav-work-en.svg", "Work"], "images/logo/nav-arkiv.svg": ["images/logo/nav-archive-en.svg", "Archive"], "images/logo/nav-om-os.svg": ["images/logo/nav-team-en.svg", "Team"], "images/logo/nav-kontakt.svg": ["images/logo/nav-contact-en.svg", "Contact"], "images/logo/start-projekt.svg": ["images/logo/start-project-en.svg", "Start a project"]};
+  var PATTERNS = [["^Projekt (\\d+) / (\\d+)$", "Project $1 / $2"], ["^(\\d+) billeder$", "$1 images"], ["^Se projektet (.+)$", "View project $1"], ["^Åbn billede: (.+)$", "Open image: $1"], ["^Der opstod en fejl ved afsendelsen: (.*)$", "An error occurred while sending: $1"], ["^(.+) — Om os \\| BK Studio$", "$1 — About us | BK Studio"]], TOKENS = {"Fotografi": "Photography", "Danmark": "Denmark", "Landskab": "Landscape"}, IMGS = {"images/logo/nav-arbejde.svg": ["images/logo/nav-work-en.svg", "Work"], "images/logo/nav-arkiv.svg": ["images/logo/nav-archive-en.svg", "Archive"], "images/logo/nav-om-os.svg": ["images/logo/nav-team-en.svg", "Team"], "images/logo/nav-kontakt.svg": ["images/logo/nav-contact-en.svg", "Contact"], "images/logo/start-projekt.svg": ["images/logo/start-project-en.svg", "Start a project"]};
   var SKIP = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, SVG: 1, svg: 1, CANVAS: 1, TEMPLATE: 1 };
   var INL = { A: 1, B: 1, STRONG: 1, EM: 1, I: 1, SPAN: 1, BR: 1, SMALL: 1, U: 1, MARK: 1 };
   var ATTRS = ['alt', 'aria-label', 'placeholder', 'title'], has = Object.prototype.hasOwnProperty;
