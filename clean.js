@@ -9,30 +9,22 @@
 
   $$('.proc').forEach(s => s.classList.add('proc-c'));
 
-  // showreel: hentes først, når den nærmer sig skærmen, spiller kun mens den er synlig og vokser ud til fuld bredde
-  function reel() {
-    const sec = document.querySelector('.reel'), v = sec && sec.querySelector('.reel-video'); if (!v) return;
-    const sd = navigator.connection && navigator.connection.saveData;
-    let loaded = false, vis = false;
-    function load() {
-      if (v.dataset.poster) { v.poster = v.dataset.poster; delete v.dataset.poster; }       // forsidebilledet hentes også først, når showreelen nærmer sig
-      if (loaded || sd || reduce) return; loaded = true;
-      const mp4 = v.canPlayType && /(probably|maybe)/.test(v.canPlayType('video/mp4; codecs="avc1.64001f"'));
-      v.src = 'video/showreel' + (innerWidth < 700 ? '-sm' : '') + (mp4 ? '.mp4' : '.webm'); v.load();
-    }
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(es => { if (es[0].isIntersecting) load(); }, { rootMargin: '900px 0px' }).observe(sec);
-      new IntersectionObserver(es => { vis = es[0].isIntersecting; if (vis && loaded) v.play().catch(() => {}); else v.pause(); }, { threshold: .2 }).observe(v);
-    } else load();
-    v.addEventListener('canplay', () => { if (vis) v.play().catch(() => {}); });
-    if (reduce) return;
-    let q = false;
-    const upd = () => { q = false; const r = sec.getBoundingClientRect(); const k = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * .9))); sec.style.setProperty('--rs', (k * k * (3 - 2 * k)).toFixed(3)); };
-    addEventListener('scroll', () => { if (!q) { q = true; requestAnimationFrame(upd); } }, { passive: true }); upd();
+  // "Nyopstartet": tallene tæller op fra 0, når de kommer frem (kun én gang)
+  function counts() {
+    const els = $$('[data-count]'); if (!els.length) return;
+    if (reduce || !('IntersectionObserver' in window)) return;
+    els.forEach(el => { el.textContent = '0'; });
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return; io.unobserve(e.target);
+      const el = e.target, to = +el.dataset.count, t0 = performance.now(), dur = 900 + to * 12;
+      const step = now => { const k = Math.min(1, (now - t0) / dur), v = 1 - Math.pow(1 - k, 3); el.textContent = String(Math.round(to * v)); if (k < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }), { threshold: .6 });
+    els.forEach(el => io.observe(el));
   }
 
   function ready() {
-    reel();
+    counts();
     if (!('IntersectionObserver' in window)) { $$('.proc-rows').forEach(r => r.classList.add('drawn')); return; }
 
     // processen: stregen tegnes, når trinnene er godt inde på skærmen
