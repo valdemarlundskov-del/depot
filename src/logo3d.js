@@ -99,7 +99,8 @@ function opening(sec) {
     // inde bag logoet: midt i vinduet, og vokser langsommere end vinduet (den ligger længere inde), så man zoomer forbi den
     const T = window.__thru, nar = vw < 700, asp = LWd / LHt;
     const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (T && T.g ? T.g : 1);
-    const wpx = bw * (1 - .56 * back);                                                       // ved start: præcis logoets størrelse; glider så bagud ind i rummet
+    const jw = Math.min(vw * (vw < 700 ? .7 : .42), 580), grow = smooth((p - .3) / .3);   // samme størrelse som på resten af siden (journey)
+    const wpx = bw * (1 - .56 * back) * (1 - grow) + jw * grow;                               // ved start: præcis logoets størrelse; glider bagud og vokser så op
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ);
     group.scale.setScalar(s);
     const cx = T ? T.cx : vw / 2, cy = T ? T.cy : vh / 2, u = VIS / vh;
@@ -169,8 +170,8 @@ function free(host) {
 // ---------- 3) rejsen gennem forsiden ----------
 // Efter åbningen følger 3D-logoet med ned gennem forsiden og står stille midt på skærmen, men ses kun på de sorte flader:
 // i karussellen (som et plan midt i ringen: foran de bagerste kort, bag teksten og de forreste kort), i filmstriben (bag billederne)
-// og i footeren. Der følger det med footeren op, skifter fra sort til hvidt og lander midt i footerens store logo-felt, hvor det
-// bliver til det flade logo; så glider logoet ud på sin plads til venstre, og "STUDIO" skubbes flydende ud til højre bag det. Logoet renderes én gang pr. billede på et skjult lærred og kopieres ind i hver sorts flade.
+// og i footeren. Der glider det ind fra footerens overkant, skifter fra sort til hvidt og lander midt i footerens store logo-felt,
+// hvor det bliver til det flade logo; så glider logoet ud på sin plads til venstre, og "STUDIO" toner blødt frem til højre bag det. Logoet renderes én gang pr. billede på et skjult lærred og kopieres ind i hver sorts flade.
 function journey() {
   const targets = [];
   const add = (sec, parent, before, kind) => {
@@ -189,14 +190,7 @@ function journey() {
   const html = document.documentElement, C0 = new Color('#141414'), C1 = new Color('#f7f7f5');
   let half = 40, mat = null, vw = 0, vh = 0, dpr = 1, raf = 0, ang = 0, last = 0, landed = false;
 
-  // flydende kant til "STUDIO", når det breder sig ud fra logoet
-  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true'); svg.style.position = 'absolute';
-  svg.innerHTML = '<filter id="bk-liquid" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>';
-  document.body.appendChild(svg);
-  const disp = svg.querySelector('feDisplacementMap');
-  let liqT0 = 0, spreadT = 0;
-  function liquid(now) { const k = Math.min(1, (now - liqT0) / 1700); disp.setAttribute('scale', (60 * Math.pow(1 - k, 2)).toFixed(1)); if (k < 1) requestAnimationFrame(liquid); }
+  let spreadT = 0;
 
   function size() {
     vw = innerWidth; vh = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -219,7 +213,9 @@ function journey() {
     ang += (goal - ang) * (1 - Math.exp(-dt * 7)); if (Math.abs(goal - ang) < 1e-4) ang = goal;
     const baseW = Math.min(vw * (vw < 700 ? .7 : .42), 580);
     // når footeren kommer op nedefra, følger logoet med i footerens synlige del (så det ikke gemmer sig bag den lyse flade ovenover)
-    const fr = foot ? foot.getBoundingClientRect().top : vh, baseY = fr < vh ? Math.max(vh / 2, fr + baseW * .55 + 30) : vh / 2;   // midt på skærmen; i footeren under dens overkant
+    // midt på skærmen; når footeren kommer op, kigger logoet først frem under footerens overkant og glider så ned i den
+    const fr = foot ? foot.getBoundingClientRect().top : vh, ent = smooth((vh - fr) / (vh * .55));
+    const baseY = fr < vh ? Math.max(vh / 2, fr + baseW * (-.32 + .92 * ent)) : vh / 2;
     const cx = br ? vw / 2 + (mx - vw / 2) * t : vw / 2, cy = br ? baseY + (br.top + br.height / 2 - baseY) * t : baseY;
     const wpx = baseW + ((br ? br.width : baseW) - baseW) * t;
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ), u = VIS / vh;
@@ -236,7 +232,7 @@ function journey() {
         const dx = mega.clientWidth / 2 - (fm.offsetLeft + fm.offsetWidth / 2);
         mega.style.setProperty('--fmdx', dx.toFixed(1) + 'px');
         foot.classList.add('fm-landed');
-        clearTimeout(spreadT); spreadT = setTimeout(() => { foot.classList.add('fm-spread'); liqT0 = performance.now(); requestAnimationFrame(liquid); }, 260);
+        clearTimeout(spreadT); spreadT = setTimeout(() => foot.classList.add('fm-spread'), 280);
       } else if (foot) { clearTimeout(spreadT); foot.classList.remove('fm-landed', 'fm-spread'); }
     }
     const fade = 1 - smooth((t - .93) / .06);                           // modellen går over i det flade logo
