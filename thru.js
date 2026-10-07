@@ -143,7 +143,7 @@
   // Formen tegnes i lav opløsning, forskydes blødt med et flydende felt (udstrækning + langsomme bølger) og skaleres op igen som ny maske.
   let mS = null, mO = null, cS2 = null, cO = null, wImg = null;
   function applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur) {
-    const a = .36 * Math.pow(Math.sin(Math.PI * clamp(zp)), 1.2);
+    const a = .6 * Math.pow(Math.sin(Math.PI * clamp(zp)), 1.1);
     if (a < .015) return;
     const qs = .25, w = Math.max(64, Math.round(lm.width * qs)), h = Math.max(64, Math.round(lm.height * qs));
     if (!mS || mS.width !== w || mS.height !== h) {
@@ -160,9 +160,9 @@
       const v = (y + .5) / h * 2 - 1, v2 = v * v;
       for (let x = 0; x < w; x++) {
         const u = (x + .5) / w * 2 - 1;
-        // udstrækning mod kanterne + langsomme, flydende bølger
-        const su = u * (1 - a * u * u) + wv * Math.sin(v * 5.2 + t * 2.3 + u * 1.7);
-        const sv = v * (1 - a * .6 * v2) + wv * Math.sin(u * 4.6 - t * 1.9 + v * 1.3);
+        // udstrækning mod kanterne (mest vandret, hvor logoet er bredest; altid uden fold) + langsomme, flydende bølger
+        const su = u / (1 + 1.4 * a * u * u) + wv * Math.sin(v * 5.2 + t * 2.3 + u * 1.7);
+        const sv = v / (1 + .5 * a * v2) + wv * Math.sin(u * 4.6 - t * 1.9 + v * 1.3);
         let sx = (su + 1) * .5 * w - .5, sy = (sv + 1) * .5 * h - .5;
         sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
         const ix = sx | 0, iy = sy | 0, fx = sx - ix, fy = sy - iy, p = (iy * w + ix) * 4 + 3, p2 = p + w * 4;
@@ -193,16 +193,28 @@
     return clamp((innerHeight - r.top) / Math.max(1, r.height));
   }
 
+  // forsiden: logoet starter lille og sort og venter, til billederne (og 3D-logoet) er hentet. Så vokser det op i fuld størrelse,
+  // og det sorte toner ud, så man kan se ind i rummet bag logoet. Sikkerhedsnet: senest efter 6 sekunder.
+  let homeT0 = 0; const tStart = performance.now();
+  function homeReady(now) {
+    if (homeT0) return true;
+    const imgs = COL.every(c => c.im.complete), want3d = document.documentElement.dataset.thru3d === '1';
+    if ((imgs && (!want3d || window.__thru3d !== undefined)) || now - tStart > 6000) homeT0 = now;
+    return !!homeT0;
+  }
   function draw(now) {
     const p = progress();
     // 3D-logoet (logo3d.min.js) snurrer rundt inde bag logo-vinduet, foran showreelen
     const m3 = !loaderMode && window.__thru3d && window.__thru3d.ready ? window.__thru3d : null;
     if (p >= 1) { if (doneFinal) return; doneFinal = true; } else doneFinal = false;
     const tIn = now - t0;
-    const intro = reduce || internalNav ? 1 : easeOut(tIn / (loaderMode ? 1700 : 3000));          // logoet afsløres langsomt ved indlæsning
+    const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
+    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1100) : 0;              // forsiden: lille → fuld størrelse
+    const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 650) / 1000) : 0;      // forsiden: det sorte logo toner ud
+    const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
     const asp = LWd / LHt;
-    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (.86 + .14 * intro), bh = bw / asp;
+    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (loaderMode ? .86 + .14 * intro : .38 + .62 * grow), bh = bw / asp;
     const k = bw / LWd, ox = vw / 2 - bw / 2, oy = vh / 2 - bh / 2;
     const Cx = vw / 2, Cy = vh / 2;
     // trin 1: zoom lige ind i logoets midte og helt igennem det (logoets kant forsvinder ud forbi skærmen).
@@ -216,11 +228,11 @@
     const Fx = F0x + (Cx - F0x) * smooth(zp), Fy = F0y + (Cy - F0y) * smooth(zp);
     const txM = Fx - F0x * sM, tyM = Fy - F0y * sM;
     // del logo-maskens placering med 3D-åbningen (logo3d.min.js), så 3D-logoet kan lande præcist i den
-    if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, vw, vh };
+    if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, g: .38 + .62 * grow, vw, vh };
     const e = smooth((p - .08) / .34);                                        // 0..1: billederne glider udad mod siderne — allerede mens man zoomer ind
     const baseFade = loaderMode ? smooth((p - .36) / .14) : smooth((p - .24) / .16);                               // 0..1: den sorte flade toner ud, når man er kommet godt ind
     const rv = 0;                                                           // (BK STUDIO-ordmærket over showreelen er taget ud sammen med showreelen)
-    const blur = (14 * (1 - .25 * zp) + (1 - intro) * 48) * dpr;      // blød kant der skærpes, mens logoet afsløres
+    const blur = (14 * (1 - .25 * zp) * (loaderMode ? 1 : .5 + .5 * grow) + (loaderMode ? (1 - intro) * 48 : 0)) * dpr;      // blød kant der skærpes, mens logoet afsløres
     const t = now / 1000;
 
     // lag A: den sorte flade (går helt ud til siderne)
@@ -233,7 +245,7 @@
     const vready = vid && vidReady && vid.readyState >= 2 && vid.videoWidth > 0;
     const srcEl = loaderMode ? (poster.complete && poster.naturalWidth ? poster : null) : 1;
     // 3D-logoet (som stenen hos Podium) snurrer rundt inde bag vinduet og svæver midt i billedet, når man er kommet igennem; så toner det ud
-    const a3 = m3 ? (1 - smooth((p - .45) / .09)) * intro : 0;
+    const a3 = m3 ? 1 - smooth((p - .45) / .09) : 0;
     const io = 1 - smooth((p - .46) / .09);                                                 // billederne toner ud lige efter
     if (!loaderMode) {
       cT.fillStyle = DARK; cT.fillRect(0, 0, vw, vh);
@@ -271,15 +283,16 @@
     const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
-    ctx.globalAlpha = intro * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
+    ctx.globalAlpha = (loaderMode ? intro : 1) * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
     if (a3 > .003) {                                                                                   // 3D-logoet, klippet af logoformen
       c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);
-      const b3 = (1 - a3) * 28 + (1 - intro) * 18;
+      const b3 = (1 - a3) * 28;
       if (b3 > .5) c3.filter = 'blur(' + (b3 * dpr).toFixed(1) + 'px)';
       try { c3.drawImage(m3.canvas, 0, 0, l3.width, l3.height); } catch (err) {}
       c3.filter = 'none'; c3.globalCompositeOperation = 'destination-in'; c3.drawImage(lm, 0, 0); c3.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = a3; ctx.drawImage(l3, 0, 0); ctx.globalAlpha = 1;
     }
+    if (!loaderMode && reveal < 1) { ctx.globalAlpha = 1 - reveal; ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // det sorte logo, der toner ud
     if (toneAmt > .003) { ctx.globalAlpha = .34 * toneAmt; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }
     if (!loaderMode && rv > .003) {
       const Wl = Math.min(vw * (nar ? .86 : .58), 940), hb = Wl / 4.99, hw = hb * .7, gp = hb * .26;
