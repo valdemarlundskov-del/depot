@@ -65,6 +65,29 @@
     if ('ResizeObserver' in window) bgs.forEach(bg => new ResizeObserver(fit).observe(bg.parentElement));
   })();
 
+  // menu-drop: panelet bygges op med den højre halvdel af BK-logoet i stort til venstre, menupunkterne i den brede del
+  // til højre og sociale medier (med logoer) nederst. Markupen i siderne er den samme som før; det ekstra lægges på her.
+  (function () {
+    const drop = document.getElementById('menuDrop'); if (!drop || drop.querySelector('.drop-art')) return;
+    const ul = drop.querySelector('ul'), book = drop.querySelector('.drop-book');
+    const art = document.createElement('div'); art.className = 'drop-art'; art.setAttribute('aria-hidden', 'true');
+    art.innerHTML = '<img src="/images/logo/bk-blob.svg" alt="" decoding="async">';
+    const main = document.createElement('div'); main.className = 'drop-main';
+    if (ul) main.appendChild(ul); if (book) main.appendChild(book);
+    const IG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>';
+    const LI = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="7" y="10" width="2.2" height="7" fill="currentColor"/><circle cx="8.1" cy="7.3" r="1.35" fill="currentColor"/><path d="M11.4 10h2.1v1c.5-.75 1.4-1.2 2.4-1.2 1.9 0 2.9 1.2 2.9 3.3V17h-2.2v-3.6c0-1-.4-1.6-1.3-1.6s-1.6.6-1.6 1.7V17h-2.3z" fill="currentColor"/></svg>';
+    const soc = document.createElement('div'); soc.className = 'drop-social';
+    soc.innerHTML = '<span class="ds-lab">Følg os</span><div class="ds-row">' +
+      '<a class="ds" href="https://www.instagram.com/bkstudiodk/" target="_blank" rel="noopener" aria-label="Instagram — @bkstudiodk">' + IG + '<span>Instagram</span></a>' +
+      '<a class="ds" href="https://www.linkedin.com/company/bk-studio-dk/" target="_blank" rel="noopener" aria-label="LinkedIn — BK Studio">' + LI + '<span>LinkedIn</span></a></div>' +
+      '<a class="ds-mail" href="/kontakt">kontakt@bkstudio.dk</a>';
+    main.appendChild(soc);
+    drop.appendChild(art); drop.appendChild(main);
+    // logoet drejer en anelse efter musen inde i panelet
+    drop.addEventListener('pointermove', e => { const r = drop.getBoundingClientRect(); art.style.setProperty('--dr', (((e.clientY - r.top) / r.height - .5) * 14).toFixed(2) + 'deg'); });
+    drop.addEventListener('pointerleave', () => art.style.setProperty('--dr', '0deg'));
+  })();
+
   // menu-drop: tre streger yderst til højre åbner en dropdown (computer). Mobil bruger den fulde menu.
   (function () {
     const mb = document.getElementById('menuBtn'), drop = document.getElementById('menuDrop'); if (!mb || !drop) return;

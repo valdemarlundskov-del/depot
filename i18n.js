@@ -45,6 +45,7 @@
  "Tirsdag": "Tuesday",
  "Mandag": "Monday",
  "Lokal tid i Danmark": "Local time in Denmark",
+ "Følg os": "Follow us",
  "Nyopstartet": "Just started",
  "Vi er kun lige begyndt.": "We're only just getting started.",
  "BK Studio er nyt. Vi har ikke en lang kundeliste endnu, men vi har kameraerne, tiden og lysten. Her er, hvor vi står lige nu.": "BK Studio is new. We don't have a long client list yet, but we have the cameras, the time and the drive. Here's where we are right now.",
