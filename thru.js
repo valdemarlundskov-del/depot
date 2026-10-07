@@ -66,75 +66,7 @@
   }
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
-  // ---------- magnetisk blæk ved hover (forsiden) ----------
-  // Logoet er blæk, og markøren er en magnet: kommer man tæt på, strækker blækket sig ud mod markøren som kviksølv, danner en bro
-  // og snører sig af igen. Markøren trækker selv en lille blækdråbe med sig, og når den bevæger sig, drypper der små dråber,
-  // der svinder ind. Da logoet er et vindue, ser man rummet bag logoet gennem alt blækket.
-  // Tegnes i lav opløsning: logoet + dråberne sløres og skærpes igen med en tærskel, så de flyder sammen.
   const mkc = () => document.createElement('canvas');
-  const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, vx: 0, vy: 0, a: 0, drops: [], lx: 0, ly: 0 };
-  sec.addEventListener('pointermove', e => {
-    if (reduce || loaderMode) return;
-    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
-    if (!ink.on) { ink.x = ink.lx = x; ink.y = ink.ly = y; ink.vx = ink.vy = 0; }
-    ink.on = true; ink.tx = x; ink.ty = y; dirty = true;
-  });
-  sec.addEventListener('pointerleave', () => { ink.on = false; });
-  let iS = null, iC = null;
-  function applyInk(now, dt, ox, oy, bw, bh, zp, sM, txM, tyM, k) {
-    const gate = 1 - smooth(zp / .18);
-    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 6);
-    for (let i = ink.drops.length - 1; i >= 0; i--) if (now - ink.drops[i].t0 > ink.drops[i].life) ink.drops.splice(i, 1);
-    if (ink.a < .01 && !ink.drops.length) return;
-    // dråben følger markøren med fjeder og inerti, og strækkes i bevægelsesretningen
-    if (ink.on) { ink.vx += ((ink.tx - ink.x) * 240 - ink.vx * 22) * dt; ink.vy += ((ink.ty - ink.y) * 240 - ink.vy * 22) * dt; }
-    else { ink.vx *= Math.exp(-dt * 8); ink.vy *= Math.exp(-dt * 8); }
-    ink.x += ink.vx * dt; ink.y += ink.vy * dt;
-    const speed = Math.hypot(ink.vx, ink.vy);
-    // drypper, når den bevæger sig
-    if (ink.on && Math.hypot(ink.x - ink.lx, ink.y - ink.ly) > 26 && ink.drops.length < 28) {
-      ink.drops.push({ x: ink.x, y: ink.y, r: 9 + Math.random() * 12, t0: now, life: 700 + Math.random() * 700, vy: 10 + Math.random() * 30 }); ink.lx = ink.x; ink.ly = ink.y;
-    }
-    const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
-    if (!iS || iS.width !== gw || iS.height !== gh) { iS = mkc(); iS.width = gw; iS.height = gh; iC = iS.getContext('2d', { willReadFrequently: true }); }
-    const D = dpr * q;
-    iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.filter = 'blur(' + (D * 22).toFixed(1) + 'px)'; iC.fillStyle = '#000';
-    // logoet (så dråberne kan smelte sammen med det) — magneten trækker formen lidt ud mod markøren
-    iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM)); iC.fill(LOGO, 'evenodd');
-    // magneten: find logoets kant på vej fra markøren ind mod logoets midte; er den tæt på, rækker blækket ud efter markøren som en tråd
-    let reach = null;
-    if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
-      const fx = sM * (ox + FX * k) + txM, fy = sM * (oy + FY * k) + tyM, N = 40;
-      for (let i = 1; i <= N; i++) {
-        const px = ink.x + (fx - ink.x) * i / N, py = ink.y + (fy - ink.y) * i / N;
-        if (iC.isPointInPath(LOGO, px * D, py * D, 'evenodd')) { reach = { x: px, y: py, d: Math.hypot(px - ink.x, py - ink.y) }; break; }
-      }
-    }
-    iC.setTransform(D, 0, 0, D, 0, 0);
-    if (reach && reach.d < 260) {
-      const pull = Math.pow(1 - reach.d / 260, .7) * ink.a, n = Math.max(3, Math.ceil(reach.d / 9));
-      for (let i = 0; i <= n; i++) {
-        const u = i / n, wob = Math.sin(u * Math.PI) * Math.sin(now / 1000 * 3 + u * 5) * 6 * pull;
-        const r = (12 + 34 * Math.pow(1 - u, 1.2)) * (.45 + .55 * pull);   // tyk ved logoet, tynd ved markøren
-        if (r > .5) { iC.beginPath(); iC.arc(reach.x + (ink.x - reach.x) * u * (.35 + .65 * pull) + wob, reach.y + (ink.y - reach.y) * u * (.35 + .65 * pull), r * Math.min(1, pull * 2.2), 0, Math.PI * 2); iC.fill(); }
-      }
-    }
-    const R = 44 * ink.a, st = Math.min(1.8, 1 + speed * .0022), ang = Math.atan2(ink.vy, ink.vx);
-    if (R > .5) { iC.beginPath(); iC.ellipse(ink.x, ink.y, R * st, R / Math.sqrt(st), ang, 0, Math.PI * 2); iC.fill(); }
-    ink.drops.forEach(d => {
-      const age = (now - d.t0) / d.life, r = d.r * (1 - age) * (age < .12 ? age / .12 : 1);
-      if (r > .4) { iC.beginPath(); iC.arc(d.x, d.y + d.vy * age, r, 0, Math.PI * 2); iC.fill(); }
-    });
-    const im = iC.getImageData(0, 0, gw, gh), dd = im.data;
-    for (let i = 3; i < dd.length; i += 4) { const v = (dd[i] - 100) * 6; dd[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: blæk flyder sammen
-    iC.setTransform(1, 0, 0, 1, 0, 0); iC.filter = 'none'; iC.putImageData(im, 0, 0);
-    // læg blækket oven i logo-masken (union), med samme bløde kant
-    cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
-    cM.filter = 'blur(' + (6 * dpr).toFixed(1) + 'px)'; cM.globalAlpha = Math.min(1, ink.a * 1.5 + (ink.drops.length ? .6 : 0));
-    cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
-    cM.drawImage(iS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
-    dirty = true;
-  }
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
   // Formen tegnes i lav opløsning, forskydes blødt med et flydende felt (udstrækning + langsomme bølger) og skaleres op igen som ny maske.
@@ -318,7 +250,6 @@
       cM.drawImage(gS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
-    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, ox, oy, bw, bh, zp, sM, txM, tyM, k);   // magnetisk blæk ved markøren
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
@@ -329,16 +260,16 @@
     const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
-    ctx.globalAlpha = (loaderMode ? intro : 1) * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
-    if (a3 > .003) {                                                                                   // 3D-logoet, klippet af logoformen
+    if (!loaderMode && reveal < 1) ctx.drawImage(la, 0, 0);                                     // forsiden: det sorte logo ligger nederst, til man scroller
+    ctx.globalAlpha = (loaderMode ? intro : reveal) * (1 - fadeLt); if (ctx.globalAlpha > .003) ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // rummet toner frem ovenpå; intet skinner igennem kanterne før
+    if (a3 > .003 && reveal > .003) {                                                                  // 3D-logoet, klippet af logoformen
       c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);
       const b3 = (1 - a3) * 28;
       if (b3 > .5) c3.filter = 'blur(' + (b3 * dpr).toFixed(1) + 'px)';
       try { c3.drawImage(m3.canvas, 0, 0, l3.width, l3.height); } catch (err) {}
       c3.filter = 'none'; c3.globalCompositeOperation = 'destination-in'; c3.drawImage(lm, 0, 0); c3.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = a3; ctx.drawImage(l3, 0, 0); ctx.globalAlpha = 1;
+      ctx.globalAlpha = a3 * reveal; ctx.drawImage(l3, 0, 0); ctx.globalAlpha = 1;
     }
-    if (!loaderMode && reveal < 1) { ctx.globalAlpha = 1 - reveal; ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // det sorte logo, der toner ud
     if (toneAmt > .003) { ctx.globalAlpha = .34 * toneAmt; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }
     if (!loaderMode && rv > .003) {
       const Wl = Math.min(vw * (nar ? .86 : .58), 940), hb = Wl / 4.99, hw = hb * .7, gp = hb * .26;
