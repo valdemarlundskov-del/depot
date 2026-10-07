@@ -65,37 +65,61 @@
     if ('ResizeObserver' in window) bgs.forEach(bg => new ResizeObserver(fit).observe(bg.parentElement));
   })();
 
-  // menu-drop: panelet i højre side med menupunkterne og sociale medier (med logoer) nederst. BK-logoet sidder lige på panelets
-  // venstre kant: halvdelen er inde i panelet, halvdelen stikker ud over siden. Logoet skifter farve efter det, det ligger over
-  // (som headeren og markøren): sort ude på siden og lyst inde i panelet. Markupen i siderne er den samme; det ekstra lægges på her.
+  // menu-drop (computer): et mørkt panel i højre side. Hvert menupunkt er en række med nummer, stort ord og en pil, der glider ind.
+  // BK-logoet sidder lige på panelets venstre kant (halvt inde, halvt ude) og skifter farve efter baggrunden (sort på siden, lyst i
+  // panelet). Når man peger på et punkt, bliver logoet et vindue med et billede, der hører til punktet. Nederst: sociale medier og e-mail.
+  // Markupen i siderne er den samme som før; det ekstra lægges på her.
   (function () {
     const drop = document.getElementById('menuDrop'); if (!drop || document.querySelector('.drop-logo')) return;
     const ul = drop.querySelector('ul'), book = drop.querySelector('.drop-book');
-    const art = document.createElement('div'); art.className = 'drop-logo'; art.setAttribute('aria-hidden', 'true');
-    art.innerHTML = '<img src="/images/logo/bk-blob.svg" alt="" decoding="async">';
-    document.body.appendChild(art);                                  // uden for panelet, så farveskiftet virker både på siden og i panelet
+    const mk = (cls, html) => { const n = document.createElement('div'); n.className = cls; n.setAttribute('aria-hidden', 'true'); if (html) n.innerHTML = html; document.body.appendChild(n); return n; };
+    const art = mk('drop-logo', '<img src="/images/logo/bk-blob.svg" alt="" decoding="async">');   // uden for panelet, så farveskiftet virker både på siden og i panelet
+    const peek = mk('drop-peek');                                                                    // billedet i logoformen
+    const PICS = { '/arbejde': 'images/thumbs/porsche924/DSC03358.webp', '/arkiv': 'images/thumbs/landskab/A7S07589.webp', '/#team': 'images/thumbs/om/DSC00965.webp',
+      '/om-os': 'images/thumbs/om/DSC00965.webp', '/kontakt': 'images/thumbs/om/A7S05300.webp', '/book': 'images/thumbs/vildbjerg/DSC04124.webp' };
     const main = document.createElement('div'); main.className = 'drop-main';
-    if (ul) main.appendChild(ul); if (book) main.appendChild(book);
+    // "Start et projekt" bliver den sidste række i listen, lige så stor som de andre
+    if (ul && book) { const li = document.createElement('li'); li.className = 'drop-li-book'; book.classList.remove('drop-book'); li.appendChild(book); ul.appendChild(li); }
+    if (ul) {
+      [...ul.children].forEach((li, i) => {
+        const a = li.querySelector('a'); if (!a) return;
+        a.classList.add('drop-row');
+        a.insertAdjacentHTML('afterbegin', '<span class="dr-n" aria-hidden="true">' + String(i + 1).padStart(2, '0') + '</span>');
+        a.insertAdjacentHTML('beforeend', '<span class="dr-arrow" aria-hidden="true">→</span>');
+        a.dataset.pic = PICS[a.getAttribute('href')] || '';
+      });
+      main.appendChild(ul);
+    }
     const IG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>';
     const LI = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="7" y="10" width="2.2" height="7" fill="currentColor"/><circle cx="8.1" cy="7.3" r="1.35" fill="currentColor"/><path d="M11.4 10h2.1v1c.5-.75 1.4-1.2 2.4-1.2 1.9 0 2.9 1.2 2.9 3.3V17h-2.2v-3.6c0-1-.4-1.6-1.3-1.6s-1.6.6-1.6 1.7V17h-2.3z" fill="currentColor"/></svg>';
     const soc = document.createElement('div'); soc.className = 'drop-social';
-    soc.innerHTML = '<span class="ds-lab">Følg os</span><div class="ds-row">' +
+    soc.innerHTML = '<div class="ds-row">' +
       '<a class="ds" href="https://www.instagram.com/bkstudiodk/" target="_blank" rel="noopener" aria-label="Instagram — @bkstudiodk">' + IG + '<span>Instagram</span></a>' +
       '<a class="ds" href="https://www.linkedin.com/company/bk-studio-dk/" target="_blank" rel="noopener" aria-label="LinkedIn — BK Studio">' + LI + '<span>LinkedIn</span></a></div>' +
       '<a class="ds-mail" href="/kontakt">kontakt@bkstudio.dk</a>';
     main.appendChild(soc);
     drop.appendChild(main);
-    // logoets midte på panelets venstre kant, lodret midt på panelet
+    // logoets midte på panelets venstre kant, lodret midt på panelet; billedet ligger præcis samme sted
     const place = () => {
-      const r = drop.getBoundingClientRect(), h = Math.min(r.height * 1.02, 470), w = h * 839.7 / 724.3;
-      art.style.width = w.toFixed(1) + 'px'; art.style.left = (r.left - w / 2).toFixed(1) + 'px'; art.style.top = (r.top + r.height / 2 - h / 2).toFixed(1) + 'px';
-      drop.style.setProperty('--lh', (w / 2).toFixed(1) + 'px');
+      const r = drop.getBoundingClientRect(), h = Math.min(Math.max(r.height * .95, 300), 430), w = h * 839.7 / 724.3;
+      [art, peek].forEach(n => { n.style.width = w.toFixed(1) + 'px'; n.style.height = h.toFixed(1) + 'px'; n.style.left = (r.left - w / 2).toFixed(1) + 'px'; n.style.top = (r.top + r.height / 2 - h / 2).toFixed(1) + 'px'; });
     };
-    new MutationObserver(() => { const o = drop.classList.contains('open'); if (o) place(); art.classList.toggle('on', o); }).observe(drop, { attributes: true, attributeFilter: ['class'] });
+    let loaded = false;
+    new MutationObserver(() => {
+      const o = drop.classList.contains('open');
+      if (o) { place(); if (!loaded) { loaded = true; Object.values(PICS).forEach(src => { const im = new Image(); im.src = '/' + src; }); } }   // billederne hentes først, når menuen åbnes
+      art.classList.toggle('on', o); if (!o) peek.classList.remove('on');
+    }).observe(drop, { attributes: true, attributeFilter: ['class'] });
     addEventListener('resize', () => { if (drop.classList.contains('open')) place(); });
+    // peg på et punkt: logoet viser punktets billede
+    drop.addEventListener('pointerover', e => {
+      const a = e.target.closest && e.target.closest('.drop-row');
+      if (a && a.dataset.pic) { peek.style.backgroundImage = 'url(/' + a.dataset.pic + ')'; peek.classList.add('on'); }
+      else if (!a) peek.classList.remove('on');
+    });
+    drop.addEventListener('pointerleave', () => { peek.classList.remove('on'); [art, peek].forEach(n => n.style.setProperty('--dr', '0deg')); });
     // logoet drejer en anelse efter musen inde i panelet
-    drop.addEventListener('pointermove', e => { const r = drop.getBoundingClientRect(); art.style.setProperty('--dr', (((e.clientY - r.top) / r.height - .5) * 10).toFixed(2) + 'deg'); });
-    drop.addEventListener('pointerleave', () => art.style.setProperty('--dr', '0deg'));
+    drop.addEventListener('pointermove', e => { const r = drop.getBoundingClientRect(), v = (((e.clientY - r.top) / r.height - .5) * 10).toFixed(2) + 'deg'; art.style.setProperty('--dr', v); peek.style.setProperty('--dr', v); });
   })();
 
   // menu-drop: tre streger yderst til højre åbner en dropdown (computer). Mobil bruger den fulde menu.
