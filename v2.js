@@ -153,9 +153,7 @@
   const ctaSec = document.querySelector('.cta-big'), w3Sec = document.querySelector('.w3d');
   if (ctaSec) initFlow(ctaSec, ctaSec.querySelector('.cta-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
   if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
-  // forsiden: showreelen og karussellen ligger på én fælles flade med ét lærred bag begge, så mønstret og musens bølger er ét og samme
-  const flowWrap = document.querySelector('.flow-wrap');
-  if (flowWrap) initFlow(flowWrap, flowWrap.querySelector('.wrap-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2, byWidth: true });   // samme skala som før, selvom fladen er høj
+  // forsiden: fladen bag tal-sektionen og karussellen er BK-monogrammet (clean.js), ikke højdekurver
 
 
   // Ydelserne side om side: det første står på siden, de andre kommer ind fra højre og går mod venstre, mens man scroller.
