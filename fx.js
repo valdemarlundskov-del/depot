@@ -200,7 +200,7 @@
 
   // overskrifter: ord for ord
   function split(el) {
-    if (el.querySelector('.ln, .w') || el.closest('.overlay')) return;
+    if (el.querySelector('.ln, .w, .tw, .tl') || el.closest('.overlay, .thru-title, [data-rv], .reveal, [data-words]')) return;   // ikke to animationer på samme tekst
     const label = el.textContent.replace(/\s+/g, ' ').trim();
     let i = 0;
     const walk = node => [...node.childNodes].forEach(n => {
@@ -221,7 +221,7 @@
   $$('h1, h2').forEach(split);
 
   if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .18) e.target.classList.add('in'); else if (!e.isIntersecting && e.boundingClientRect.top > 0) e.target.classList.remove('in'); }), { threshold: [0, .18] });   // kører baglæns, når man scroller op forbi elementet
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .18) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: [0, .18] });   // kun én gang
     $$('.split').forEach(el => io.observe(el));
   } else $$('.split').forEach(el => el.classList.add('in'));
 

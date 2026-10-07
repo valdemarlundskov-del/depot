@@ -105,3 +105,7 @@ html body .logo-light:hover img{filter:none;opacity:1;}
 
 /* ---------- åbningen: ingen scroll, før logoet har vist, hvad der er bag det (thru.js) ---------- */
 html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior:none;}
+
+/* ---------- showreel: samme levende højdekurver bag videoen som under "Vi skaber billeder, der bliver hængende" (v2.js) ---------- */
+.reel-flow{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
+.reel-in{z-index:1;}

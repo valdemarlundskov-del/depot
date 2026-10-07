@@ -78,7 +78,7 @@ if (cursor && !window.matchMedia('(any-hover:none)').matches) {
 function cardHTML(p) {
   return `<a class="work-item ${p.span} reveal cursor-target" href="/arbejde#${p.id}" data-id="${p.id}">
     <div class="frame">
-      <img src="${p.cover}" alt="${p.title} — ${p.category}" loading="lazy" decoding="async" onerror="useProjectImageFallback(this, '${p.id}')">
+      <img src="${p.cover.replace('images/', 'images/thumbs/')}" alt="${p.title} — ${p.category}" loading="lazy" decoding="async" onerror="useProjectImageFallback(this, '${p.id}')">
       <div class="veil"></div>
       ${p.originLogo ? `<div class="project-origin" aria-label="Logo for ${p.title}"><img src="${p.originLogo}" alt="${p.title} logo" onerror="this.parentElement.classList.add('logo-missing')"></div>` : ''}
       <div class="meta"><div><h3>${p.title}</h3><p class="cat">${p.category}</p></div><p class="yr">${p.year}</p></div>
@@ -115,8 +115,7 @@ if (workGrid) {
 if ('IntersectionObserver' in window) {
   const io = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting && entry.intersectionRatio >= .12) entry.target.classList.add('in');
-      else if (!entry.isIntersecting && entry.boundingClientRect.top > 0) entry.target.classList.remove('in');   // baglæns, når man scroller op
+      if (entry.isIntersecting && entry.intersectionRatio >= .12) { entry.target.classList.add('in'); io.unobserve(entry.target); }   // kun én gang (teksten animerer ikke ind igen)
     });
   }, {threshold:[0, .12]});
   $$('.reveal').forEach(el => io.observe(el));
