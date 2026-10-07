@@ -15,7 +15,7 @@
   // menu: antal projekter + kontaktinfo i fuldskærmsmenuen
   if (nav0) {
     const x = document.createElement('div'); x.className = 'nav-extra';
-    x.innerHTML = '<div><span>Kontakt</span><a href="mailto:kontakt@bkstudio.dk">kontakt@bkstudio.dk</a><p>Midtsjælland, Danmark</p></div><div><span>Sociale medier</span><a href="https://www.instagram.com/bkstudiodk/" target="_blank" rel="noopener">Instagram</a><a href="https://www.instagram.com/photo.basharat/" target="_blank" rel="noopener">Basharat</a><a href="https://www.instagram.com/kurevisuals/" target="_blank" rel="noopener">Valdemar</a></div>';
+    x.innerHTML = '<div><span>Kontakt</span><a href="mailto:kontakt@bkstudio.dk">kontakt@bkstudio.dk</a><p>Midtsjælland, Danmark</p></div><div><span>Sociale medier</span><a href="https://www.instagram.com/bkstudiodk/" target="_blank" rel="noopener">Instagram</a><a href="https://www.linkedin.com/company/bk-studio-dk/" target="_blank" rel="noopener">LinkedIn</a><a href="https://www.instagram.com/photo.basharat/" target="_blank" rel="noopener">Basharat</a><a href="https://www.instagram.com/kurevisuals/" target="_blank" rel="noopener">Valdemar</a></div>';
     nav0.appendChild(x);
   }
 

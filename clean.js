@@ -24,11 +24,10 @@
     els.forEach(el => io.observe(el));
   }
 
-  // BK-monogrammet: fladen bag tal-sektionen og karussellen er et diskret mønster af små BK-logoer (som et monogram).
+  // BK-monogrammet: fladen bag tal-sektionen og karussellen (og karussellen på /arbejde) er et diskret mønster af små BK-logoer (som et monogram).
   // Musen er en magnet: logoerne i nærheden drejer sig mod markøren som kompasnåle, vokser og lyser op, og falder blødt
   // tilbage, når den går videre. Tegnes kun, mens noget bevæger sig, og kun når fladen er på skærmen.
-  function monogram() {
-    const wrap = document.querySelector('.flow-wrap'), cv = wrap && wrap.querySelector('.mono-field'); if (!cv) return;
+  function monogram(wrap, cv) {
     const ctx = cv.getContext('2d'), img = new Image();
     let W = 0, H = 0, dpr = 1, pts = [], spr = null, SZ = 16, vis = false, raf = 0, mx = -1e4, my = -1e4, on = 0, onT = 0;
     function sprite() {
@@ -76,7 +75,7 @@
   }
 
   function ready() {
-    counts(); monogram();
+    counts(); $$('.mono-field').forEach(cv => monogram(cv.parentElement, cv));   // forsiden og /arbejde
     if (!('IntersectionObserver' in window)) { $$('.proc-rows').forEach(r => r.classList.add('drawn')); return; }
 
     // processen: stregen tegnes, når trinnene er godt inde på skærmen
