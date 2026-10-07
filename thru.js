@@ -230,13 +230,13 @@
     if (p >= 1) { if (doneFinal) return; doneFinal = true; } else doneFinal = false;
     const tIn = now - t0;
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
-    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1100) : 0;              // forsiden: lille → fuld størrelse
+    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1100) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
     const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 650) / 1000) : 0;      // forsiden: det sorte logo toner ud
     if (locked && hr && now - homeT0 > 1500) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
     const asp = LWd / LHt;
-    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (loaderMode ? .86 + .14 * intro : .38 + .62 * grow), bh = bw / asp;
+    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (loaderMode ? .86 + .14 * intro : 1), bh = bw / asp;
     const k = bw / LWd, ox = vw / 2 - bw / 2, oy = vh / 2 - bh / 2;
     const Cx = vw / 2, Cy = vh / 2;
     // trin 1: zoom lige ind i logoets midte og helt igennem det (logoets kant forsvinder ud forbi skærmen).
@@ -250,7 +250,7 @@
     const Fx = F0x + (Cx - F0x) * smooth(zp), Fy = F0y + (Cy - F0y) * smooth(zp);
     const txM = Fx - F0x * sM, tyM = Fy - F0y * sM;
     // del logo-maskens placering med 3D-åbningen (logo3d.min.js), så 3D-logoet kan lande præcist i den
-    if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, g: .38 + .62 * grow, vw, vh };
+    if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, g: 1, vw, vh };
     const e = smooth((p - .08) / .34);                                        // 0..1: billederne glider udad mod siderne — allerede mens man zoomer ind
     const baseFade = loaderMode ? smooth((p - .36) / .14) : smooth((p - .24) / .16);                               // 0..1: den sorte flade toner ud, når man er kommet godt ind
     const rv = 0;                                                           // (BK STUDIO-ordmærket over showreelen er taget ud sammen med showreelen)
@@ -293,6 +293,16 @@
     cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM - D, dpr * tyM);
     cM.translate(ox, oy); cM.scale(k, k); cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd');
     applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
+    // forsiden: logoet starter som en lille sort cirkel (i logoets bredeste del), der ånder let, mens alt bag logoet hentes.
+    // Først når alt er hentet, udvider cirklen sig, til hele logoformen er vist.
+    if (!loaderMode && grow < 1) {
+      const R0 = FR * .62 * (hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2)), R = R0 + (720 - R0) * grow * grow;
+      cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM, dpr * tyM); cM.translate(ox, oy); cM.scale(k, k);
+      cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0;
+      cM.filter = 'blur(' + (blur * .45).toFixed(1) + 'px)';                       // samme bløde kant som logoet
+      cM.globalCompositeOperation = 'destination-in'; cM.beginPath(); cM.arc(FX, FY, R, 0, Math.PI * 2); cM.fillStyle = '#000'; cM.fill();
+      cM.globalCompositeOperation = 'source-over'; cM.filter = 'none';
+    }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     if (!loaderMode) applyLiquid(now, ox, oy, bw, bh, zp);                          // liquid virker kun på billederne i logoet; de hvide omkring og hullerne rører vi ikke
