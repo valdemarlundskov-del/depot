@@ -5,13 +5,14 @@
       glider det bagud ind i det sorte rum og snurrer (drejningen følger scroll), og det bliver der, til siden kommer op nedefra og dækker det. Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
       midt i billedet; derefter toner den ud med et slør, og BK STUDIO kommer frem.
       Uden WebGL, eller hvis man har slået animationer fra, er vinduet bare showreelen.
+   3) Rejsen gennem forsiden: 3D-logoet følger med ned og ses på de sorte flader, og lander til sidst som logoet i footeren.
    2) <div class="logo3d" data-src="images/logo/bk-blob.svg" data-color="#141414"></div> giver et frit 3D-logo andre steder.
 
    Bygges til logo3d.min.js (med three.js indbygget) med esbuild:
      esbuild src/logo3d.js --bundle --minify --format=esm --outfile=logo3d.min.js */
 import {
   WebGLRenderer, Scene, PerspectiveCamera, Group, Mesh, ExtrudeGeometry, MeshPhysicalMaterial,
-  PMREMGenerator, DirectionalLight, SRGBColorSpace, ACESFilmicToneMapping
+  PMREMGenerator, DirectionalLight, SRGBColorSpace, ACESFilmicToneMapping, Color
 } from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -165,6 +166,92 @@ function free(host) {
   size();
 }
 
+// ---------- 3) rejsen gennem forsiden ----------
+// Efter åbningen følger 3D-logoet med ned gennem forsiden og står stille midt på skærmen, men ses kun på de sorte flader:
+// i karussellen (som et plan midt i ringen: foran de bagerste kort, bag teksten og de forreste kort), i filmstriben (bag billederne)
+// og i footeren. Der flyver det ned på BK-logoets plads, skifter fra sort til hvidt, lander og bliver til det flade logo, og
+// "STUDIO" breder sig flydende ud fra det. Logoet renderes én gang pr. billede på et skjult lærred og kopieres ind i hver sorts flade.
+function journey() {
+  const targets = [];
+  const add = (sec, parent, before, kind) => {
+    if (!sec || !parent) return;
+    const cv = document.createElement('canvas'); cv.className = 'bk3d-layer bk3d-' + kind; cv.setAttribute('aria-hidden', 'true');
+    parent.insertBefore(cv, before || null); targets.push({ sec, cv, ctx: cv.getContext('2d'), vis: false, kind });
+  };
+  const w3 = document.querySelector('.flow-wrap .w3d'), ring = w3 && w3.querySelector('.w3d-stage');
+  add(w3, ring, ring && ring.firstChild, 'ring');
+  const strip = document.querySelector('.strip'); add(strip, strip, strip && strip.firstChild, 'strip');
+  const foot = document.querySelector('footer'); add(foot, foot, foot && foot.firstChild, 'foot');
+  if (!targets.length) return;
+  const gl = document.createElement('canvas');
+  let st; try { st = stage(gl, '#141414', true); } catch (e) { targets.forEach(x => x.cv.remove()); return; }
+  const { renderer, scene, camera, group } = st;
+  const html = document.documentElement, C0 = new Color('#141414'), C1 = new Color('#f7f7f5');
+  let half = 40, mat = null, vw = 0, vh = 0, dpr = 1, raf = 0, ang = 0, last = 0, landed = false;
+
+  // flydende kant til "STUDIO", når det breder sig ud fra logoet
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true'); svg.style.position = 'absolute';
+  svg.innerHTML = '<filter id="bk-liquid" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>';
+  document.body.appendChild(svg);
+  const disp = svg.querySelector('feDisplacementMap');
+  let liqT0 = 0;
+  function liquid(now) { const k = Math.min(1, (now - liqT0) / 1500); disp.setAttribute('scale', (70 * Math.pow(1 - k, 2)).toFixed(1)); if (k < 1) requestAnimationFrame(liquid); }
+
+  function size() {
+    vw = innerWidth; vh = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
+    renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
+    targets.forEach(x => { const r = x.sec.getBoundingClientRect(); x.cv.width = Math.round(r.width * dpr); x.cv.height = Math.round(r.height * dpr); });
+    kick();
+  }
+  function frame(now) {
+    raf = 0; if (!mat) return;
+    const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
+    // fod: hvor langt er man nået ned mod BK-logoet i footeren (1 = landet)
+    const fm = document.querySelector('.foot-mega .fm-blob');
+    let t = 0, br = null;
+    if (fm) {
+      br = fm.getBoundingClientRect();
+      const maxS = document.documentElement.scrollHeight - vh, endTop = br.top - (maxS - scrollY) + 30, start = vh * 1.05;
+      t = smooth((start - br.top) / Math.max(1, start - endTop));
+    }
+    const goal = scrollY * .0024;                                      // drejer kun, når man scroller
+    ang += (goal - ang) * (1 - Math.exp(-dt * 7)); if (Math.abs(goal - ang) < 1e-4) ang = goal;
+    const baseW = Math.min(vw * (vw < 700 ? .62 : .34), 470);
+    // når footeren kommer op nedefra, følger logoet med i footerens synlige del (så det ikke gemmer sig bag den lyse flade ovenover)
+    const fr = foot ? foot.getBoundingClientRect().top : vh, baseY = Math.max(vh / 2, Math.min(fr + baseW * .55 + 30, vh + baseW));
+    const cx = br ? vw / 2 + (br.left + br.width / 2 - vw / 2) * t : vw / 2, cy = br ? baseY + (br.top + br.height / 2 - baseY) * t : baseY;
+    const wpx = baseW + ((br ? br.width : baseW) - baseW) * t;
+    const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ), u = VIS / vh;
+    group.scale.setScalar(s); group.position.set((cx - vw / 2) * u, -(cy - vh / 2) * u, 0);
+    const front = Math.round(ang / (Math.PI * 2)) * Math.PI * 2;      // lander lige forfra
+    group.rotation.set(.16 * (1 - t), ang + (front - ang) * t - .5 * (1 - t), .04 * (1 - t));
+    mat.color.lerpColors(C0, C1, smooth((t - .35) / .5));               // sort på vej ned, hvidt når det lander i den sorte footer
+    renderer.render(scene, camera);
+    const land = t > .985;
+    if (land !== landed) { landed = land; foot && foot.classList.toggle('fm-landed', land); if (land) { liqT0 = performance.now(); requestAnimationFrame(liquid); } }
+    const fade = 1 - smooth((t - .93) / .06);                           // modellen går over i det flade logo
+    targets.forEach(x => {
+      if (!x.vis) return;
+      const r = x.sec.getBoundingClientRect(), c = x.ctx;
+      c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, x.cv.width, x.cv.height);
+      c.globalAlpha = x.kind === 'foot' ? fade : 1;
+      if (c.globalAlpha > .003) c.drawImage(gl, -r.left * dpr, -r.top * dpr, vw * dpr, vh * dpr);
+      c.globalAlpha = 1;
+    });
+    if (ang !== goal) raf = requestAnimationFrame(frame);
+  }
+  function kick() { if (!raf && targets.some(x => x.vis)) { last = 0; raf = requestAnimationFrame(frame); } }
+  const io = new IntersectionObserver(es => { es.forEach(e => { const x = targets.find(y => y.sec === e.target); if (x) x.vis = e.isIntersecting; }); kick(); }, { rootMargin: '60px 0px' });
+  targets.forEach(x => io.observe(x.sec));
+  addEventListener('scroll', kick, { passive: true });
+  addEventListener('resize', size);
+  if ('ResizeObserver' in window) { let rt = 0; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(size, 120); }).observe(document.body); }
+  loadLogo(st, 'images/logo/bk-blob.svg').then(h => {
+    half = h; mat = group.children[0].material; html.classList.add('bk3d-on'); size();
+  }).catch(() => { targets.forEach(x => x.cv.remove()); });
+}
+
 const thruSec = document.querySelector('[data-thru]');
-if (thruSec && !reduce) opening(thruSec);
+if (thruSec && !reduce) { opening(thruSec); journey(); }
 document.querySelectorAll('.logo3d').forEach(free);

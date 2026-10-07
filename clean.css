@@ -150,3 +150,15 @@ html body .section-head h2,html body .nums h2,html body .booking-intro h1,html b
 html body .about-bk-copy h2,html body .mh-h,html body .burst-copy h2,html body .burst h2{font-size:var(--h2)!important;line-height:1.04!important;}
 html body .nums h2{margin-bottom:18px;}
 html body .ak-title{font-size:clamp(48px,7vw,112px);}
+
+/* ---------- 3D-logoet på rejsen gennem forsiden (logo3d.min.js): ses kun på de sorte flader, bag indholdet ---------- */
+.bk3d-layer{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
+.strip,footer{position:relative;}
+.strip>*:not(.bk3d-layer),footer>*:not(.bk3d-layer){position:relative;z-index:1;}
+/* i footeren lander 3D-logoet på BK-logoets plads og bliver til det flade logo; derefter breder "STUDIO" sig flydende ud */
+html.bk3d-on footer .foot-mega .fm-blob{opacity:0;transition:opacity .25s;}
+html.bk3d-on footer.fm-landed .foot-mega .fm-blob{opacity:1;}
+html.bk3d-on footer .foot-mega .fm-word{clip-path:inset(0 100% 0 0);filter:brightness(0) invert(1) url(#bk-liquid);transition:clip-path .5s cubic-bezier(.6,0,.2,1);}
+html.bk3d-on footer.fm-landed .foot-mega .fm-word{clip-path:inset(0 -2% 0 0);transition:clip-path 1.5s cubic-bezier(.5,0,.15,1) .1s;}
+.bk3d-ring{transform:translateZ(-30px);}
+html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger altid foran 3D-logoet */
