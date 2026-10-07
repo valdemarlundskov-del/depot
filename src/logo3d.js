@@ -2,7 +2,8 @@
    Logoet trækkes ud i 3D direkte fra images/logo/bk-blob.svg (afrundede kanter, blank "blæk"-overflade med refleksioner).
 
    1) Åbningen på forsiden ([data-thru]): man scroller gennem logo-vinduet (thru.js), og inde bag vinduet snurrer 3D-logoet rundt
-      foran showreelen. Modellen ligger længere inde end vinduet, så man zoomer forbi den; den sløres ud, når BK STUDIO kommer frem.
+      foran showreelen (som stenen hos Podium). Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
+      midt i billedet; derefter toner den ud med et slør, og BK STUDIO kommer frem.
       Uden WebGL, eller hvis man har slået animationer fra, er vinduet bare showreelen.
    2) <div class="logo3d" data-src="images/logo/bk-blob.svg" data-color="#141414"></div> giver et frit 3D-logo andre steder.
 
@@ -89,18 +90,18 @@ function opening(sec) {
     raf = 0;
     const p = prog();
     if (!ready) { raf = requestAnimationFrame(frame); return; }
-    if (p > .5) { window.__thru3d = null; return; }                                          // forbi åbningen: hvil
+    if (p > .6) { window.__thru3d = null; return; }                                          // forbi åbningen: hvil
     if (!t0) t0 = now;
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
     const t = now / 1000, intro = ease((now - t0) / 2200), zp = smooth(p / .4);
     px += (tx - px) * (1 - Math.exp(-dt * 3)); py += (ty - py) * (1 - Math.exp(-dt * 3));
     // snurrer rundt: hurtigt ind fra start, derefter roligt, og lidt hurtigere mens man zoomer forbi
-    ang += dt * (.75 + (1 - intro) * 5 + zp * 1.4);
+    ang += dt * (.75 + (1 - intro) * 5 + zp * .6);
 
     // inde bag logoet: midt i vinduet, og vokser langsommere end vinduet (den ligger længere inde), så man zoomer forbi den
     const T = window.__thru, nar = vw < 700, asp = LWd / LHt;
     const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp);
-    const wpx = bw * (nar ? .58 : .54) * (1 + 1.6 * zp * zp) * (.6 + .4 * intro);
+    const wpx = bw * (nar ? .56 : .5) * (1 + .7 * zp) * (.6 + .4 * intro);
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ);
     group.scale.setScalar(s);
     const cx = T ? T.cx : vw / 2, cy = T ? T.cy : vh / 2, u = VIS / vh;

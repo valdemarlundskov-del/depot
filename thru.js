@@ -1,5 +1,6 @@
-// BK Studio — forsiden: scroll gennem logoet (efter podium.global). Logoet er et vindue fyldt med billeder;
-// man zoomer lige ind i midten, billederne kommer mod dig og bliver til et fuldskærms-mosaik, og resten af siden stiger op nedefra.
+// BK Studio — forsiden: scroll gennem logoet (efter podium.global). Logoet er et vindue ind til et sort rum med enkelte mørke billeder
+// og 3D-logoet (logo3d.min.js), der snurrer rundt. Man zoomer lige ind gennem logoet, billederne spreder sig ud mod kanterne,
+// 3D-logoet svæver midt i det sorte, så toner det hele ud, og resten af siden stiger op nedefra.
 // Tegnes på canvas (skarp vektor ved enhver zoom).
 (function () {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -41,7 +42,16 @@
   // showreel: vises i logoformen fra start, fylder hele skærmen, når man er kommet igennem logoet, og dækkes til sidst af resten af siden
   const vid = loaderMode ? null : sec.querySelector('.thru-video');
   let vidReady = false, vidHold = false;
-  const poster = new Image(); poster.decoding = 'async'; poster.onload = () => { dirty = true; }; poster.src = 'video/showreel-poster.jpg';
+  const poster = new Image(); poster.decoding = 'async'; poster.onload = () => { dirty = true; }; if (loaderMode) poster.src = 'video/showreel-poster.jpg';
+  // forsiden: bag logoet er der sort, med enkelte (mørke) billeder, der svæver og spreder sig ud, mens man scroller gennem logoet.
+  // x/y/w er i forhold til logoets bredde fra skærmens midte; d er dybden (hvor meget billedet spreder sig og vokser).
+  const COL = loaderMode ? [] : [
+    { src: 'images/thumbs/vildbjerg/DSC04225.webp', x: -.33, y: .1, w: .19, d: 1.25 },
+    { src: 'images/thumbs/landskab/A7S07205.webp', x: -.05, y: -.21, w: .25, d: .85 },
+    { src: 'images/thumbs/porsche924/DSC03359.webp', x: .28, y: -.17, w: .14, d: 1.5 },
+    { src: 'images/thumbs/vildbjerg/DSC04240.webp', x: .22, y: .17, w: .27, d: 1.05 },
+    { src: 'images/thumbs/landskab/A7S07158.webp', x: -.04, y: .33, w: .21, d: 1.35 }
+  ].map(c => { const im = new Image(); im.decoding = 'async'; im.onload = () => { dirty = true; }; im.src = c.src; c.im = im; return c; });
   if (vid) {
     vid.muted = true; vid.playsInline = true; vid.loop = true;
     const small = innerWidth < 700, sd = navigator.connection && navigator.connection.saveData;
@@ -168,12 +178,12 @@
   let lastNow = 0, doneFinal = false;
   let dpr = 1, vw = 0, vh = 0, visible = true;
   let t0 = performance.now(), finished = false;
-  const la = document.createElement('canvas'), lm = document.createElement('canvas'), lt = document.createElement('canvas');
-  const cA = la.getContext('2d'), cM = lm.getContext('2d'), cT = lt.getContext('2d');
+  const la = document.createElement('canvas'), lm = document.createElement('canvas'), lt = document.createElement('canvas'), l3 = document.createElement('canvas');
+  const cA = la.getContext('2d'), cM = lm.getContext('2d'), cT = lt.getContext('2d'), c3 = l3.getContext('2d');
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, innerWidth < 700 ? 1.5 : 1.75);
     vw = cv.clientWidth; vh = cv.clientHeight;
-    [cv, la, lm, lt].forEach(c => { c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr); });
+    [cv, la, lm, lt, l3].forEach(c => { c.width = Math.round(vw * dpr); c.height = Math.round(vh * dpr); });
     dirty = true; doneFinal = false;
   }
   function progress() {
@@ -209,7 +219,7 @@
     if (!loaderMode) window.__thru = { p, cx: (ox + bw / 2) * sM + txM, cy: (oy + bh / 2) * sM + tyM, w: bw * sM, vw, vh };
     const e = smooth((p - .08) / .34);                                        // 0..1: billederne glider udad mod siderne — allerede mens man zoomer ind
     const baseFade = loaderMode ? smooth((p - .36) / .14) : smooth((p - .24) / .16);                               // 0..1: den sorte flade toner ud, når man er kommet godt ind
-    const rv = smooth((p - .3) / .22);                                      // 0..1: BK STUDIO kommer langsomt frem imens
+    const rv = 0;                                                           // (BK STUDIO-ordmærket over showreelen er taget ud sammen med showreelen)
     const blur = (14 * (1 - .25 * zp) + (1 - intro) * 48) * dpr;      // blød kant der skærpes, mens logoet afsløres
     const t = now / 1000;
 
@@ -221,22 +231,26 @@
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'source-over'; cT.clearRect(0, 0, lt.width, lt.height);
     cT.setTransform(dpr, 0, 0, dpr, 0, 0);
     const vready = vid && vidReady && vid.readyState >= 2 && vid.videoWidth > 0;
-    const srcEl = vready ? vid : (poster.complete && poster.naturalWidth ? poster : null);
-    if (srcEl) {
-      const iw = vready ? vid.videoWidth : poster.naturalWidth, ih = vready ? vid.videoHeight : poster.naturalHeight;
-      const sc = Math.max(vw / iw, vh / ih) * (1 + .22 * (1 - smooth(zp)));            // en let indzoomning ved start, der lægger sig, mens man zoomer ind
-      const dy = (.5 - p) * vh * .02;
-      try { cT.drawImage(srcEl, Cx - iw * sc / 2, Cy - ih * sc / 2 + dy, iw * sc, ih * sc); } catch (err) {}
-    }
-    // 3D-logoet inde bag vinduet: en mørk tone bag modellen, så den træder frem, og den sløres ud, når BK STUDIO kommer frem
-    const a3 = m3 ? (1 - smooth((p - .25) / .13)) * intro : 0;
-    if (a3 > .003) {
-      cT.setTransform(1, 0, 0, 1, 0, 0);
-      cT.globalAlpha = .22 * a3; cT.fillStyle = '#080808'; cT.fillRect(0, 0, lt.width, lt.height);
-      const b3 = (1 - a3) * 26 + (1 - intro) * 18;
-      cT.globalAlpha = a3; if (b3 > .5) cT.filter = 'blur(' + (b3 * dpr).toFixed(1) + 'px)';
-      try { cT.drawImage(m3.canvas, 0, 0, lt.width, lt.height); } catch (err) {}
-      cT.filter = 'none'; cT.globalAlpha = 1;
+    const srcEl = loaderMode ? (poster.complete && poster.naturalWidth ? poster : null) : 1;
+    // 3D-logoet (som stenen hos Podium) snurrer rundt inde bag vinduet og svæver midt i billedet, når man er kommet igennem; så toner det ud
+    const a3 = m3 ? (1 - smooth((p - .45) / .09)) * intro : 0;
+    const io = 1 - smooth((p - .46) / .09);                                                 // billederne toner ud lige efter
+    if (!loaderMode) {
+      cT.fillStyle = DARK; cT.fillRect(0, 0, vw, vh);
+      if (io > .003) {
+        const e = smooth(zp), lift = smooth((p - .38) / .2) * vh * .12;
+        COL.forEach((c, i) => {
+          const im = c.im; if (!im.complete || !im.naturalWidth) return;
+          const sp = 1 + 1.25 * e * c.d, w = c.w * bw * (1 + 1.5 * e * c.d), h = w * im.naturalHeight / im.naturalWidth;
+          const x = Cx + c.x * bw * sp + Math.sin(t * .3 + i * 1.7) * 4, y = Cy + c.y * bw * sp + Math.cos(t * .27 + i) * 4 - lift * c.d;
+          cT.globalAlpha = io; try { cT.drawImage(im, x - w / 2, y - h / 2, w, h); } catch (err) {}
+        });
+        cT.globalAlpha = 1;
+      }
+    } else if (srcEl) {
+      const iw = poster.naturalWidth, ih = poster.naturalHeight;
+      const sc = Math.max(vw / iw, vh / ih) * (1 + .22 * (1 - smooth(zp)));
+      try { cT.drawImage(srcEl, Cx - iw * sc / 2, Cy - ih * sc / 2, iw * sc, ih * sc); } catch (err) {}
     }
     // lag M: logoformen med blød kant + opløsning ved musen
     const D = lm.width + 4000;
@@ -258,6 +272,14 @@
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
     ctx.globalAlpha = intro * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
+    if (a3 > .003) {                                                                                   // 3D-logoet, klippet af logoformen
+      c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);
+      const b3 = (1 - a3) * 28 + (1 - intro) * 18;
+      if (b3 > .5) c3.filter = 'blur(' + (b3 * dpr).toFixed(1) + 'px)';
+      try { c3.drawImage(m3.canvas, 0, 0, l3.width, l3.height); } catch (err) {}
+      c3.filter = 'none'; c3.globalCompositeOperation = 'destination-in'; c3.drawImage(lm, 0, 0); c3.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = a3; ctx.drawImage(l3, 0, 0); ctx.globalAlpha = 1;
+    }
     if (toneAmt > .003) { ctx.globalAlpha = .34 * toneAmt; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }
     if (!loaderMode && rv > .003) {
       const Wl = Math.min(vw * (nar ? .86 : .58), 940), hb = Wl / 4.99, hw = hb * .7, gp = hb * .26;
