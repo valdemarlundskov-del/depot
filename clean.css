@@ -63,15 +63,15 @@ html body.hdr-hide:not(.menu-open):not(.drop-open) header.site-header{transform:
 }
 
 /* ---------- billeder dukker op gennem BK-blobben ---------- */
-@property --bs{syntax:'<percentage>';inherits:false;initial-value:0%;}
-@property --br{syntax:'<percentage>';inherits:false;initial-value:0%;}
-.blob-rv{--bs:0%;--br:0%;
-  -webkit-mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--br),transparent calc(var(--br) + .5%));
-          mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--br),transparent calc(var(--br) + .5%));
+@property --blobS{syntax:'<percentage>';inherits:false;initial-value:0%;}
+@property --blobR{syntax:'<percentage>';inherits:false;initial-value:0%;}
+.blob-rv{--blobS:0%;--blobR:0%;
+  -webkit-mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--blobR),transparent calc(var(--blobR) + .5%));
+          mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--blobR),transparent calc(var(--blobR) + .5%));
   -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
-  -webkit-mask-size:var(--bs) auto,100% 100%;mask-size:var(--bs) auto,100% 100%;
-  transition:--bs 1.25s cubic-bezier(.55,0,.15,1),--br .9s cubic-bezier(.4,0,.2,1) .55s;}
-.blob-rv.blob-in{--bs:320%;--br:75%;}
+  -webkit-mask-size:var(--blobS) auto,100% 100%;mask-size:var(--blobS) auto,100% 100%;
+  transition:--blobS 1.25s cubic-bezier(.55,0,.15,1),--blobR .9s cubic-bezier(.4,0,.2,1) .55s;}
+.blob-rv.blob-in{--blobS:320%;--blobR:75%;}
 .blob-rv.blob-done{-webkit-mask:none;mask:none;}
 .blob-rv img{transform:scale(1.18);transition:transform 1.8s cubic-bezier(.2,.7,.2,1);}
 .blob-rv.blob-in img{transform:none;}
@@ -93,3 +93,12 @@ html body.hdr-hide:not(.menu-open):not(.drop-open) header.site-header{transform:
 .reel-cap{display:flex;justify-content:space-between;margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-300);}
 @media(max-width:640px){.reel-in{width:100%;}.reel-video{aspect-ratio:4/5;}.reel-cap{padding:0 var(--gut);}}
 @media(prefers-reduced-motion:reduce){.reel-in{transform:none;}}
+
+/* ---------- kontakt på forsiden: samme opsætning som /kontakt ---------- */
+html body .home-contact .booking-intro h2{font-size:clamp(36px,5.4vw,76px)!important;line-height:1.08!important;margin-bottom:26px!important;max-width:none;}
+.home-contact{padding-top:var(--sp-c)!important;padding-bottom:var(--sp-c)!important;}
+
+/* ---------- "Vi har arbejdet for": Vildbjerg-logoet i de rigtige farver ved hover (på en mørk flade, så det grå og hvide kan ses) ---------- */
+.logo-slot{border-radius:14px;transition:background .4s,padding .4s;}
+.logo-light:hover{background:var(--black);padding:8px 14px;}
+html body .logo-light:hover img{filter:none;opacity:1;}

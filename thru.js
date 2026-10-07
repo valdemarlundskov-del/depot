@@ -246,11 +246,11 @@
     const srcEl = loaderMode ? (poster.complete && poster.naturalWidth ? poster : null) : 1;
     // 3D-logoet (som stenen hos Podium) snurrer rundt inde bag vinduet og svæver midt i billedet, når man er kommet igennem; så toner det ud
     const a3 = m3 ? 1 - smooth((p - .45) / .09) : 0;
-    const io = 1 - smooth((p - .46) / .09);                                                 // billederne toner ud lige efter
+    const io = 1;                                                                           // billederne bliver: de glider op og dækkes af siden, der kommer nedefra
     if (!loaderMode) {
       cT.fillStyle = DARK; cT.fillRect(0, 0, vw, vh);
       if (io > .003) {
-        const e = smooth(zp), lift = smooth((p - .38) / .2) * vh * .12;
+        const e = smooth(zp), lift = Math.max(0, p - .36) * vh * .9;
         COL.forEach((c, i) => {
           const im = c.im; if (!im.complete || !im.naturalWidth) return;
           const sp = 1 + 1.25 * e * c.d, w = c.w * bw * (1 + 1.5 * e * c.d), h = w * im.naturalHeight / im.naturalWidth;
