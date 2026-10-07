@@ -102,3 +102,6 @@ html body .home-contact .booking-intro h2{font-size:clamp(36px,5.4vw,76px)!impor
 .logo-slot{border-radius:14px;transition:background .4s,padding .4s;}
 .logo-light:hover{background:var(--black);padding:8px 14px;}
 html body .logo-light:hover img{filter:none;opacity:1;}
+
+/* ---------- åbningen: ingen scroll, før logoet har vist, hvad der er bag det (thru.js) ---------- */
+html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior:none;}
