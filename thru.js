@@ -195,13 +195,34 @@
 
   // forsiden: logoet starter lille og sort og venter, til billederne (og 3D-logoet) er hentet. Så vokser det op i fuld størrelse,
   // og det sorte toner ud, så man kan se ind i rummet bag logoet. Sikkerhedsnet: senest efter 6 sekunder.
-  let homeT0 = 0; const tStart = performance.now();
+  let homeT0 = 0, fontsOk = !document.fonts; const tStart = performance.now();
+  if (document.fonts) document.fonts.ready.then(() => { fontsOk = true; });
   function homeReady(now) {
     if (homeT0) return true;
     const imgs = COL.every(c => c.im.complete), want3d = document.documentElement.dataset.thru3d === '1';
-    if ((imgs && (!want3d || window.__thru3d !== undefined)) || now - tStart > 6000) homeT0 = now;
+    if ((imgs && fontsOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) homeT0 = now;
     return !!homeT0;
   }
+  // man kan ikke scrolle videre, før alt bag logoet er hentet og logoet har vist, hvad der er bag det (ellers ødelægges effekten).
+  // Siden starter altid i toppen. Gælder ikke, når man kommer tilbage via et link/tilbage-knap, har et #mål eller reduceret bevægelse.
+  const lockScroll = !loaderMode && !reduce && !internalNav && !location.hash;
+  let locked = false;
+  const LOCK_KEYS = new Set([' ', 'Spacebar', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'End', 'Home']);
+  const stopEv = e => { if (locked) e.preventDefault(); };
+  const stopKey = e => { if (locked && LOCK_KEYS.has(e.key) && !(e.target.closest && e.target.closest('input,textarea,select'))) e.preventDefault(); };
+  if (lockScroll) {
+    locked = true;
+    try { history.scrollRestoration = 'manual'; } catch (e) {}
+    scrollTo(0, 0);
+    document.documentElement.classList.add('thru-lock');
+    addEventListener('wheel', stopEv, { passive: false }); addEventListener('touchmove', stopEv, { passive: false }); addEventListener('keydown', stopKey);
+  }
+  function unlock() {
+    if (!locked) return; locked = false;
+    document.documentElement.classList.remove('thru-lock');
+    removeEventListener('wheel', stopEv); removeEventListener('touchmove', stopEv); removeEventListener('keydown', stopKey);
+  }
+  setTimeout(unlock, 14000);                                                                    // sikkerhedsnet
   function draw(now) {
     const p = progress();
     // 3D-logoet (logo3d.min.js) snurrer rundt inde bag logo-vinduet, foran showreelen
@@ -211,6 +232,7 @@
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
     const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1100) : 0;              // forsiden: lille → fuld størrelse
     const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 650) / 1000) : 0;      // forsiden: det sorte logo toner ud
+    if (locked && hr && now - homeT0 > 1500) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
     const asp = LWd / LHt;
