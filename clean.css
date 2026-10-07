@@ -155,10 +155,13 @@ html body .ak-title{font-size:clamp(48px,7vw,112px);}
 .bk3d-layer{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
 .strip,footer{position:relative;}
 .strip>*:not(.bk3d-layer),footer>*:not(.bk3d-layer){position:relative;z-index:1;}
-/* i footeren lander 3D-logoet på BK-logoets plads og bliver til det flade logo; derefter breder "STUDIO" sig flydende ud */
-html.bk3d-on footer .foot-mega .fm-blob{opacity:0;transition:opacity .25s;}
+/* i footeren lander 3D-logoet midt i det store logo-felt og bliver til det flade logo (--fmdx flytter det til midten); så glider
+   logoet ud på sin plads til venstre, og "STUDIO" skubbes ud til højre bag det med en flydende kant (logo3d.min.js) */
+html.bk3d-on footer .foot-mega .fm-blob{position:relative;z-index:2;opacity:0;transform:translateX(var(--fmdx,0px));transition:none;}
 html.bk3d-on footer.fm-landed .foot-mega .fm-blob{opacity:1;}
-html.bk3d-on footer .foot-mega .fm-word{clip-path:inset(0 100% 0 0);filter:brightness(0) invert(1) url(#bk-liquid);transition:clip-path .5s cubic-bezier(.6,0,.2,1);}
-html.bk3d-on footer.fm-landed .foot-mega .fm-word{clip-path:inset(0 -2% 0 0);transition:clip-path 1.5s cubic-bezier(.5,0,.15,1) .1s;}
+html.bk3d-on footer.fm-spread .foot-mega .fm-blob{transform:none;transition:transform 1.15s cubic-bezier(.65,0,.2,1);}
+html.bk3d-on footer.fm-spread .foot-mega:hover .fm-blob{transform:rotate(-10deg) scale(1.04);transition:transform 1s var(--ease-out);}
+html.bk3d-on footer .foot-mega .fm-word{position:relative;z-index:1;clip-path:inset(0 100% 0 0);transform:translateX(-18%);filter:brightness(0) invert(1) url(#bk-liquid);transition:none;}
+html.bk3d-on footer.fm-spread .foot-mega .fm-word{clip-path:inset(0 -2% 0 0);transform:none;transition:clip-path 1.25s cubic-bezier(.6,0,.2,1) .2s,transform 1.25s cubic-bezier(.6,0,.2,1) .2s;}
 .bk3d-ring{transform:translateZ(-30px);}
 html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger altid foran 3D-logoet */
