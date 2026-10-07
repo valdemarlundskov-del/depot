@@ -66,77 +66,74 @@
   }
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
-  // ---------- liquid ved hover (forsiden) ----------
-  // Markøren er som en finger i vand: den trækker logoet med sig, og efterlader ringe, der brer sig, svinger og dør ud. Smalt og blødt.
-  let liquidOff = false, mxp = -1e4, myp = -1e4, hov = 0, lastSp = null, lastP = null, vxs = 0, vys = 0, idleAt = 0, gWp = null;
-  const rip = [];
+  // ---------- magnetisk blæk ved hover (forsiden) ----------
+  // Logoet er blæk, og markøren er en magnet: kommer man tæt på, strækker blækket sig ud mod markøren som kviksølv, danner en bro
+  // og snører sig af igen. Markøren trækker selv en lille blækdråbe med sig, og når den bevæger sig, drypper der små dråber,
+  // der svinder ind. Da logoet er et vindue, ser man rummet bag logoet gennem alt blækket.
+  // Tegnes i lav opløsning: logoet + dråberne sløres og skærpes igen med en tærskel, så de flyder sammen.
   const mkc = () => document.createElement('canvas');
-  let LQ = null;                                        // arbejdsdata (genbruges)
+  const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, vx: 0, vy: 0, a: 0, drops: [], lx: 0, ly: 0 };
   sec.addEventListener('pointermove', e => {
     if (reduce || loaderMode) return;
-    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top, now = performance.now();
-    if (lastP) { vxs += ((x - lastP.x) - vxs) * .45; vys += ((y - lastP.y) - vys) * .45; }
-    lastP = { x, y }; mxp = x; myp = y;
-    if (!lastSp || Math.hypot(x - lastSp.x, y - lastSp.y) > 14) {
-      const d = lastSp ? Math.hypot(x - lastSp.x, y - lastSp.y) : 14;
-      rip.push({ x, y, t0: now, a: Math.min(1, Math.max(.3, d / 26)) }); lastSp = { x, y };
-      if (rip.length > 16) rip.shift();
-    }
-    dirty = true;
+    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    if (!ink.on) { ink.x = ink.lx = x; ink.y = ink.ly = y; ink.vx = ink.vy = 0; }
+    ink.on = true; ink.tx = x; ink.ty = y; dirty = true;
   });
-  sec.addEventListener('pointerleave', () => { mxp = myp = -1e4; lastP = lastSp = null; });
-  function applyLiquid(now, ox, oy, bw, bh, zp) {
-    if (liquidOff) return;
-    const gate = 1 - clamp((zp - .04) / .22);
-    const pad = 44, inside = mxp > ox - pad && mxp < ox + bw + pad && myp > oy - pad && myp < oy + bh + pad;
-    hov += ((inside ? 1 : 0) - hov) * .2; vxs *= .87; vys *= .87;
-    for (let i = rip.length - 1; i >= 0; i--) if (now - rip[i].t0 > 1700) rip.splice(i, 1);
-    if (inside && now - idleAt > 700) { idleAt = now; rip.push({ x: mxp, y: myp, t0: now, a: .34 }); if (rip.length > 16) rip.shift(); }   // en svag ring ind imellem, så det bliver ved med at leve
-    if (gate < .02 || (!rip.length && Math.hypot(vxs, vys) < .05)) return;
-    const R = 105, cx = inside ? mxp : (rip.length ? rip[rip.length - 1].x : mxp), cy = inside ? myp : (rip.length ? rip[rip.length - 1].y : myp);
-    const x0 = Math.max(0, Math.floor((cx - R) * dpr)), y0 = Math.max(0, Math.floor((cy - R) * dpr));
-    const w = Math.min(cv.width - x0, Math.ceil(2 * R * dpr)), h = Math.min(cv.height - y0, Math.ceil(2 * R * dpr));
-    if (w < 30 || h < 30) return;
-    let src;
-    try { src = cT.getImageData(x0, y0, w, h); } catch (err) { liquidOff = true; return; }        // åbnes siden direkte fra en fil, må billedet ikke læses: så springes effekten over
-    const sd = src.data, out = ctx.createImageData(w, h), od = out.data;
-    const st = 6, gw = Math.ceil(w / st) + 2, gh = Math.ceil(h / st) + 2;
-    if (!LQ || LQ.n < gw * gh) LQ = { n: gw * gh, ux: new Float32Array(gw * gh), uy: new Float32Array(gw * gh), sh: new Float32Array(gw * gh) };
-    const { ux, uy, sh } = LQ;
-    const live = rip.map(s => { const age = (now - s.t0) / 1000; return { x: s.x, y: s.y, r0: 62 * age, wd: 12 + age * 9, amp: s.a * Math.pow(1 - age / 1.7, 2) * 12.5 * gate }; });
-    const dk = 2.7 * gate;
-    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
-      const px = (x0 + i * st) / dpr, py = (y0 + j * st) / dpr;
-      let Ux = 0, Uy = 0, S = 0;
-      const dx0 = px - cx, dy0 = py - cy, dd = Math.hypot(dx0, dy0);
-      const g = Math.exp(-(dd * dd) / (2 * 34 * 34));
-      Ux += vxs * dk * g; Uy += vys * dk * g;                                         // trækkes med markøren
-      for (const s of live) {
-        const rx = px - s.x, ry = py - s.y, d = Math.hypot(rx, ry) || 1e-3, q = (d - s.r0) / s.wd, env = Math.exp(-q * q);
-        if (env < .02) continue;
-        const o = Math.cos(q * 2.3) * env * s.amp; Ux += rx / d * o; Uy += ry / d * o; S += Math.sin(q * 2.3) * env * s.amp * .014;
-      }
-      const um = Math.hypot(Ux, Uy); if (um > 24) { Ux *= 24 / um; Uy *= 24 / um; }              // loft, så intet rives i stykker
-      const wnd = Math.min(1, Math.max(0, (R - dd) / (R * .4)));                       // blød afkant, så effekten aldrig får en kant
-      ux[j * gw + i] = Ux * wnd; uy[j * gw + i] = Uy * wnd; sh[j * gw + i] = S * wnd;
+  sec.addEventListener('pointerleave', () => { ink.on = false; });
+  let iS = null, iC = null;
+  function applyInk(now, dt, ox, oy, bw, bh, zp, sM, txM, tyM, k) {
+    const gate = 1 - smooth(zp / .18);
+    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 6);
+    for (let i = ink.drops.length - 1; i >= 0; i--) if (now - ink.drops[i].t0 > ink.drops[i].life) ink.drops.splice(i, 1);
+    if (ink.a < .01 && !ink.drops.length) return;
+    // dråben følger markøren med fjeder og inerti, og strækkes i bevægelsesretningen
+    if (ink.on) { ink.vx += ((ink.tx - ink.x) * 240 - ink.vx * 22) * dt; ink.vy += ((ink.ty - ink.y) * 240 - ink.vy * 22) * dt; }
+    else { ink.vx *= Math.exp(-dt * 8); ink.vy *= Math.exp(-dt * 8); }
+    ink.x += ink.vx * dt; ink.y += ink.vy * dt;
+    const speed = Math.hypot(ink.vx, ink.vy);
+    // drypper, når den bevæger sig
+    if (ink.on && Math.hypot(ink.x - ink.lx, ink.y - ink.ly) > 26 && ink.drops.length < 28) {
+      ink.drops.push({ x: ink.x, y: ink.y, r: 9 + Math.random() * 12, t0: now, life: 700 + Math.random() * 700, vy: 10 + Math.random() * 30 }); ink.lx = ink.x; ink.ly = ink.y;
     }
-    for (let y = 0; y < h; y++) {
-      const gy = y / st, j = Math.floor(gy), fy = gy - j;
-      for (let x = 0; x < w; x++) {
-        const gx = x / st, i = Math.floor(gx), fx = gx - i, k = j * gw + i;
-        const a00 = (1 - fx) * (1 - fy), a10 = fx * (1 - fy), a01 = (1 - fx) * fy, a11 = fx * fy;
-        const Ux = ux[k] * a00 + ux[k + 1] * a10 + ux[k + gw] * a01 + ux[k + gw + 1] * a11;
-        const Uy = uy[k] * a00 + uy[k + 1] * a10 + uy[k + gw] * a01 + uy[k + gw + 1] * a11;
-        const S = sh[k] * a00 + sh[k + 1] * a10 + sh[k + gw] * a01 + sh[k + gw + 1] * a11;
-        let sx = x - Ux * dpr, sy = y - Uy * dpr;
-        sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
-        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = (iy * w + ix) * 4, p2 = p + w * 4;
-        const b00 = (1 - tx) * (1 - ty), b10 = tx * (1 - ty), b01 = (1 - tx) * ty, b11 = tx * ty, sc = 1 + S, o = (y * w + x) * 4;
-        for (let c = 0; c < 3; c++) od[o + c] = (sd[p + c] * b00 + sd[p + 4 + c] * b10 + sd[p2 + c] * b01 + sd[p2 + 4 + c] * b11) * sc;
-        od[o + 3] = sd[p + 3] * b00 + sd[p + 7] * b10 + sd[p2 + 3] * b01 + sd[p2 + 7] * b11;
+    const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
+    if (!iS || iS.width !== gw || iS.height !== gh) { iS = mkc(); iS.width = gw; iS.height = gh; iC = iS.getContext('2d', { willReadFrequently: true }); }
+    const D = dpr * q;
+    iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.filter = 'blur(' + (D * 22).toFixed(1) + 'px)'; iC.fillStyle = '#000';
+    // logoet (så dråberne kan smelte sammen med det) — magneten trækker formen lidt ud mod markøren
+    iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM)); iC.fill(LOGO, 'evenodd');
+    // magneten: find logoets kant på vej fra markøren ind mod logoets midte; er den tæt på, rækker blækket ud efter markøren som en tråd
+    let reach = null;
+    if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
+      const fx = sM * (ox + FX * k) + txM, fy = sM * (oy + FY * k) + tyM, N = 40;
+      for (let i = 1; i <= N; i++) {
+        const px = ink.x + (fx - ink.x) * i / N, py = ink.y + (fy - ink.y) * i / N;
+        if (iC.isPointInPath(LOGO, px * D, py * D, 'evenodd')) { reach = { x: px, y: py, d: Math.hypot(px - ink.x, py - ink.y) }; break; }
       }
     }
-    cT.setTransform(1, 0, 0, 1, 0, 0); cT.putImageData(out, x0, y0); dirty = true;
+    iC.setTransform(D, 0, 0, D, 0, 0);
+    if (reach && reach.d < 260) {
+      const pull = Math.pow(1 - reach.d / 260, .7) * ink.a, n = Math.max(3, Math.ceil(reach.d / 9));
+      for (let i = 0; i <= n; i++) {
+        const u = i / n, wob = Math.sin(u * Math.PI) * Math.sin(now / 1000 * 3 + u * 5) * 6 * pull;
+        const r = (12 + 34 * Math.pow(1 - u, 1.2)) * (.45 + .55 * pull);   // tyk ved logoet, tynd ved markøren
+        if (r > .5) { iC.beginPath(); iC.arc(reach.x + (ink.x - reach.x) * u * (.35 + .65 * pull) + wob, reach.y + (ink.y - reach.y) * u * (.35 + .65 * pull), r * Math.min(1, pull * 2.2), 0, Math.PI * 2); iC.fill(); }
+      }
+    }
+    const R = 44 * ink.a, st = Math.min(1.8, 1 + speed * .0022), ang = Math.atan2(ink.vy, ink.vx);
+    if (R > .5) { iC.beginPath(); iC.ellipse(ink.x, ink.y, R * st, R / Math.sqrt(st), ang, 0, Math.PI * 2); iC.fill(); }
+    ink.drops.forEach(d => {
+      const age = (now - d.t0) / d.life, r = d.r * (1 - age) * (age < .12 ? age / .12 : 1);
+      if (r > .4) { iC.beginPath(); iC.arc(d.x, d.y + d.vy * age, r, 0, Math.PI * 2); iC.fill(); }
+    });
+    const im = iC.getImageData(0, 0, gw, gh), dd = im.data;
+    for (let i = 3; i < dd.length; i += 4) { const v = (dd[i] - 100) * 6; dd[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: blæk flyder sammen
+    iC.setTransform(1, 0, 0, 1, 0, 0); iC.filter = 'none'; iC.putImageData(im, 0, 0);
+    // læg blækket oven i logo-masken (union), med samme bløde kant
+    cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
+    cM.filter = 'blur(' + (6 * dpr).toFixed(1) + 'px)'; cM.globalAlpha = Math.min(1, ink.a * 1.5 + (ink.drops.length ? .6 : 0));
+    cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
+    cM.drawImage(iS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
+    dirty = true;
   }
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
@@ -321,8 +318,8 @@
       cM.drawImage(gS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
+    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, ox, oy, bw, bh, zp, sM, txM, tyM, k);   // magnetisk blæk ved markøren
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
-    if (!loaderMode) applyLiquid(now, ox, oy, bw, bh, zp);                          // liquid virker kun på billederne i logoet; de hvide omkring og hullerne rører vi ikke
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
     // sammensæt: hvid baggrund → showreelen i logoformen (vokser, til den fylder skærmen) → let mørk tone → BK STUDIO i lys skrift oven på.
