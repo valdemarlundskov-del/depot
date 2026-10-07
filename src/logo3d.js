@@ -169,8 +169,8 @@ function free(host) {
 // ---------- 3) rejsen gennem forsiden ----------
 // Efter åbningen følger 3D-logoet med ned gennem forsiden og står stille midt på skærmen, men ses kun på de sorte flader:
 // i karussellen (som et plan midt i ringen: foran de bagerste kort, bag teksten og de forreste kort), i filmstriben (bag billederne)
-// og i footeren. Der flyver det ned på BK-logoets plads, skifter fra sort til hvidt, lander og bliver til det flade logo, og
-// "STUDIO" breder sig flydende ud fra det. Logoet renderes én gang pr. billede på et skjult lærred og kopieres ind i hver sorts flade.
+// og i footeren. Der følger det med footeren op, skifter fra sort til hvidt og lander midt i footerens store logo-felt, hvor det
+// bliver til det flade logo; så glider logoet ud på sin plads til venstre, og "STUDIO" skubbes flydende ud til højre bag det. Logoet renderes én gang pr. billede på et skjult lærred og kopieres ind i hver sorts flade.
 function journey() {
   const targets = [];
   const add = (sec, parent, before, kind) => {
@@ -195,8 +195,8 @@ function journey() {
   svg.innerHTML = '<filter id="bk-liquid" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>';
   document.body.appendChild(svg);
   const disp = svg.querySelector('feDisplacementMap');
-  let liqT0 = 0;
-  function liquid(now) { const k = Math.min(1, (now - liqT0) / 1500); disp.setAttribute('scale', (70 * Math.pow(1 - k, 2)).toFixed(1)); if (k < 1) requestAnimationFrame(liquid); }
+  let liqT0 = 0, spreadT = 0;
+  function liquid(now) { const k = Math.min(1, (now - liqT0) / 1700); disp.setAttribute('scale', (60 * Math.pow(1 - k, 2)).toFixed(1)); if (k < 1) requestAnimationFrame(liquid); }
 
   function size() {
     vw = innerWidth; vh = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -208,19 +208,19 @@ function journey() {
     raf = 0; if (!mat) return;
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
     // fod: hvor langt er man nået ned mod BK-logoet i footeren (1 = landet)
-    const fm = document.querySelector('.foot-mega .fm-blob');
-    let t = 0, br = null;
+    const fm = document.querySelector('.foot-mega .fm-blob'), mega = fm && fm.parentElement;
+    let t = 0, br = null, mx = 0;
     if (fm) {
-      br = fm.getBoundingClientRect();
+      br = fm.getBoundingClientRect(); const mr = mega.getBoundingClientRect(); mx = mr.left + mr.width / 2;
       const maxS = document.documentElement.scrollHeight - vh, endTop = br.top - (maxS - scrollY) + 30, start = vh * 1.05;
       t = smooth((start - br.top) / Math.max(1, start - endTop));
     }
     const goal = scrollY * .0024;                                      // drejer kun, når man scroller
     ang += (goal - ang) * (1 - Math.exp(-dt * 7)); if (Math.abs(goal - ang) < 1e-4) ang = goal;
-    const baseW = Math.min(vw * (vw < 700 ? .62 : .34), 470);
+    const baseW = Math.min(vw * (vw < 700 ? .7 : .42), 580);
     // når footeren kommer op nedefra, følger logoet med i footerens synlige del (så det ikke gemmer sig bag den lyse flade ovenover)
-    const fr = foot ? foot.getBoundingClientRect().top : vh, baseY = Math.max(vh / 2, Math.min(fr + baseW * .55 + 30, vh + baseW));
-    const cx = br ? vw / 2 + (br.left + br.width / 2 - vw / 2) * t : vw / 2, cy = br ? baseY + (br.top + br.height / 2 - baseY) * t : baseY;
+    const fr = foot ? foot.getBoundingClientRect().top : vh, baseY = fr < vh ? Math.max(vh / 2, fr + baseW * .55 + 30) : vh / 2;   // midt på skærmen; i footeren under dens overkant
+    const cx = br ? vw / 2 + (mx - vw / 2) * t : vw / 2, cy = br ? baseY + (br.top + br.height / 2 - baseY) * t : baseY;
     const wpx = baseW + ((br ? br.width : baseW) - baseW) * t;
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ), u = VIS / vh;
     group.scale.setScalar(s); group.position.set((cx - vw / 2) * u, -(cy - vh / 2) * u, 0);
@@ -229,7 +229,16 @@ function journey() {
     mat.color.lerpColors(C0, C1, smooth((t - .35) / .5));               // sort på vej ned, hvidt når det lander i den sorte footer
     renderer.render(scene, camera);
     const land = t > .985;
-    if (land !== landed) { landed = land; foot && foot.classList.toggle('fm-landed', land); if (land) { liqT0 = performance.now(); requestAnimationFrame(liquid); } }
+    if (land !== landed) {
+      landed = land;
+      if (land && fm) {
+        // logoet lander midt i feltet og bliver til det flade logo; så glider det ud på sin plads, og "STUDIO" skubbes ud til højre
+        const dx = mega.clientWidth / 2 - (fm.offsetLeft + fm.offsetWidth / 2);
+        mega.style.setProperty('--fmdx', dx.toFixed(1) + 'px');
+        foot.classList.add('fm-landed');
+        clearTimeout(spreadT); spreadT = setTimeout(() => { foot.classList.add('fm-spread'); liqT0 = performance.now(); requestAnimationFrame(liquid); }, 260);
+      } else if (foot) { clearTimeout(spreadT); foot.classList.remove('fm-landed', 'fm-spread'); }
+    }
     const fade = 1 - smooth((t - .93) / .06);                           // modellen går over i det flade logo
     targets.forEach(x => {
       if (!x.vis) return;
