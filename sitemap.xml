@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.bkstudio.dk/</loc><priority>1.0</priority></url>
-  <url><loc>https://www.bkstudio.dk/arbejde</loc><priority>0.8</priority></url>
-  <url><loc>https://www.bkstudio.dk/arkiv</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bkstudio.dk/om-os</loc><priority>0.6</priority></url>
-  <url><loc>https://www.bkstudio.dk/kontakt</loc><priority>0.6</priority></url>
-  <url><loc>https://www.bkstudio.dk/book</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bkstudio.dk/privatlivspolitik</loc><priority>0.2</priority></url>
+  <url><loc>https://www.bkstudio.dk/</loc></url>
+  <url><loc>https://www.bkstudio.dk/arbejde</loc></url>
+  <url><loc>https://www.bkstudio.dk/arbejde/porsche924</loc></url>
+  <url><loc>https://www.bkstudio.dk/arbejde/vildbjerg</loc></url>
+  <url><loc>https://www.bkstudio.dk/arbejde/thailand</loc></url>
+  <url><loc>https://www.bkstudio.dk/om-os</loc></url>
+  <url><loc>https://www.bkstudio.dk/kontakt</loc></url>
+  <url><loc>https://www.bkstudio.dk/book</loc></url>
+  <url><loc>https://www.bkstudio.dk/arkiv</loc></url>
+  <url><loc>https://www.bkstudio.dk/privatlivspolitik</loc></url>
 </urlset>
