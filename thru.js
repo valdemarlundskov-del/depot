@@ -185,8 +185,8 @@
 
   function draw(now) {
     const p = progress();
-    // 3D-åbningen (logo3d.min.js) kører: ingen logo-maske og intet zoom gennem logoet — videoen ligger i fuld skærm bag 3D-logoet
-    const m3 = !loaderMode && document.documentElement.dataset.thru3d === '1';
+    // 3D-logoet (logo3d.min.js) snurrer rundt inde bag logo-vinduet, foran showreelen
+    const m3 = !loaderMode && window.__thru3d && window.__thru3d.ready ? window.__thru3d : null;
     if (p >= 1) { if (doneFinal) return; doneFinal = true; } else doneFinal = false;
     const tIn = now - t0;
     const intro = reduce || internalNav ? 1 : easeOut(tIn / (loaderMode ? 1700 : 3000));          // logoet afsløres langsomt ved indlæsning
@@ -228,26 +228,36 @@
       const dy = (.5 - p) * vh * .02;
       try { cT.drawImage(srcEl, Cx - iw * sc / 2, Cy - ih * sc / 2 + dy, iw * sc, ih * sc); } catch (err) {}
     }
+    // 3D-logoet inde bag vinduet: en mørk tone bag modellen, så den træder frem, og den sløres ud, når BK STUDIO kommer frem
+    const a3 = m3 ? (1 - smooth((p - .25) / .13)) * intro : 0;
+    if (a3 > .003) {
+      cT.setTransform(1, 0, 0, 1, 0, 0);
+      cT.globalAlpha = .22 * a3; cT.fillStyle = '#080808'; cT.fillRect(0, 0, lt.width, lt.height);
+      const b3 = (1 - a3) * 26 + (1 - intro) * 18;
+      cT.globalAlpha = a3; if (b3 > .5) cT.filter = 'blur(' + (b3 * dpr).toFixed(1) + 'px)';
+      try { cT.drawImage(m3.canvas, 0, 0, lt.width, lt.height); } catch (err) {}
+      cT.filter = 'none'; cT.globalAlpha = 1;
+    }
     // lag M: logoformen med blød kant + opløsning ved musen
     const D = lm.width + 4000;
     cM.setTransform(1, 0, 0, 1, 0, 0); cM.clearRect(0, 0, lm.width, lm.height);
     cM.shadowColor = '#000'; cM.shadowBlur = blur; cM.shadowOffsetX = D; cM.shadowOffsetY = 0;
     cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM - D, dpr * tyM);
     cM.translate(ox, oy); cM.scale(k, k); cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd');
-    if (!m3) applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
+    applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
-    if (!loaderMode && !m3) applyLiquid(now, ox, oy, bw, bh, zp);                          // liquid virker kun på billederne i logoet; de hvide omkring og hullerne rører vi ikke
-    if (!m3) { cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over'; }
+    if (!loaderMode) applyLiquid(now, ox, oy, bw, bh, zp);                          // liquid virker kun på billederne i logoet; de hvide omkring og hullerne rører vi ikke
+    cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
     // sammensæt: hvid baggrund → showreelen i logoformen (vokser, til den fylder skærmen) → let mørk tone → BK STUDIO i lys skrift oven på.
     // Når vinduet fylder skærmen, toner lærredets udgave ud, og den almindelige video bagved tager over (samme billede, så der ingen overgang er).
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
     const fadeLt = (!loaderMode && vid && vidReady) ? smooth((p - .44) / .1) : 0;               // 0..1: lærredets video → den almindelige video
     const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
-    ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : m3 ? 1 - smooth((p - .06) / .16) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
+    ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
-    ctx.globalAlpha = intro * (1 - fadeLt) * (m3 ? smooth((p - .05) / .17) : 1); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // 3D: videoen toner frem, mens logoet sløres ud
+    ctx.globalAlpha = intro * (1 - fadeLt); ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;
     if (toneAmt > .003) { ctx.globalAlpha = .34 * toneAmt; ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1; }
     if (!loaderMode && rv > .003) {
       const Wl = Math.min(vw * (nar ? .86 : .58), 940), hb = Wl / 4.99, hw = hb * .7, gp = hb * .26;
