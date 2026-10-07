@@ -65,13 +65,15 @@
     if ('ResizeObserver' in window) bgs.forEach(bg => new ResizeObserver(fit).observe(bg.parentElement));
   })();
 
-  // menu-drop: panelet bygges op med den højre halvdel af BK-logoet i stort til venstre, menupunkterne i den brede del
-  // til højre og sociale medier (med logoer) nederst. Markupen i siderne er den samme som før; det ekstra lægges på her.
+  // menu-drop: panelet i højre side med menupunkterne og sociale medier (med logoer) nederst. BK-logoet sidder lige på panelets
+  // venstre kant: halvdelen er inde i panelet, halvdelen stikker ud over siden. Logoet skifter farve efter det, det ligger over
+  // (som headeren og markøren): sort ude på siden og lyst inde i panelet. Markupen i siderne er den samme; det ekstra lægges på her.
   (function () {
-    const drop = document.getElementById('menuDrop'); if (!drop || drop.querySelector('.drop-art')) return;
+    const drop = document.getElementById('menuDrop'); if (!drop || document.querySelector('.drop-logo')) return;
     const ul = drop.querySelector('ul'), book = drop.querySelector('.drop-book');
-    const art = document.createElement('div'); art.className = 'drop-art'; art.setAttribute('aria-hidden', 'true');
+    const art = document.createElement('div'); art.className = 'drop-logo'; art.setAttribute('aria-hidden', 'true');
     art.innerHTML = '<img src="/images/logo/bk-blob.svg" alt="" decoding="async">';
+    document.body.appendChild(art);                                  // uden for panelet, så farveskiftet virker både på siden og i panelet
     const main = document.createElement('div'); main.className = 'drop-main';
     if (ul) main.appendChild(ul); if (book) main.appendChild(book);
     const IG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>';
@@ -82,9 +84,17 @@
       '<a class="ds" href="https://www.linkedin.com/company/bk-studio-dk/" target="_blank" rel="noopener" aria-label="LinkedIn — BK Studio">' + LI + '<span>LinkedIn</span></a></div>' +
       '<a class="ds-mail" href="/kontakt">kontakt@bkstudio.dk</a>';
     main.appendChild(soc);
-    drop.appendChild(art); drop.appendChild(main);
+    drop.appendChild(main);
+    // logoets midte på panelets venstre kant, lodret midt på panelet
+    const place = () => {
+      const r = drop.getBoundingClientRect(), h = Math.min(r.height * 1.02, 470), w = h * 839.7 / 724.3;
+      art.style.width = w.toFixed(1) + 'px'; art.style.left = (r.left - w / 2).toFixed(1) + 'px'; art.style.top = (r.top + r.height / 2 - h / 2).toFixed(1) + 'px';
+      drop.style.setProperty('--lh', (w / 2).toFixed(1) + 'px');
+    };
+    new MutationObserver(() => { const o = drop.classList.contains('open'); if (o) place(); art.classList.toggle('on', o); }).observe(drop, { attributes: true, attributeFilter: ['class'] });
+    addEventListener('resize', () => { if (drop.classList.contains('open')) place(); });
     // logoet drejer en anelse efter musen inde i panelet
-    drop.addEventListener('pointermove', e => { const r = drop.getBoundingClientRect(); art.style.setProperty('--dr', (((e.clientY - r.top) / r.height - .5) * 14).toFixed(2) + 'deg'); });
+    drop.addEventListener('pointermove', e => { const r = drop.getBoundingClientRect(); art.style.setProperty('--dr', (((e.clientY - r.top) / r.height - .5) * 10).toFixed(2) + 'deg'); });
     drop.addEventListener('pointerleave', () => art.style.setProperty('--dr', '0deg'));
   })();
 
