@@ -149,5 +149,4 @@ html body .menu-drop .drop-row:hover .drop-lt,html body .menu-drop .drop-row:foc
 html body .section-head h2,html body .nums h2,html body .booking-intro h1,html body .booking-intro h2,html body .home-contact .booking-intro h2,
 html body .about-bk-copy h2,html body .mh-h,html body .burst-copy h2,html body .burst h2{font-size:var(--h2)!important;line-height:1.04!important;}
 html body .nums h2{margin-bottom:18px;}
-@media(min-width:901px){html body .w3d-title{font-size:clamp(40px,5vw,80px);}}
 html body .ak-title{font-size:clamp(48px,7vw,112px);}
