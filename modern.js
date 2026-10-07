@@ -100,6 +100,16 @@
 
   refresh(); setInterval(refresh, 15000);
 
+  // undersiderne: 3D-logoet (logo3d.min.js) hentes først, når footeren eller karussellen nærmer sig, så det kan følge med og lande i footeren
+  if (!document.querySelector('[data-thru]') && !matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    let gl = false; try { const c = document.createElement('canvas'); gl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) {}
+    const near = [document.querySelector('footer'), document.querySelector('.w3d')].filter(Boolean);
+    if (gl && near.length) {
+      const jo = new IntersectionObserver(function (es) { if (es.some(e => e.isIntersecting)) { jo.disconnect(); import('/logo3d.min.js').catch(function () {}); } }, { rootMargin: '1400px 0px' });
+      near.forEach(n => jo.observe(n));
+    }
+  }
+
   // 3D-logoet: three.js (logo3d.min.js) hentes først, når logoet nærmer sig skærmen
   const l3 = document.querySelectorAll('.logo3d');
   if (l3.length && 'IntersectionObserver' in window) {

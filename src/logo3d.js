@@ -5,7 +5,7 @@
       glider det bagud ind i det sorte rum og snurrer (drejningen følger scroll), og det bliver der, til siden kommer op nedefra og dækker det. Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
       midt i billedet; derefter toner den ud med et slør, og BK STUDIO kommer frem.
       Uden WebGL, eller hvis man har slået animationer fra, er vinduet bare showreelen.
-   3) Rejsen gennem forsiden: 3D-logoet følger med ned og ses på de sorte flader, og lander til sidst som logoet i footeren.
+   3) Rejsen gennem siden (alle sider; på undersiderne hentes filen først, når footeren eller karussellen nærmer sig): 3D-logoet følger med ned og ses på de sorte flader, og lander til sidst som logoet i footeren.
    2) <div class="logo3d" data-src="images/logo/bk-blob.svg" data-color="#141414"></div> giver et frit 3D-logo andre steder.
 
    Bygges til logo3d.min.js (med three.js indbygget) med esbuild:
@@ -99,8 +99,8 @@ function opening(sec) {
     // inde bag logoet: midt i vinduet, og vokser langsommere end vinduet (den ligger længere inde), så man zoomer forbi den
     const T = window.__thru, nar = vw < 700, asp = LWd / LHt;
     const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (T && T.g ? T.g : 1);
-    const jw = Math.min(vw * (vw < 700 ? .7 : .42), 580), grow = smooth((p - .3) / .3);   // samme størrelse som på resten af siden (journey)
-    const wpx = bw * (1 - .56 * back) * (1 - grow) + jw * grow;                               // ved start: præcis logoets størrelse; glider bagud og vokser så op
+    const jw = Math.min(vw * (vw < 700 ? .7 : .42), 580);                                     // samme størrelse som på resten af siden (journey)
+    const wpx = bw + (jw - bw) * back;                                                         // ved start: præcis logoets størrelse; går så direkte over i den faste størrelse
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ);
     group.scale.setScalar(s);
     const cx = T ? T.cx : vw / 2, cy = T ? T.cy : vh / 2, u = VIS / vh;
@@ -179,7 +179,7 @@ function journey() {
     const cv = document.createElement('canvas'); cv.className = 'bk3d-layer bk3d-' + kind; cv.setAttribute('aria-hidden', 'true');
     parent.insertBefore(cv, before || null); targets.push({ sec, cv, ctx: cv.getContext('2d'), vis: false, kind });
   };
-  const w3 = document.querySelector('.flow-wrap .w3d'), ring = w3 && w3.querySelector('.w3d-stage');
+  const w3 = document.querySelector('.w3d'), ring = w3 && w3.querySelector('.w3d-stage');
   add(w3, ring, ring && ring.firstChild, 'ring');
   const strip = document.querySelector('.strip'); add(strip, strip, strip && strip.firstChild, 'strip');
   const foot = document.querySelector('footer'); add(foot, foot, foot && foot.firstChild, 'foot');
@@ -258,5 +258,5 @@ function journey() {
 }
 
 const thruSec = document.querySelector('[data-thru]');
-if (thruSec && !reduce) { opening(thruSec); journey(); }
+if (!reduce) { if (thruSec) opening(thruSec); journey(); }        // rejsen (og landingen i footeren) på alle sider, åbningen kun på forsiden
 document.querySelectorAll('.logo3d').forEach(free);
