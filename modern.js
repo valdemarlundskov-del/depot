@@ -101,7 +101,7 @@
     const a = el('span'); a.appendChild(dot()); a.appendChild(liveText(null, 'main')); a.appendChild(el('span', 'hs-sep', '·')); a.appendChild(liveText(null, 'sub'));
     const b = el('span'); b.appendChild(el('span', null, 'Lokal tid i Danmark')); b.appendChild(liveText('m-clock', 'clock'));
     meta.appendChild(a); meta.appendChild(b);
-    f.insertBefore(mega, bottom); f.insertBefore(meta, bottom);
+    f.insertBefore(meta, bottom); f.insertBefore(mega, bottom);   // status og lokal tid over det store logo
   });
 
   refresh(); setInterval(refresh, 15000);

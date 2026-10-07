@@ -1,7 +1,6 @@
 /* BK Studio — oprydning og effekter (lag ovenpå style.css, v2.css og modern.css).
    Samme identitet: blobben, den inverterende header, topografi-linjerne, blækstregerne og de fede versaler.
-   Mere overskueligt: headeren går af vejen, når man scroller ned, ydelserne står i et roligt gitter i stedet for en lang låst scroll,
-   og processen er tre kort side om side. Nye effekter (clean.js): billeder dukker op gennem BK-blobben, kort vipper med lysrefleks
+   Mere overskueligt: headeren går af vejen, når man scroller ned, og processen er tre kort side om side. Nye effekter (clean.js): kort vipper med lysrefleks
    efter musen, og processens trin bindes sammen af en streg, der tegner sig ud. */
 
 /* ---------- headeren: væk når man scroller ned, tilbage når man scroller op (så den aldrig ligger oven i overskrifterne) ---------- */
@@ -12,25 +11,6 @@ html body.hdr-hide:not(.menu-open):not(.drop-open) header.site-header{transform:
 :root{--sp-c:clamp(84px,10vw,150px);}
 .proc,.tm,.ct,.faq{padding-top:var(--sp-c)!important;padding-bottom:var(--sp-c)!important;}
 .section-head{align-items:end;}
-
-/* ---------- ydelser: et roligt gitter med fire kort (ingen låst scroll) ---------- */
-.pns.pns-c{height:auto!important;padding:var(--sp-c) 0!important;}
-.pns-c .pns-pin{position:relative!important;height:auto!important;overflow:visible!important;padding:0 var(--gut)!important;gap:0!important;}
-.pns-c .section-head{margin-bottom:clamp(28px,4vw,56px)!important;}
-.pns-c .svc-row3{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;width:auto!important;gap:clamp(12px,1.4vw,20px)!important;transform:none!important;perspective:1100px;}
-.pns-c .sv{width:auto!important;transform:none;transform-style:preserve-3d;transition:transform .6s var(--ease-out),box-shadow .6s var(--ease-out);contain:none!important;}
-.pns-c .sv-img{flex:none!important;aspect-ratio:4/3.4;}
-.pns-c .sv ul{display:flex!important;}
-.pns-c .sv-txt{flex:1 1 auto;display:flex;flex-direction:column;}
-.pns-c .sv .sc-link{margin-top:auto;padding-top:14px;}
-@media(max-width:1180px){.pns-c .svc-row3{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
-@media(max-width:640px){
-  .pns-c .pns-pin{padding:0!important;}
-  .pns-c .section-head{padding:0 var(--gut)!important;}
-  .pns-c .svc-row3{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 var(--gut) 8px!important;scrollbar-width:none;}
-  .pns-c .svc-row3::-webkit-scrollbar{display:none;}
-  .pns-c .sv{flex:0 0 82vw!important;scroll-snap-align:center;}
-}
 
 /* kort, der vipper efter musen med en lysrefleks (clean.js sætter --rx, --ry, --gx, --gy) */
 .tilt{--rx:0deg;--ry:0deg;--gx:50%;--gy:50%;position:relative;}
@@ -62,23 +42,7 @@ html body.hdr-hide:not(.menu-open):not(.drop-open) header.site-header{transform:
   .proc-c .pr::before{left:-28px;top:28px;}
 }
 
-/* ---------- billeder dukker op gennem BK-blobben ---------- */
-@property --blobS{syntax:'<percentage>';inherits:false;initial-value:0%;}
-@property --blobR{syntax:'<percentage>';inherits:false;initial-value:0%;}
-.blob-rv{--blobS:0%;--blobR:0%;
-  -webkit-mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--blobR),transparent calc(var(--blobR) + .5%));
-          mask-image:url(images/logo/bk-blob.svg),radial-gradient(circle at 50% 50%,#000 var(--blobR),transparent calc(var(--blobR) + .5%));
-  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
-  -webkit-mask-size:var(--blobS) auto,100% 100%;mask-size:var(--blobS) auto,100% 100%;
-  transition:--blobS 1.25s cubic-bezier(.55,0,.15,1),--blobR .9s cubic-bezier(.4,0,.2,1) .55s;}
-.blob-rv.blob-in{--blobS:320%;--blobR:75%;}
-.blob-rv.blob-done{-webkit-mask:none;mask:none;}
-.blob-rv img{transform:scale(1.18);transition:transform 1.8s cubic-bezier(.2,.7,.2,1);}
-.blob-rv.blob-in img{transform:none;}
-
 @media(prefers-reduced-motion:reduce){
-  .blob-rv{-webkit-mask:none!important;mask:none!important;}
-  .blob-rv img{transform:none!important;}
   .proc-c .proc-rows::before,.proc-c .pr::before{transform:none!important;transition:none!important;}
 }
 
@@ -100,7 +64,7 @@ html body .home-contact .booking-intro h2{font-size:clamp(36px,5.4vw,76px)!impor
 
 /* ---------- "Vi har arbejdet for": Vildbjerg-logoet i de rigtige farver ved hover (på en mørk flade, så det grå og hvide kan ses) ---------- */
 .logo-slot{border-radius:14px;transition:background .4s,padding .4s;}
-.logo-light:hover{background:var(--black);padding:8px 14px;}
+.logo-light:hover{background:#02153F;padding:8px 14px;}
 html body .logo-light:hover img{filter:none;opacity:1;}
 
 /* ---------- åbningen: ingen scroll, før logoet har vist, hvad der er bag det (thru.js) ---------- */
@@ -111,3 +75,11 @@ html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior
 .wrap-flow{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
 .flow-wrap>.reel,.flow-wrap>.w3d{position:relative;z-index:1;background:transparent!important;}
 .reel-in{z-index:1;}
+
+/* ---------- tal og små etiketter i brandets skrift (Inter) i stedet for maskinskrift ---------- */
+:root{--mono:'Inter',sans-serif;}
+.hdr-status,.foot-meta,.m-idx,.sv-num,.reel-cap,.footer-heading{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:.08em;}
+
+/* ---------- footer: status og lokal tid står over det store BK-logo, uden streg under ---------- */
+.foot-meta{border-bottom:0!important;padding-bottom:0!important;margin:clamp(28px,4vw,56px) 0 0!important;}
+.foot-mega{margin-top:clamp(14px,1.6vw,22px)!important;margin-bottom:clamp(22px,2.6vw,36px);}
