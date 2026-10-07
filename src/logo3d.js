@@ -1,8 +1,9 @@
 /* BK Studio — BK-logoet i 3D.
    Logoet trækkes ud i 3D direkte fra images/logo/bk-blob.svg (afrundede kanter, blank "blæk"-overflade med refleksioner).
 
-   1) Åbningen på forsiden ([data-thru]): man scroller gennem logo-vinduet (thru.js), og inde bag vinduet snurrer 3D-logoet rundt
-      foran showreelen. Modellen ligger længere inde end vinduet, så man zoomer forbi den; den sløres ud, når BK STUDIO kommer frem.
+   1) Åbningen på forsiden ([data-thru]): man scroller gennem logo-vinduet (thru.js), og inde bag vinduet ligger 3D-logoet i det sorte
+      rum (som stenen hos Podium). Det står stille og drejer kun, når man scroller. Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
+      midt i billedet; derefter toner den ud med et slør, og BK STUDIO kommer frem.
       Uden WebGL, eller hvis man har slået animationer fra, er vinduet bare showreelen.
    2) <div class="logo3d" data-src="images/logo/bk-blob.svg" data-color="#141414"></div> giver et frit 3D-logo andre steder.
 
@@ -70,47 +71,45 @@ function opening(sec) {
   }
   addEventListener('resize', size); size();
 
-  let half = 40, ready = false, t0 = 0;
+  let half = 40, ready = false;
   const fail = () => { window.__thru3d = null; delete html.dataset.thru3d; };                 // kommer 3D ikke, er vinduet bare showreelen som før
   const giveUp = setTimeout(() => { if (!ready) fail(); }, 6000);
   loadLogo(st, 'images/logo/bk-blob.svg').then(h => { half = h; ready = true; clearTimeout(giveUp); kick(); }).catch(fail);
 
-  // musen vipper modellen let
-  let tx = 0, ty = 0, px = 0, py = 0;
-  sec.addEventListener('pointermove', e => { tx = clamp((e.clientX / innerWidth) * 2 - 1, -1, 1); ty = clamp((e.clientY / innerHeight) * 2 - 1, -1, 1); });
 
   function prog() {
     const T = window.__thru; if (T) return T.p;
     const r = spacer.getBoundingClientRect(); return clamp((innerHeight - r.top) / Math.max(1, r.height));
   }
 
-  let raf = 0, last = 0, ang = 0;
+  // modellen står stille og drejer kun, når man scroller: vinklen følger scroll-positionen (med en blød efterløb)
+  let raf = 0, last = 0, ang = 0, sized = 0;
+  addEventListener('resize', () => { sized++; kick(); });
   function frame(now) {
     raf = 0;
     const p = prog();
     if (!ready) { raf = requestAnimationFrame(frame); return; }
-    if (p > .5) { window.__thru3d = null; return; }                                          // forbi åbningen: hvil
-    if (!t0) t0 = now;
+    if (p > .6) { window.__thru3d = null; return; }                                          // forbi åbningen: hvil
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-    const t = now / 1000, intro = ease((now - t0) / 2200), zp = smooth(p / .4);
-    px += (tx - px) * (1 - Math.exp(-dt * 3)); py += (ty - py) * (1 - Math.exp(-dt * 3));
-    // snurrer rundt: hurtigt ind fra start, derefter roligt, og lidt hurtigere mens man zoomer forbi
-    ang += dt * (.75 + (1 - intro) * 5 + zp * 1.4);
+    const zp = smooth(p / .4), goal = p * Math.PI * 6;
+    ang += (goal - ang) * (1 - Math.exp(-dt * 7));
+    if (Math.abs(goal - ang) < 1e-4) ang = goal;
 
     // inde bag logoet: midt i vinduet, og vokser langsommere end vinduet (den ligger længere inde), så man zoomer forbi den
     const T = window.__thru, nar = vw < 700, asp = LWd / LHt;
-    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp);
-    const wpx = bw * (nar ? .58 : .54) * (1 + 1.6 * zp * zp) * (.6 + .4 * intro);
+    const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (T && T.g ? T.g : 1);
+    const wpx = bw * (nar ? .56 : .5) * (1 + .7 * zp);
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ);
     group.scale.setScalar(s);
     const cx = T ? T.cx : vw / 2, cy = T ? T.cy : vh / 2, u = VIS / vh;
-    group.position.set((cx - vw / 2) * u * (1 - zp), -(cy - vh / 2) * u * (1 - zp) + Math.sin(t * .9) * .04, 0);
-    group.rotation.y = ang + px * .35;
-    group.rotation.x = .18 * Math.sin(t * .6) + py * .25;
-    group.rotation.z = .05 * Math.sin(t * .4);
+    group.position.set((cx - vw / 2) * u * (1 - zp), -(cy - vh / 2) * u * (1 - zp), 0);
+    group.rotation.set(.16, ang - .5, .04);                                                      // en lille fast skråvinkel, så kanterne fanger lyset
     renderer.render(scene, camera);
     window.__thru3d = { canvas, ready: true };
-    raf = requestAnimationFrame(frame);
+    // tegn kun igen, mens noget ændrer sig (drejning eller logoets størrelse ved indlæsning)
+    const key = [ang.toFixed(5), s.toFixed(6), group.position.x.toFixed(4), group.position.y.toFixed(4), sized].join();
+    if (key !== frame.key) { frame.key = key; raf = requestAnimationFrame(frame); }
+    else { last = 0; setTimeout(() => { if (!raf) raf = requestAnimationFrame(frame); }, 120); }
   }
   function kick() { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } }
   addEventListener('scroll', kick, { passive: true });

@@ -13,7 +13,29 @@
   $$('.pns[data-svc]').forEach(s => { s.removeAttribute('data-svc'); s.classList.add('pns-c'); });
   $$('.proc').forEach(s => s.classList.add('proc-c'));
 
+  // showreel: hentes først, når den nærmer sig skærmen, spiller kun mens den er synlig og vokser ud til fuld bredde
+  function reel() {
+    const sec = document.querySelector('.reel'), v = sec && sec.querySelector('.reel-video'); if (!v) return;
+    const sd = navigator.connection && navigator.connection.saveData;
+    let loaded = false, vis = false;
+    function load() {
+      if (loaded || sd || reduce) return; loaded = true;
+      const mp4 = v.canPlayType && /(probably|maybe)/.test(v.canPlayType('video/mp4; codecs="avc1.64001f"'));
+      v.src = 'video/showreel' + (innerWidth < 700 ? '-sm' : '') + (mp4 ? '.mp4' : '.webm'); v.load();
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(es => { if (es[0].isIntersecting) load(); }, { rootMargin: '900px 0px' }).observe(sec);
+      new IntersectionObserver(es => { vis = es[0].isIntersecting; if (vis && loaded) v.play().catch(() => {}); else v.pause(); }, { threshold: .2 }).observe(v);
+    } else load();
+    v.addEventListener('canplay', () => { if (vis) v.play().catch(() => {}); });
+    if (reduce) return;
+    let q = false;
+    const upd = () => { q = false; const r = sec.getBoundingClientRect(); const k = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * .9))); sec.style.setProperty('--rs', (k * k * (3 - 2 * k)).toFixed(3)); };
+    addEventListener('scroll', () => { if (!q) { q = true; requestAnimationFrame(upd); } }, { passive: true }); upd();
+  }
+
   function ready() {
+    reel();
     if (!('IntersectionObserver' in window)) { $$('.proc-rows').forEach(r => r.classList.add('drawn')); return; }
 
     // processen: stregen tegnes, når trinnene er godt inde på skærmen
