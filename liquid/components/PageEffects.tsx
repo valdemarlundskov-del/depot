@@ -9,9 +9,9 @@ export function PageEffects() {
   useEffect(() => {
     const root = document.documentElement;
     const sections = [...document.querySelectorAll<HTMLElement>('[data-theme]')];
-    if (sections[0]) root.dataset.theme = sections[0].dataset.theme;
+    if (sections[0]) root.dataset.tone = sections[0].dataset.theme;
     const tio = new IntersectionObserver(es => {
-      es.forEach(e => { if (e.isIntersecting) root.dataset.theme = (e.target as HTMLElement).dataset.theme; });
+      es.forEach(e => { if (e.isIntersecting) root.dataset.tone = (e.target as HTMLElement).dataset.theme; });
     }, { rootMargin: '-48% 0px -52% 0px' });
     sections.forEach(s => tio.observe(s));
 

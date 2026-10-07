@@ -1,7 +1,7 @@
 /* ==========================================================================
    LIQUID — designsystem
    Palet: varm off-white, næsten-sort, sort, grafit, neutral grå, hvid. Ingen accentfarver.
-   Hele siden skifter lys mellem mørke og lyse afsnit (html[data-theme]), i stedet for hårde sektionskanter.
+   Hele siden skifter lys mellem mørke og lyse afsnit (html[data-tone]), i stedet for hårde sektionskanter.
    ========================================================================== */
 
 :root {
@@ -26,7 +26,7 @@
   --mono: var(--font-mono), ui-monospace, 'SF Mono', Menlo, monospace;
   color-scheme: dark;
 }
-html[data-theme='light'] {
+html[data-tone='light'] {
   --bg: var(--paper);
   --fg: var(--ink);
   --muted: #5d5e62;

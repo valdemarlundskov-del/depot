@@ -43,10 +43,12 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     anim.current = requestAnimationFrame(frame);
   }, []);
 
+  const current = useRef(pathname);
+  current.current = pathname;
   const go = useCallback<Go>((href, at) => {
     const url = new URL(href, location.href);
     if (url.origin !== location.origin) { location.href = href; return; }
-    if (url.pathname === location.pathname) { history.replaceState(null, '', url.pathname + url.hash); scrollToHash(url.hash, true); return; }
+    if (url.pathname === current.current) { scrollToHash(url.hash, true); return; }
     pendingHash.current = url.hash;
     if (prefersReducedMotion() || !wrap.current) { router.push(url.pathname + url.hash); return; }
     origin.current = at ?? { x: innerWidth / 2, y: innerHeight / 2 };
