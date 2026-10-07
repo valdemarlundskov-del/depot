@@ -86,3 +86,11 @@ html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior
 /* ---------- footer: status og lokal tid står over det store BK-logo, uden streg under ---------- */
 .foot-meta{border-bottom:0!important;padding-bottom:0!important;margin:clamp(28px,4vw,56px) 0 0!important;}
 .foot-mega{margin-top:clamp(14px,1.6vw,22px)!important;margin-bottom:clamp(22px,2.6vw,36px);}
+
+/* ---------- numrene på ydelseskortene i samme stil som processens numre (pille med ramme) ---------- */
+html body .sv-num{left:14px;top:14px;padding:5px 11px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:.12em;line-height:1;
+  color:var(--black);background:var(--white);border:1.5px solid var(--black);border-radius:999px;-webkit-backdrop-filter:none;backdrop-filter:none;}
+
+/* ---------- teamet på samme lyse flade som resten, så FAQ og omgivelserne hænger sammen ---------- */
+.tm{background:var(--paper)!important;}
+.faq{border-top:0!important;}
