@@ -19,6 +19,7 @@
     const sd = navigator.connection && navigator.connection.saveData;
     let loaded = false, vis = false;
     function load() {
+      if (v.dataset.poster) { v.poster = v.dataset.poster; delete v.dataset.poster; }       // forsidebilledet hentes også først, når showreelen nærmer sig
       if (loaded || sd || reduce) return; loaded = true;
       const mp4 = v.canPlayType && /(probably|maybe)/.test(v.canPlayType('video/mp4; codecs="avc1.64001f"'));
       v.src = 'video/showreel' + (innerWidth < 700 ? '-sm' : '') + (mp4 ? '.mp4' : '.webm'); v.load();

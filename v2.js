@@ -23,7 +23,7 @@
     stage.querySelectorAll('.w3c').forEach(c => c.remove());
     const html = Array.from({ length: n }, (_, i) => {
       const s = RING[i % RING.length], it = picks[i % picks.length];
-      return `<a class="w3c" style="--w:${(s[0] * m).toFixed(1)}vw;--a:${s[1]}" href="/arbejde#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
+      return `<a class="w3c" style="--w:${(s[0] * m).toFixed(1)}vw;--a:${s[1]}" href="/arbejde#${it.p.id}" aria-label="Se projektet ${it.p.title}"><span class="w3c-in"><img src="${th(it.g)}" alt="" loading="lazy" decoding="async"><em>${it.p.title}</em></span><b class="w3c-cta" aria-hidden="true">Se projekt</b></a>`;
     }).join('');
     stage.insertAdjacentHTML('beforeend', html);
     if (window.__w3Layout) window.__w3Layout();
@@ -150,7 +150,9 @@
   }
   const ctaSec = document.querySelector('.cta-big'), w3Sec = document.querySelector('.w3d');
   if (ctaSec) initFlow(ctaSec, ctaSec.querySelector('.cta-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
-  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });          // samme blide bølger som under "Har du noget, der skal skabes?"
+  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
+  const reelSec = document.querySelector('.reel');
+  if (reelSec) initFlow(reelSec, reelSec.querySelector('.reel-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 1.4 });     // samme højdekurver bag showreelen          // samme blide bølger som under "Har du noget, der skal skabes?"
 
 
   // Ydelserne side om side: det første står på siden, de andre kommer ind fra højre og går mod venstre, mens man scroller.
@@ -201,7 +203,7 @@
   const rvs = [...document.querySelectorAll('[data-rv]')];
   if (!reduce && 'IntersectionObserver' in window) {
     rvs.forEach(el => el.classList.add('rv'));
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .12) e.target.classList.add('in'); else if (!e.isIntersecting && e.boundingClientRect.top > 0) e.target.classList.remove('in'); }), { threshold: [0, .12] });
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .12) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: [0, .12] });   // kun én gang
     rvs.forEach(el => io.observe(el));
   }
 

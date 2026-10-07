@@ -63,7 +63,7 @@
     // tekster og billeder der glider ind, når de kommer til syne
     if (io) io.disconnect();
     if ('IntersectionObserver' in window) {
-      io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .14) e.target.classList.add('in'); else if (!e.isIntersecting && e.boundingClientRect.top > (e.rootBounds ? e.rootBounds.top : 0)) e.target.classList.remove('in'); }), { root: ov, threshold: [0, .14] });
+      io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .14) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: ov, threshold: [0, .14] });   // kun én gang
       ov.querySelectorAll('.cf-img, .cf-word, .ov-info p, .ov-meta div, .ov-cta h3').forEach(el => { el.classList.add('cs-rv'); io.observe(el); });
     } else ov.querySelectorAll('.cs-rv').forEach(el => el.classList.add('in'));
     cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
