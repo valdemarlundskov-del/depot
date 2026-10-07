@@ -139,9 +139,6 @@ html[lang="en"] .hours li.today span:first-child::after{content:'  today';}
 .logo3d.logo3d-fallback::before{opacity:1;}
 .l3d-cap{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-500);}
 
-/* ---------- åbningen: 3D-logoet (logo3d.min.js) ligger midt på den lyse flade og sløres ud, når man scroller (thru.js tegner baggrunden og videoen) ---------- */
-.thru-3d{position:absolute;inset:0;z-index:2;pointer-events:none;}
+/* ---------- åbningen: 3D-logoet (logo3d.min.js) renderes på et skjult lærred; thru.js tegner det ind bag logo-vinduet ---------- */
+.thru-3d{position:absolute;inset:0;z-index:0;opacity:0;pointer-events:none;}
 .thru-3d canvas{display:block;width:100%;height:100%;}
-.thru-3d.off{visibility:hidden;}
-.thru-3d.gone{opacity:0!important;visibility:hidden;transition:opacity .8s,visibility 0s .8s;}
-.thru.has-3d .thru-title,.thru.has-3d .thru-scroll{z-index:3;}
