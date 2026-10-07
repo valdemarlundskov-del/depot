@@ -141,7 +141,7 @@
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
   // Formen tegnes i lav opløsning, forskydes blødt med et flydende felt (udstrækning + langsomme bølger) og skaleres op igen som ny maske.
-  let mS = null, mO = null, cS2 = null, cO = null, wImg = null;
+  let mS = null, mO = null, cS2 = null, cO = null, wImg = null, gS = null, gC = null;
   function applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur) {
     const a = .6 * Math.pow(Math.sin(Math.PI * clamp(zp)), 1.1);
     if (a < .015) return;
@@ -230,9 +230,9 @@
     if (p >= 1) { if (doneFinal) return; doneFinal = true; } else doneFinal = false;
     const tIn = now - t0;
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
-    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1100) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
-    const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 650) / 1000) : 0;      // forsiden: det sorte logo toner ud
-    if (locked && hr && now - homeT0 > 1500) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
+    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1500) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
+    const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 1050) / 1000) : 0;      // forsiden: det sorte logo toner ud
+    if (locked && hr && now - homeT0 > 1900) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
     const asp = LWd / LHt;
@@ -294,14 +294,31 @@
     cM.translate(ox, oy); cM.scale(k, k); cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd');
     applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
     // forsiden: logoet starter som en lille sort cirkel (i logoets bredeste del), der ånder let, mens alt bag logoet hentes.
-    // Først når alt er hentet, udvider cirklen sig, til hele logoformen er vist.
+    // Når alt er hentet, smelter cirklen over i logoet: logoformen vokser ud fra cirklen, og de to flyder sammen (blød "goo"-overgang),
+    // til hele logoet står der. Tegnes i lav opløsning: sløres og skærpes igen med en tærskel, så formerne smelter sammen.
     if (!loaderMode && grow < 1) {
-      const R0 = FR * .62 * (hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2)), R = R0 + (720 - R0) * grow * grow;
-      cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM, dpr * tyM); cM.translate(ox, oy); cM.scale(k, k);
-      cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0;
-      cM.filter = 'blur(' + (blur * .45).toFixed(1) + 'px)';                       // samme bløde kant som logoet
-      cM.globalCompositeOperation = 'destination-in'; cM.beginPath(); cM.arc(FX, FY, R, 0, Math.PI * 2); cM.fillStyle = '#000'; cM.fill();
-      cM.globalCompositeOperation = 'source-over'; cM.filter = 'none';
+      const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
+      if (!gS || gS.width !== gw || gS.height !== gh) { gS = mkc(); gS.width = gw; gS.height = gh; gC = gS.getContext('2d', { willReadFrequently: true }); }
+      const e = smooth(grow), R0 = FR * .62 * (hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2)), U = dpr * q * sM * k;
+      gC.setTransform(1, 0, 0, 1, 0, 0); gC.globalAlpha = 1; gC.clearRect(0, 0, gw, gh);
+      gC.filter = grow > 0 ? 'blur(' + (U * 26).toFixed(1) + 'px)' : 'none';
+      gC.setTransform(U, 0, 0, U, dpr * q * (sM * ox + txM), dpr * q * (sM * oy + tyM));
+      gC.fillStyle = '#000';
+      gC.globalAlpha = 1 - smooth((grow - .45) / .5); gC.beginPath(); gC.arc(FX, FY, R0 * (1 + .25 * e), 0, Math.PI * 2); gC.fill();
+      if (grow > 0) {
+        const sc = .12 + .88 * e; gC.globalAlpha = 1;
+        gC.translate(FX, FY); gC.scale(sc, sc); gC.translate(-FX, -FY); gC.fill(LOGO, 'evenodd');
+        const im = gC.getImageData(0, 0, gw, gh), d = im.data;
+        for (let i = 3; i < d.length; i += 4) { const v = (d[i] - 118) * 7; d[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: formerne flyder sammen
+        gC.setTransform(1, 0, 0, 1, 0, 0); gC.putImageData(im, 0, 0);
+      }
+      gC.filter = 'none'; gC.globalAlpha = 1;
+      cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
+      const tl = smooth((grow - .78) / .22);                                                      // til sidst glider den over i den rigtige logoform
+      cM.globalCompositeOperation = 'destination-in'; cM.fillStyle = 'rgba(0,0,0,' + tl.toFixed(3) + ')'; cM.fillRect(0, 0, lm.width, lm.height);
+      cM.globalCompositeOperation = 'source-over'; cM.globalAlpha = 1 - tl;
+      cM.filter = 'blur(' + (blur * .45).toFixed(1) + 'px)'; cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
+      cM.drawImage(gS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
