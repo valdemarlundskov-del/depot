@@ -1,8 +1,8 @@
 /* BK Studio — BK-logoet i 3D.
    Logoet trækkes ud i 3D direkte fra images/logo/bk-blob.svg (afrundede kanter, blank "blæk"-overflade med refleksioner).
 
-   1) Åbningen på forsiden ([data-thru]): man scroller gennem logo-vinduet (thru.js), og inde bag vinduet ligger 3D-logoet i det sorte
-      rum (som stenen hos Podium). Det står stille og drejer kun, når man scroller. Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
+   1) Åbningen på forsiden ([data-thru]): ved start sidder 3D-logoet præcis i logo-vinduet (thru.js), set lige forfra. Når man scroller,
+      glider det bagud ind i det sorte rum og snurrer (drejningen følger scroll), og det bliver der, til siden kommer op nedefra og dækker det. Den vokser langsommere end vinduet, så når man er kommet gennem logoet, svæver den
       midt i billedet; derefter toner den ud med et slør, og BK STUDIO kommer frem.
       Uden WebGL, eller hvis man har slået animationer fra, er vinduet bare showreelen.
    2) <div class="logo3d" data-src="images/logo/bk-blob.svg" data-color="#141414"></div> giver et frit 3D-logo andre steder.
@@ -89,21 +89,21 @@ function opening(sec) {
     raf = 0;
     const p = prog();
     if (!ready) { raf = requestAnimationFrame(frame); return; }
-    if (p > .6) { window.__thru3d = null; return; }                                          // forbi åbningen: hvil
+    if (p >= 1) { window.__thru3d = null; return; }                                          // siden har dækket åbningen: hvil
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-    const zp = smooth(p / .4), goal = p * Math.PI * 6;
+    const zp = smooth(p / .4), back = smooth(p / .3), tilt = smooth(p / .12), goal = p * Math.PI * 6;
     ang += (goal - ang) * (1 - Math.exp(-dt * 7));
     if (Math.abs(goal - ang) < 1e-4) ang = goal;
 
     // inde bag logoet: midt i vinduet, og vokser langsommere end vinduet (den ligger længere inde), så man zoomer forbi den
     const T = window.__thru, nar = vw < 700, asp = LWd / LHt;
     const bw = Math.min(vw * (nar ? .86 : .56), vh * (nar ? .5 : .66) * asp) * (T && T.g ? T.g : 1);
-    const wpx = bw * (nar ? .56 : .5) * (1 + .7 * zp);
+    const wpx = bw * (1 - .56 * back);                                                       // ved start: præcis logoets størrelse; glider så bagud ind i rummet
     const a = wpx * (VIS / vh) / LWd, s = a / (1 + a * half / CAMZ);
     group.scale.setScalar(s);
     const cx = T ? T.cx : vw / 2, cy = T ? T.cy : vh / 2, u = VIS / vh;
     group.position.set((cx - vw / 2) * u * (1 - zp), -(cy - vh / 2) * u * (1 - zp), 0);
-    group.rotation.set(.16, ang - .5, .04);                                                      // en lille fast skråvinkel, så kanterne fanger lyset
+    group.rotation.set(.16 * tilt, ang - .5 * tilt, .04 * tilt);                                 // lige forfra ved start (sidder i logoet); en lille skråvinkel, når den snurrer
     renderer.render(scene, camera);
     window.__thru3d = { canvas, ready: true };
     // tegn kun igen, mens noget ændrer sig (drejning eller logoets størrelse ved indlæsning)

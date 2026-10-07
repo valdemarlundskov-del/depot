@@ -26,12 +26,6 @@
     host.insertBefore(p, host.firstChild);
   });
 
-  // numre på ydelseskortene
-  document.querySelectorAll('.svc-row3 .sv').forEach(function (sv, i) {
-    const img = sv.querySelector('.sv-img:not(.sv-mark)'); if (!img || img.querySelector('.sv-num')) return;
-    const n = el('span', 'sv-num', String(i + 1).padStart(2, '0')); n.setAttribute('aria-hidden', 'true'); img.appendChild(n);
-  });
-
   // ledig/optaget ud fra åbningstiderne (dansk tid). Søndag = 0.
   const HOURS = [[10, 17], [8, 20], [8, 20], [8, 20], [8, 20], [8, 20], [10, 17]];
   const DAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];

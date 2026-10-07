@@ -228,7 +228,7 @@
     const tIn = now - t0;
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
     const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1500) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
-    const reveal = loaderMode || instant ? 1 : hr ? smooth((now - homeT0 - 1050) / 1000) : 0;      // forsiden: det sorte logo toner ud
+    const reveal = loaderMode || reduce ? 1 : hr ? smooth(p / .1) : 0;                           // forsiden: logoet står helt sort, indtil man begynder at scrolle; så toner det sorte ud
     if (locked && hr && now - homeT0 > 1900) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
@@ -263,8 +263,8 @@
     cT.setTransform(dpr, 0, 0, dpr, 0, 0);
     const vready = vid && vidReady && vid.readyState >= 2 && vid.videoWidth > 0;
     const srcEl = loaderMode ? (poster.complete && poster.naturalWidth ? poster : null) : 1;
-    // 3D-logoet (som stenen hos Podium) snurrer rundt inde bag vinduet og svæver midt i billedet, når man er kommet igennem; så toner det ud
-    const a3 = m3 ? 1 - smooth((p - .45) / .09) : 0;
+    // 3D-logoet sidder i logoet ved start, glider bagud og snurrer, når man scroller, og bliver, til siden dækker det
+    const a3 = m3 ? 1 : 0;                                                                   // 3D-logoet bliver, til siden nedefra dækker det
     const io = 1;                                                                           // billederne bliver: de glider op og dækkes af siden, der kommer nedefra
     if (!loaderMode) {
       cT.fillStyle = DARK; cT.fillRect(0, 0, vw, vh);
