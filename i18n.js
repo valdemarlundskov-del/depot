@@ -118,7 +118,7 @@
  "Arkiv": "Archive",
  "Kontakt": "Contact",
  "Sociale medier": "Social media",
- "© 2026 BK Studio. Alle rettigheder forbeholdes. Billederne må ikke bruges uden vores tilladelse.": "© 2026 BK Studio. All rights reserved. The images may not be used without our permission.",
+ "© 2026 BK Studio. Alle rettigheder forbeholdes.": "© 2026 BK Studio. All rights reserved.",
  "Privatlivspolitik": "Privacy policy",
  "Stifter · Kreativ ledelse · Fotograf · Videograf": "Founder · Creative Lead · Photographer · Filmmaker",
  "Medstifter · Fotograf · Videograf · Redaktør": "Co-Founder · Photographer · Filmmaker · Editor",
