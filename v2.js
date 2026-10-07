@@ -33,6 +33,7 @@
 
   // Reserve: en klasse følger musen, så blur og "Se projekt" vises, selv hvis browserens :hover ikke rammer de skrå 3D-kort
   document.addEventListener('pointerover', e => {
+    if (e.pointerType === 'touch') return;
     const c = e.target.closest && e.target.closest('.w3c');
     document.querySelectorAll('.w3c.is-hover').forEach(x => { if (x !== c) x.classList.remove('is-hover'); });
     if (c) c.classList.add('is-hover');
@@ -271,7 +272,7 @@
       if (run) requestAnimationFrame(loop);
     };
     const kick = () => { if (!run) { run = true; requestAnimationFrame(loop); } };
-    sec3d.addEventListener('mousemove', e => { const r = sec3d.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width - .5; ty = (e.clientY - r.top) / r.height - .5; kick(); });
+    sec3d.addEventListener('mousemove', e => { if (e.target.closest && e.target.closest('.w3c')) return; const r = sec3d.getBoundingClientRect(); tx = (e.clientX - r.left) / r.width - .5; ty = (e.clientY - r.top) / r.height - .5; kick(); });
     sec3d.addEventListener('mouseleave', () => { tx = 0; ty = 0; kick(); });
   }
   const req = () => { if (!queued) { queued = true; requestAnimationFrame(frame); } };
@@ -287,7 +288,9 @@
   const stage = document.getElementById('w3dStage'), sec = document.querySelector('[data-w3d]');
   if (!stage || !sec) return;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let auto = 0, speed = 1, vis = false, last = 0, raf = 0;
+  let auto = 0, speed = 1, vis = false, last = 0, raf = 0, bob = 0, touchHold = 0;
+  // touch: ringen holder stille, mens man rører den, og lidt efter, så man kan nå at trykke på et kort
+  sec.addEventListener('touchstart', () => { touchHold = performance.now() + 2500; }, { passive: true });
   const TAU = Math.PI * 2, held = c => c.matches(':hover') || c.classList.contains('is-hover');
   function layout(t) {
     const cards = stage.querySelectorAll('.w3c'), n = cards.length; if (!n) return;
@@ -297,7 +300,7 @@
     for (let i = 0; i < n; i++) {
       const c = cards[i], th = i * TAU / n + rot, s = Math.sin(th), co = Math.cos(th);   // co: 1 = forrest, -1 = bagerst
       const hv = held(c) ? 1 : 0, depth = (co + 1) / 2;
-      const x = Rx * s, z = Rz * co + hv * 90, y = -Ky * co + Math.sin(t * .0011 + i * 1.7) * 7;
+      const x = Rx * s, z = Rz * co, y = -Ky * co + Math.sin(t * .0011 + i * 1.7) * 7;
       c.style.transform = 'translate(-50%,-50%) translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + (s * 24).toFixed(1) + 'deg)';
       c.style.setProperty('--sh', (hv ? 1 : .5 + .5 * depth).toFixed(3));
       const bl = (hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2); c.style.setProperty('--bl', bl.toFixed(2) + 'px'); c.style.setProperty('--bs', (1 + bl * .014).toFixed(3));
@@ -333,10 +336,11 @@
   function frame(t) {
     raf = 0; if (!vis) return;
     const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
-    let any = false; for (const c of stage.querySelectorAll('.w3c')) if (held(c)) { any = true; break; }
-    speed += ((any ? 0 : 1) - speed) * Math.min(1, dt * 4);                       // ringen bremser op, når man peger på et kort
+    let any = performance.now() < touchHold; if (!any) for (const c of stage.querySelectorAll('.w3c')) if (held(c)) { any = true; break; }
+    speed += ((any ? 0 : 1) - speed) * Math.min(1, dt * 10);                      // ringen stopper hurtigt, når man peger på (eller rører) et kort, så det er let at ramme
     auto += TAU / 85 * speed * dt;                                                 // en hel omgang tager ca. 85 sekunder
-    layout(t);
+    bob += dt * 1000 * speed;                                                      // den lille svæven står også stille imens
+    layout(bob);
     raf = requestAnimationFrame(frame);
   }
   fitSection(); layout(0);
