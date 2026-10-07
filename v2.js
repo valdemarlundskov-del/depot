@@ -72,25 +72,36 @@
 
 
   // Levende højdekurver (marching squares på bevægelig støj). Bruges bag "Vi skaber billeder, der bliver hængende" og "Skriv til os".
+  // Sektioner i samme gruppe (cfg.group) deler ét sammenhængende mønster: støjen regnes i fælles koordinater fra gruppens øverste sektion,
+  // så kurverne fortsætter fra den ene sektion over i den næste.
+  const flowGroups = {};
   function initFlow(sec, cv, cfg) {
     if (!cv) return;
+    const grp = cfg.group ? (flowGroups[cfg.group] = flowGroups[cfg.group] || []) : null;
+    if (grp) grp.push(sec);
+    let oy = 0, GW = 0, GH = 0;
     const ctx = cv.getContext('2d');
     const LV = [-1.5, -1.3, -1.1, -.9, -.7, -.5, -.3, -.1, .1, .3, .5, .7, .9, 1.1, 1.3, 1.5];
     let W = 0, H = 0, K = 1, dpr = 1, cell = 24, cols = 0, rows = 0, F = null, vis = false, mx = 0, my = 0, tmx = 0, tmy = 0, amp = 0, tamp = 0, vy = 0, lastY = scrollY;
     function resize() {
       dpr = Math.min(devicePixelRatio || 1, 1.5); W = sec.clientWidth; H = sec.clientHeight; K = Math.max(.32, Math.max(W, H) / 1440);
+      GW = W; GH = H; oy = 0;
+      if (grp) {
+        const tops = grp.map(s => s.getBoundingClientRect().top + scrollY), bots = grp.map((s, i) => tops[i] + s.offsetHeight), top = Math.min(...tops);
+        oy = sec.getBoundingClientRect().top + scrollY - top; GH = Math.max(...bots) - top; K = Math.max(.32, W / 1440);
+      }
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       cell = Math.max(18, Math.round(Math.min(W, 1600) / 62)); cols = Math.ceil(W / cell) + 2; rows = Math.ceil(H / cell) + 2; F = new Float32Array(cols * rows);
       tmx = mx = W * .5; tmy = my = H * .5;
     }
     // Støj med flere knæk: koordinaterne vrides først af en anden støj (domænevridning), og der lægges finere led ovenpå, så kurverne får organiske knæk og bugter.
     const noise = (X, Y, t) => {
-      let x = X / K, y = Y / K;
+      let x = X / K, y = (Y + oy) / K;
       const kk = cfg.kink || 1;
       x += (Math.sin(y * .011 + t * .31) * 42 + Math.sin(y * .027 - t * .22) * 16) * kk;
       y += (Math.sin(x * .009 - t * .27) * 38 + Math.sin(x * .023 + t * .19) * 14) * kk;
       return (Math.sin(x * .0061 + t * .21) * .5 + Math.sin(y * .0083 - t * .17 + x * .0021) * .4 + Math.sin((x + y) * .0044 + t * .13) * .4
-        + Math.sin(Math.hypot(x - W / K * .7, y - H / K * .4) * .0058 - t * .25) * .5
+        + Math.sin(Math.hypot(x - GW / K * .7, y - GH / K * .4) * .0058 - t * .25) * .5
         + (Math.sin(x * .019 + y * .013 + t * .4) * .3 + Math.sin(y * .031 - x * .011 - t * .33) * .22 + Math.sin((x - y) * .027 + t * .5) * .16) * kk) * 1.05;
     };
     // Mønstret står stille. Kun dér, hvor musen bevæger sig, flyder linjerne: fasen ændres lokalt omkring markøren, i takt med at musen flytter sig,
@@ -146,13 +157,14 @@
     sec.addEventListener('pointerleave', () => { tamp = 0; lwT = 0; lastX = null; });
     new IntersectionObserver(es => { vis = es[0].isIntersecting; }, { rootMargin: '80px' }).observe(sec);
     addEventListener('resize', () => { resize(); drawn = false; });
+    if (grp && 'ResizeObserver' in window) { let rt = 0; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(() => { resize(); drawn = false; }, 100); }).observe(document.body); }   // gruppens placering ændrer sig, når siden bygges op
     resize(); if (reduce) draw(0); else requestAnimationFrame(loop);
   }
   const ctaSec = document.querySelector('.cta-big'), w3Sec = document.querySelector('.w3d');
   if (ctaSec) initFlow(ctaSec, ctaSec.querySelector('.cta-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
-  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2 });
+  if (w3Sec) initFlow(w3Sec, w3Sec.querySelector('.w3d-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2, group: 'reel' });
   const reelSec = document.querySelector('.reel');
-  if (reelSec) initFlow(reelSec, reelSec.querySelector('.reel-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 1.4 });     // samme højdekurver bag showreelen          // samme blide bølger som under "Har du noget, der skal skabes?"
+  if (reelSec) initFlow(reelSec, reelSec.querySelector('.reel-flow'), { speed: 1, bump: .6, reach: 170, kink: .8, t0: 3.2, group: 'reel' });     // ét sammenhængende mønster bag showreelen og karussellen
 
 
   // Ydelserne side om side: det første står på siden, de andre kommer ind fra højre og går mod venstre, mens man scroller.
