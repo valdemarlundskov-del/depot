@@ -169,9 +169,8 @@ html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger alt
 html body .pns{height:215vh;}
 @media(max-width:1180px){html body .pns{height:225vh;}}
 @media(prefers-reduced-motion:reduce){html body .pns{height:auto;}}
-/* teamet: ingen fast fuld skærmhøjde (gav tomrum), og prikkerne under billederne kun på mobil, hvor man swiper */
+/* teamet: ingen fast fuld skærmhøjde (gav tomrum) */
 html body .tm{min-height:0;}
-@media(min-width:701px){html body .mh-dots{display:none;}}
 
 /* ---------- footer: status og lokal tid over stregen; © og links under stregen; BK STUDIO stort helt nede i bunden,
    så kun den øverste halvdel ses (modern.js sætter den negative bundmargen ud fra logoets højde) ---------- */
