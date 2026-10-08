@@ -186,3 +186,7 @@ html body .foot-mega{order:4;margin:clamp(28px,4vw,56px) calc(-1 * min(5.5vw,84p
 .thru-pct.done{opacity:0;}
 html .site-header,html .thru-title,html .thru-scroll{transition:opacity .8s ease;}
 html.thru-loading .site-header,html.thru-loading .thru-title,html.thru-loading .thru-scroll{opacity:0!important;}
+
+/* arkivets billedvisning: pilene er hinandens spejlbillede og står ud for billedets midte (ikke midten af billede + billedtekst) */
+html body .lb-next{border-radius:14px 20px 15px 22px / 22px 15px 20px 14px;}
+@media(min-width:701px){html body .lb-nav{margin-bottom:34px;}}
