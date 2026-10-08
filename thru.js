@@ -141,7 +141,7 @@
       if ((imgs && fontsOk && pageOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) loadedAt = now;
     }
     // når alt er hentet, når procent-tallet 100 og toner væk; først derefter vokser det lille logo op til det store
-    if (loadedAt && !homeT0) { if (!pctEl) homeT0 = loadedAt; else if (pctDoneAt) homeT0 = pctDoneAt + 500; }
+    if (loadedAt && !homeT0) { if (!pctEl) homeT0 = loadedAt; else if (pctDoneAt) homeT0 = pctDoneAt + 650; }
     return !!homeT0 && now >= homeT0;
   }
   // man kan ikke scrolle videre, før alt bag logoet er hentet og logoet har vist, hvad der er bag det (ellers ødelægges effekten).
@@ -247,6 +247,7 @@
     applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
     // forsiden: logoet starter som et lille sort BK-logo, der pulserer og drejer én omgang om sig selv i takt med, at siden hentes.
     // Når alt er hentet (og procent-tallet er tonet væk), vokser det op til det store logo og drejer en omgang mere.
+    if (!loaderMode && grow >= 1) window.__thruLoad = null;
     if (!loaderMode && grow < 1) {
       const e = smooth(grow), pul = hr ? 1 : 1 + .06 * Math.sin(now / 1000 * 3.2), s0 = .17 * pul, sc = s0 + (1 - s0) * e;
       const rot = ((pctEl ? pctShown : 1) + e) * Math.PI * 2;
@@ -256,6 +257,8 @@
       cM.setTransform(dpr * sM * k * sc, 0, 0, dpr * sM * k * sc, dpr * cx0, dpr * cy0); cM.scale(Math.cos(rot), 1); cM.translate(-LWd / 2, -LHt / 2);   // drejer om sin egen lodrette akse (som en mønt)
       cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd'); cM.filter = 'none'; cM.setTransform(1, 0, 0, 1, 0, 0);
       if (pctEl) { pctEl.style.left = cx0.toFixed(1) + 'px'; pctEl.style.top = (cy0 + LHt * k * s0 * .62 + 16).toFixed(1) + 'px'; }
+      // 3D-logoet (logo3d.min.js) står i det lille logos sted og drejer med, mens siden hentes; så går det over i det flade logo
+      window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: grow === 0, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
@@ -268,7 +271,11 @@
     const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
-    if (!loaderMode && reveal < 1) ctx.drawImage(la, 0, 0);                                     // forsiden: det sorte logo ligger nederst, til man scroller
+    // mens siden hentes: det lille, drejende 3D-logo; når 100 % er tonet væk, går det over i det flade sorte logo, der vokser op
+    const L3 = !loaderMode && !instant && grow === 0 && m3 && window.__thruLoad && window.__thruLoad.on && window.__thruLoad.r3;
+    const flat = L3 ? (pctDoneAt ? smooth((now - pctDoneAt) / 380) : 0) : 1;
+    if (!loaderMode && reveal < 1) { ctx.globalAlpha = flat; ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // forsiden: det sorte logo ligger nederst, til man scroller
+    if (L3 && flat < 1) { ctx.globalAlpha = 1 - flat; try { ctx.drawImage(m3.canvas, 0, 0, cv.width, cv.height); } catch (err) {} ctx.globalAlpha = 1; }
     ctx.globalAlpha = (loaderMode ? intro : reveal) * (1 - fadeLt); if (ctx.globalAlpha > .003) ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // rummet toner frem ovenpå; intet skinner igennem kanterne før
     if (a3 > .003 && reveal > .003) {                                                                  // 3D-logoet, klippet af logoformen
       c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);

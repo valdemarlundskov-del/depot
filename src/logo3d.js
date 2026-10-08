@@ -91,6 +91,15 @@ function opening(sec) {
     const p = prog();
     if (!ready) { raf = requestAnimationFrame(frame); return; }
     if (p >= 1) { window.__thru3d = null; return; }                                          // siden har dækket åbningen: hvil
+    // indlæsningen (thru.js): et lille 3D-logo i det lille logos sted, der drejer om sig selv i takt med, at siden hentes
+    const L = window.__thruLoad;
+    if (L && L.on) {
+      const bw0 = Math.min(vw * (vw < 700 ? .86 : .56), vh * (vw < 700 ? .5 : .66) * (LWd / LHt)), w0 = bw0 * L.s;
+      const a0 = w0 * (VIS / vh) / LWd, s0 = a0 / (1 + a0 * half / CAMZ), u0 = VIS / vh;
+      group.scale.setScalar(s0); group.position.set((L.cx - vw / 2) * u0, -(L.cy - vh / 2) * u0, 0); group.rotation.set(0, L.rot, 0);
+      renderer.render(scene, camera); L.r3 = true; window.__thru3d = { canvas, ready: true };
+      raf = requestAnimationFrame(frame); return;
+    }
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
     const zp = smooth(p / .4), back = smooth(p / .3), tilt = smooth(p / .12), goal = -p * Math.PI * 6;   // snurrer samme vej som på resten af siden
     ang += (goal - ang) * (1 - Math.exp(-dt * 7));
