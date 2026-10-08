@@ -156,15 +156,24 @@ html body .ak-title{font-size:clamp(48px,7vw,112px);}
 .strip,footer{position:relative;}
 .strip>*:not(.bk3d-layer),footer>*:not(.bk3d-layer){position:relative;z-index:1;}
 /* i footeren lander 3D-logoet midt i det store logo-felt og bliver til det flade logo (--fmdx flytter det til midten); så glider
-   logoet ud på sin plads til venstre, og "STUDIO" kommer ind fra højre (logo3d.min.js) */
+   "STUDIO" ind helt fra højre, rammer logoet og skubber det med ud på sin plads til venstre (logo3d.min.js) */
 html.bk3d-on footer .foot-mega .fm-blob{position:relative;z-index:2;opacity:0;transform:translateX(var(--fmdx,0px));transition:none;}
 html.bk3d-on footer.fm-landed .foot-mega .fm-blob{opacity:1;}
-html.bk3d-on footer.fm-spread .foot-mega .fm-blob{transform:none;transition:transform 1.15s cubic-bezier(.65,0,.2,1);}
-html.bk3d-on footer.fm-spread .foot-mega:hover .fm-blob{transform:rotate(-10deg) scale(1.04);transition:transform 1s var(--ease-out);}
-/* "STUDIO" kommer ind fra højre, i takt med at logoet skubbes til venstre (let sløring, der skærpes) */
-html.bk3d-on footer .foot-mega .fm-word{position:relative;z-index:1;opacity:0;transform:translateX(38%);filter:brightness(0) invert(1) blur(8px);transition:none;}
-html.bk3d-on footer.fm-spread .foot-mega .fm-word{opacity:1;transform:none;filter:brightness(0) invert(1) blur(0);
-  transition:opacity .7s ease-out,transform 1.15s cubic-bezier(.65,0,.2,1),filter .9s ease-out .1s;}
+/* "STUDIO" glider ind helt fra højre side, rammer logoet midt i feltet og skubber det med ud på sin plads til venstre */
+html.bk3d-on footer{overflow-x:clip;}
+html.bk3d-on footer .foot-mega .fm-word{position:relative;z-index:1;opacity:0;transform:translateX(110vw);filter:brightness(0) invert(1);}
+html.bk3d-on footer.fm-spread .foot-mega .fm-word{opacity:1;animation:fmWord 1.9s both;}
+html.bk3d-on footer.fm-spread .foot-mega .fm-blob{animation:fmBlob 1.9s both;transition:none;}
+html.bk3d-on footer.fm-spread .foot-mega:hover .fm-blob{animation:none;transform:rotate(-10deg) scale(1.04);transition:transform 1s var(--ease-out);}
+@keyframes fmWord{
+  0%{transform:translateX(110vw);animation-timing-function:cubic-bezier(.2,.6,.35,1);}
+  52%{transform:translateX(var(--fmdx,0px));animation-timing-function:cubic-bezier(.45,0,.2,1);}
+  100%{transform:translateX(0);}
+}
+@keyframes fmBlob{
+  0%,52%{transform:translateX(var(--fmdx,0px));animation-timing-function:cubic-bezier(.45,0,.2,1);}
+  100%{transform:translateX(0);}
+}
   transition:opacity .5s .15s,transform 1.3s cubic-bezier(.6,0,.2,1) .15s,filter 1.1s ease-out .2s,-webkit-mask-position 1.4s cubic-bezier(.6,0,.2,1) .15s,mask-position 1.4s cubic-bezier(.6,0,.2,1) .15s;}
 .bk3d-ring{transform:translateZ(-30px);}
 html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger altid foran 3D-logoet */
