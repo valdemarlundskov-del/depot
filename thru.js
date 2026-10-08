@@ -73,15 +73,17 @@
   // Tegnes i lav opløsning: logoet + dråberne sløres og skærpes igen med en tærskel, så de flyder sammen.
   const mkc = () => document.createElement('canvas');
   const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, vx: 0, vy: 0, a: 0, drops: [], lx: 0, ly: 0 };
-  sec.addEventListener('pointermove', e => {
-    if (reduce || loaderMode) return;
+  // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe magneten)
+  addEventListener('pointermove', e => {
+    if (reduce || loaderMode || e.pointerType === 'touch') return;
     const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+    if (x < 0 || y < 0 || x > rc.width || y > rc.height) { ink.on = false; return; }
     if (!ink.on) { ink.x = ink.lx = x; ink.y = ink.ly = y; ink.vx = ink.vy = 0; }
     ink.on = true; ink.tx = x; ink.ty = y; dirty = true;
-  });
-  sec.addEventListener('pointerleave', () => { ink.on = false; });
+  }, { passive: true });
+  document.documentElement.addEventListener('pointerleave', () => { ink.on = false; });
   let iS = null, iC = null;
-  function applyInk(now, dt, ox, oy, bw, bh, zp, sM, txM, tyM, k) {
+  function applyInk(now, dt, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur) {
     const gate = 1 - smooth(zp / .18);
     ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 6);
     for (let i = ink.drops.length - 1; i >= 0; i--) if (now - ink.drops[i].t0 > ink.drops[i].life) ink.drops.splice(i, 1);
@@ -98,25 +100,31 @@
     const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
     if (!iS || iS.width !== gw || iS.height !== gh) { iS = mkc(); iS.width = gw; iS.height = gh; iC = iS.getContext('2d', { willReadFrequently: true }); }
     const D = dpr * q;
-    iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.filter = 'blur(' + (D * 22).toFixed(1) + 'px)'; iC.fillStyle = '#000';
-    // logoet (så dråberne kan smelte sammen med det) — magneten trækker formen lidt ud mod markøren
-    iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM)); iC.fill(LOGO, 'evenodd');
-    // magneten: find logoets kant på vej fra markøren ind mod logoets midte; er den tæt på, rækker blækket ud efter markøren som en tråd
+    iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.fillStyle = '#000';
+    // logoets placering (bruges kun til at finde logoets kant; selve logoet ligger allerede i masken)
+    iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM));   // (logoet selv tegnes ikke i blæklaget: så har det præcis samme form og størrelse, med og uden magnet)
+    // magneten: find det nærmeste punkt på logoet (stråler ud fra markøren i alle retninger); er det inden for rækkevidde, rækker blækket ud efter markøren som en tråd
+    const RL = Math.max(320, bw * sM);                                  // magnetens rækkevidde følger logoets størrelse
     let reach = null;
     if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
-      const fx = sM * (ox + FX * k) + txM, fy = sM * (oy + FY * k) + tyM, N = 40;
-      for (let i = 1; i <= N; i++) {
-        const px = ink.x + (fx - ink.x) * i / N, py = ink.y + (fy - ink.y) * i / N;
-        if (iC.isPointInPath(LOGO, px * D, py * D, 'evenodd')) { reach = { x: px, y: py, d: Math.hypot(px - ink.x, py - ink.y) }; break; }
+      const RAYS = 28, STEP = 10;
+      for (let j = 0; j < RAYS; j++) {
+        const an = j / RAYS * Math.PI * 2, cx = Math.cos(an), cy = Math.sin(an), lim = reach ? reach.d : RL;
+        for (let d = STEP; d < lim; d += STEP) {
+          const px = ink.x + cx * d, py = ink.y + cy * d;
+          if (iC.isPointInPath(LOGO, px * D, py * D, 'evenodd')) { reach = { x: px, y: py, d }; break; }
+        }
       }
     }
+    iC.filter = 'blur(' + (D * 14).toFixed(1) + 'px)';
     iC.setTransform(D, 0, 0, D, 0, 0);
-    if (reach && reach.d < 260) {
-      const pull = Math.pow(1 - reach.d / 260, .7) * ink.a, n = Math.max(3, Math.ceil(reach.d / 9));
+    if (reach) {
+      const pull = Math.pow(1 - reach.d / RL, .5) * ink.a, n = Math.max(3, Math.ceil(reach.d / 7)), ext = .3 + .7 * pull;   // jo tættere, jo længere rækker tråden
+      const ix = reach.x - (ink.x - reach.x) / reach.d * 14, iy = reach.y - (ink.y - reach.y) / reach.d * 14;            // tråden starter lidt inde i logoet, så den hænger sammen med det
       for (let i = 0; i <= n; i++) {
         const u = i / n, wob = Math.sin(u * Math.PI) * Math.sin(now / 1000 * 3 + u * 5) * 6 * pull;
-        const r = (12 + 34 * Math.pow(1 - u, 1.2)) * (.45 + .55 * pull);   // tyk ved logoet, tynd ved markøren
-        if (r > .5) { iC.beginPath(); iC.arc(reach.x + (ink.x - reach.x) * u * (.35 + .65 * pull) + wob, reach.y + (ink.y - reach.y) * u * (.35 + .65 * pull), r * Math.min(1, pull * 2.2), 0, Math.PI * 2); iC.fill(); }
+        const r = (10 + 30 * Math.pow(1 - u, 1.3)) * (.55 + .45 * pull) * Math.min(1, ink.a * 1.6);   // tyk ved logoet, tynd ved markøren
+        if (r > .5) { iC.beginPath(); iC.arc(ix + (ink.x - ix) * u * ext + wob, iy + (ink.y - iy) * u * ext, r, 0, Math.PI * 2); iC.fill(); }
       }
     }
     const R = 44 * ink.a, st = Math.min(1.8, 1 + speed * .0022), ang = Math.atan2(ink.vy, ink.vx);
@@ -130,7 +138,7 @@
     iC.setTransform(1, 0, 0, 1, 0, 0); iC.filter = 'none'; iC.putImageData(im, 0, 0);
     // læg blækket oven i logo-masken (union), med samme bløde kant
     cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
-    cM.filter = 'blur(' + (6 * dpr).toFixed(1) + 'px)'; cM.globalAlpha = Math.min(1, ink.a * 1.5 + (ink.drops.length ? .6 : 0));
+    cM.filter = 'blur(' + (blur / 2).toFixed(1) + 'px)';   // samme bløde kant som logoet, så logoet ikke skifter størrelse, når blækket kommer cM.globalAlpha = Math.min(1, ink.a * 1.5 + (ink.drops.length ? .6 : 0));
     cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
     cM.drawImage(iS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
     dirty = true;
@@ -329,7 +337,7 @@
       window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: true, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
-    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, ox, oy, bw, bh, zp, sM, txM, tyM, k);   // magnetisk blæk ved markøren
+    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur);   // magnetisk blæk ved markøren
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
