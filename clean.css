@@ -85,8 +85,6 @@ html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior
 .hdr-status,.foot-meta,.m-idx,.sv-num,.footer-heading{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:.08em;}
 
 /* ---------- footer: status og lokal tid står over det store BK-logo, uden streg under ---------- */
-.foot-meta{border-bottom:0!important;padding-bottom:0!important;margin:clamp(28px,4vw,56px) 0 0!important;}
-.foot-mega{margin-top:clamp(14px,1.6vw,22px)!important;margin-bottom:clamp(22px,2.6vw,36px);}
 
 /* ---------- numrene på ydelseskortene i samme stil som processens numre (pille med ramme) ---------- */
 html body .sv-num{left:14px;top:14px;padding:5px 11px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:.12em;line-height:1;
@@ -187,3 +185,11 @@ html body .pns{height:215vh;}
 /* teamet: ingen fast fuld skærmhøjde (gav tomrum), og prikkerne under billederne kun på mobil, hvor man swiper */
 html body .tm{min-height:0;}
 @media(min-width:701px){html body .mh-dots{display:none;}}
+
+/* ---------- footer: status og lokal tid over stregen; © og links under stregen; BK STUDIO stort helt nede i bunden,
+   så kun den øverste halvdel ses (modern.js sætter den negative bundmargen ud fra logoets højde) ---------- */
+html body footer{display:flex;flex-direction:column;padding-bottom:0;}
+html body .footer-top{order:1;border-bottom:0;padding-bottom:0;margin-bottom:0;}
+html body .foot-meta{order:2;margin:clamp(30px,4vw,52px) 0 0!important;padding-bottom:clamp(18px,2vw,24px)!important;border-bottom:1px solid var(--line-dark)!important;}
+html body .footer-bottom{order:3;margin-top:clamp(16px,1.8vw,22px);}
+html body .foot-mega{order:4;margin:clamp(28px,4vw,56px) calc(-1 * min(5.5vw,84px)) 0;gap:clamp(12px,1.8vw,32px);padding:0 min(2.4vw,36px);}
