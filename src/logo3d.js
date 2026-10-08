@@ -92,7 +92,7 @@ function opening(sec) {
     if (!ready) { raf = requestAnimationFrame(frame); return; }
     if (p >= 1) { window.__thru3d = null; return; }                                          // siden har dækket åbningen: hvil
     const dt = last ? Math.min(.05, (now - last) / 1000) : .016; last = now;
-    const zp = smooth(p / .4), back = smooth(p / .3), tilt = smooth(p / .12), goal = p * Math.PI * 6;
+    const zp = smooth(p / .4), back = smooth(p / .3), tilt = smooth(p / .12), goal = -p * Math.PI * 6;   // snurrer samme vej som på resten af siden
     ang += (goal - ang) * (1 - Math.exp(-dt * 7));
     if (Math.abs(goal - ang) < 1e-4) ang = goal;
 
@@ -209,7 +209,7 @@ function journey() {
       const maxS = document.documentElement.scrollHeight - vh, endTop = br.top - (maxS - scrollY) + 30, start = vh * 1.05;
       t = smooth((start - br.top) / Math.max(1, start - endTop));
     }
-    const goal = scrollY * .0024;                                      // drejer kun, når man scroller
+    const goal = -scrollY * .0024;                                     // drejer kun, når man scroller (samme retning som i åbningen)
     ang += (goal - ang) * (1 - Math.exp(-dt * 7)); if (Math.abs(goal - ang) < 1e-4) ang = goal;
     const baseW = Math.min(vw * (vw < 700 ? .7 : .42), 580);
     // når footeren kommer op nedefra, følger logoet med i footerens synlige del (så det ikke gemmer sig bag den lyse flade ovenover)
