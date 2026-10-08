@@ -66,67 +66,51 @@
   }
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
-  // ---------- magnetisk blæk ved hover (forsiden) ----------
-  // Logoet er blæk, og markøren er en svag magnet: kun når markøren rører logoets kant, buler blækket blødt ud mod den.
-  // Tegnes i lav opløsning: bulen sløres og skærpes igen med en tærskel, så den flyder blødt sammen med logoet.
+  // ---------- opløsning ved musen (forsiden) ----------
+  // Hvor markøren rører logoet, går logoformen i opløsning: den smuldrer til små pixels, der flimrer og spredes lidt udad,
+  // så man ser igennem (og senere ind i rummet bag). Stærkest under markøren, og helt væk et stykke derfra.
   const mkc = () => document.createElement('canvas');
-  const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, vx: 0, vy: 0, a: 0, drops: [], lx: 0, ly: 0 };
-  // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe magneten)
+  const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, a: 0 };
+  // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe effekten)
   addEventListener('pointermove', e => {
     if (reduce || loaderMode || e.pointerType === 'touch') return;
     const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
     if (x < 0 || y < 0 || x > rc.width || y > rc.height) { ink.on = false; return; }
-    if (!ink.on) { ink.x = ink.lx = x; ink.y = ink.ly = y; ink.vx = ink.vy = 0; }
+    if (!ink.on || ink.a < .02) { ink.x = x; ink.y = y; }
     ink.on = true; ink.tx = x; ink.ty = y; dirty = true;
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { ink.on = false; });
-  let iS = null, iC = null;
-  function applyInk(now, dt, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur) {
+  const hash = (x, y, t) => { let h = (x * 374761393 + y * 668265263 + t * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  function applyInk(now, dt, bw, zp, sM) {
     const gate = 1 - smooth(zp / .18);
-    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 6);
-    for (let i = ink.drops.length - 1; i >= 0; i--) if (now - ink.drops[i].t0 > ink.drops[i].life) ink.drops.splice(i, 1);
-    if (ink.a < .01 && !ink.drops.length) return;
-    // dråben følger markøren med fjeder og inerti, og strækkes i bevægelsesretningen
-    if (ink.on) { ink.vx += ((ink.tx - ink.x) * 240 - ink.vx * 22) * dt; ink.vy += ((ink.ty - ink.y) * 240 - ink.vy * 22) * dt; }
-    else { ink.vx *= Math.exp(-dt * 8); ink.vy *= Math.exp(-dt * 8); }
-    ink.x += ink.vx * dt; ink.y += ink.vy * dt;
-    const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
-    if (!iS || iS.width !== gw || iS.height !== gh) { iS = mkc(); iS.width = gw; iS.height = gh; iC = iS.getContext('2d', { willReadFrequently: true }); }
-    const D = dpr * q;
-    iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.fillStyle = '#000';
-    // logoets placering (bruges kun til at finde logoets kant; selve logoet ligger allerede i masken)
-    iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM));   // (logoet selv tegnes ikke i blæklaget: så har det præcis samme form og størrelse, med og uden magnet)
-    // magneten: find det nærmeste punkt på logoet (stråler ud fra markøren i alle retninger); er markøren helt tæt på, buler logoet ud mod den
-    const RL = Math.max(60, bw * sM * .12);                             // magneten virker kun lige ved logoets kant
-    let reach = null;
-    if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
-      const RAYS = 28, STEP = 4;
-      for (let j = 0; j < RAYS; j++) {
-        const an = j / RAYS * Math.PI * 2, cx = Math.cos(an), cy = Math.sin(an), lim = reach ? reach.d : RL;
-        for (let d = STEP; d < lim; d += STEP) {
-          const px = ink.x + cx * d, py = ink.y + cy * d;
-          if (iC.isPointInPath(LOGO, px * D, py * D, 'evenodd')) { reach = { x: px, y: py, d }; break; }
-        }
+    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 5);
+    if (ink.a < .01) return;
+    const fl = Math.min(1, dt * 14); ink.x += (ink.tx - ink.x) * fl; ink.y += (ink.ty - ink.y) * fl;   // følger markøren blødt
+    const R = Math.min(150, Math.max(70, bw * sM * .17)), C = 3;                                       // radius og pixelstørrelse (css-px)
+    const x0 = Math.max(0, Math.floor((ink.x - R) * dpr)), y0 = Math.max(0, Math.floor((ink.y - R) * dpr));
+    const x1 = Math.min(lm.width, Math.ceil((ink.x + R) * dpr)), y1 = Math.min(lm.height, Math.ceil((ink.y + R) * dpr));
+    if (x1 - x0 < 2 || y1 - y0 < 2) return;
+    cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1;
+    const src = cM.getImageData(x0, y0, x1 - x0, y1 - y0), sd = src.data, sw = x1 - x0;
+    const tick = Math.floor(now / 70), cs = C * dpr, er = new Path2D(), sp = new Path2D();
+    let any = false;
+    const gx0 = Math.floor((ink.x - R) / C), gx1 = Math.ceil((ink.x + R) / C), gy0 = Math.floor((ink.y - R) / C), gy1 = Math.ceil((ink.y + R) / C);
+    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
+      const cx = (gx + .5) * C, cy = (gy + .5) * C, dx = cx - ink.x, dy = cy - ink.y, d = Math.hypot(dx, dy) / R;
+      if (d >= 1) continue;
+      const px = Math.round(cx * dpr) - x0, py = Math.round(cy * dpr) - y0;
+      if (px < 0 || py < 0 || px >= sw || py >= y1 - y0) continue;
+      const al = sd[(py * sw + px) * 4 + 3]; if (al < 40) continue;                                   // kun hvor der er logo
+      const f = Math.pow(1 - d, 1.3) * ink.a, h = hash(gx, gy, tick);
+      if (h < f * .9) { er.rect(gx * cs, gy * cs, cs, cs); any = true; }                              // pixlen smuldrer væk
+      if (h < f * .4) {                                                                                // og nogle af dem flyver lidt udad
+        const h2 = hash(gy, gx, tick + 7), k = (6 + 34 * f * h2) / Math.max(1, d * R);
+        sp.rect(Math.round((cx + dx * k) / C) * cs, Math.round((cy + dy * k) / C) * cs, cs, cs);
       }
     }
-    iC.filter = 'blur(' + (D * 14).toFixed(1) + 'px)';
-    iC.setTransform(D, 0, 0, D, 0, 0);
-    if (reach) {                                                           // logoet buler blødt ud lige dér, hvor markøren rører det
-      const f = smooth(1 - reach.d / RL) * Math.min(1, ink.a * 1.6), n = 6;
-      const ux = (ink.x - reach.x) / reach.d, uy = (ink.y - reach.y) / reach.d, len = reach.d * .7 + 10;
-      for (let i = 0; i <= n; i++) {
-        const u = i / n, r = (24 - 12 * u) * f;
-        if (r > .5) { iC.beginPath(); iC.arc(reach.x + ux * (len * u * f - 12), reach.y + uy * (len * u * f - 12), r, 0, Math.PI * 2); iC.fill(); }
-      }
-    }
-    const im = iC.getImageData(0, 0, gw, gh), dd = im.data;
-    for (let i = 3; i < dd.length; i += 4) { const v = (dd[i] - 100) * 6; dd[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: blæk flyder sammen
-    iC.setTransform(1, 0, 0, 1, 0, 0); iC.filter = 'none'; iC.putImageData(im, 0, 0);
-    // læg blækket oven i logo-masken (union), med samme bløde kant
-    cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
-    cM.filter = 'blur(' + (blur / 2).toFixed(1) + 'px)';   // samme bløde kant som logoet, så logoet ikke skifter størrelse, når blækket kommer cM.globalAlpha = Math.min(1, ink.a * 1.5 + (ink.drops.length ? .6 : 0));
-    cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
-    cM.drawImage(iS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
+    if (!any) return;
+    cM.globalCompositeOperation = 'destination-out'; cM.fillStyle = '#000'; cM.fill(er);
+    cM.globalCompositeOperation = 'source-over'; cM.fill(sp);
     dirty = true;
   }
 
@@ -245,9 +229,9 @@
       const share = loadedAt ? 1 : loadedShare(); pctShown += (share - pctShown) * .1; if (loadedAt && pctShown > .995) pctShown = 1;
       pctEl.textContent = Math.round(pctShown * 100) + '%';
       if (loadedAt && pctShown >= 1 && !pctDoneAt) { pctDoneAt = now + 350; setTimeout(() => pctEl.classList.add('done'), 350); }   // 100 % står et øjeblik og toner så væk
-      if (hr && now - homeT0 > 700) document.documentElement.classList.remove('thru-loading');                                 // menu og tekst kommer lidt efter
+      if (hr && now - homeT0 > 1550) document.documentElement.classList.remove('thru-loading');                                // menu og tekst kommer først, når logoet er helt stort
     }
-    if (locked && hr && now - homeT0 > 1900) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
+    if (locked && hr && now - homeT0 > 1700) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
     const asp = LWd / LHt;
@@ -312,7 +296,7 @@
     // Når alt er hentet (og procent-tallet er tonet væk), vokser det op til det store logo og drejer en omgang mere.
     if (!loaderMode && grow >= 1) window.__thruLoad = null;
     if (!loaderMode && grow < 1) {
-      const e = smooth(grow), pul = hr ? 1 : 1 + .06 * Math.sin(now / 1000 * 3.2), s0 = .17 * pul, sc = s0 + (1 - s0) * e;
+      const e = smooth(grow), pul = hr ? 1 : 1 + .06 * Math.sin(now / 1000 * 3.2), s0 = .1 * pul, sc = s0 + (1 - s0) * e;
       const rot = ((pctEl ? pctShown : 1) + e) * Math.PI * 2;
       const cx0 = sM * (ox + LWd / 2 * k) + txM, cy0 = sM * (oy + LHt / 2 * k) + tyM;
       cM.setTransform(1, 0, 0, 1, 0, 0); cM.globalCompositeOperation = 'source-over'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0;
@@ -323,7 +307,7 @@
       window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: true, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
-    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur);   // magnetisk blæk ved markøren
+    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, bw, zp, sM);   // logoet går i opløsning, hvor markøren rører det
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
