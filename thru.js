@@ -67,10 +67,8 @@
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
   // ---------- magnetisk blæk ved hover (forsiden) ----------
-  // Logoet er blæk, og markøren er en magnet: kommer man tæt på, strækker blækket sig ud mod markøren som kviksølv, danner en bro
-  // og snører sig af igen. Markøren trækker selv en lille blækdråbe med sig, og når den bevæger sig, drypper der små dråber,
-  // der svinder ind. Da logoet er et vindue, ser man rummet bag logoet gennem alt blækket.
-  // Tegnes i lav opløsning: logoet + dråberne sløres og skærpes igen med en tærskel, så de flyder sammen.
+  // Logoet er blæk, og markøren er en svag magnet: kun når markøren rører logoets kant, buler blækket blødt ud mod den.
+  // Tegnes i lav opløsning: bulen sløres og skærpes igen med en tærskel, så den flyder blødt sammen med logoet.
   const mkc = () => document.createElement('canvas');
   const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, vx: 0, vy: 0, a: 0, drops: [], lx: 0, ly: 0 };
   // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe magneten)
@@ -92,22 +90,17 @@
     if (ink.on) { ink.vx += ((ink.tx - ink.x) * 240 - ink.vx * 22) * dt; ink.vy += ((ink.ty - ink.y) * 240 - ink.vy * 22) * dt; }
     else { ink.vx *= Math.exp(-dt * 8); ink.vy *= Math.exp(-dt * 8); }
     ink.x += ink.vx * dt; ink.y += ink.vy * dt;
-    const speed = Math.hypot(ink.vx, ink.vy);
-    // drypper, når den bevæger sig
-    if (ink.on && Math.hypot(ink.x - ink.lx, ink.y - ink.ly) > 26 && ink.drops.length < 28) {
-      ink.drops.push({ x: ink.x, y: ink.y, r: 9 + Math.random() * 12, t0: now, life: 700 + Math.random() * 700, vy: 10 + Math.random() * 30 }); ink.lx = ink.x; ink.ly = ink.y;
-    }
     const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
     if (!iS || iS.width !== gw || iS.height !== gh) { iS = mkc(); iS.width = gw; iS.height = gh; iC = iS.getContext('2d', { willReadFrequently: true }); }
     const D = dpr * q;
     iC.setTransform(1, 0, 0, 1, 0, 0); iC.clearRect(0, 0, gw, gh); iC.fillStyle = '#000';
     // logoets placering (bruges kun til at finde logoets kant; selve logoet ligger allerede i masken)
     iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM));   // (logoet selv tegnes ikke i blæklaget: så har det præcis samme form og størrelse, med og uden magnet)
-    // magneten: find det nærmeste punkt på logoet (stråler ud fra markøren i alle retninger); er det inden for rækkevidde, rækker blækket ud efter markøren som en tråd
-    const RL = Math.max(280, bw * sM * .75);                            // magnetens rækkevidde følger logoets størrelse (kun tæt på logoet, ikke fra hele siden)
+    // magneten: find det nærmeste punkt på logoet (stråler ud fra markøren i alle retninger); er markøren helt tæt på, buler logoet ud mod den
+    const RL = Math.max(60, bw * sM * .12);                             // magneten virker kun lige ved logoets kant
     let reach = null;
     if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
-      const RAYS = 28, STEP = 10;
+      const RAYS = 28, STEP = 4;
       for (let j = 0; j < RAYS; j++) {
         const an = j / RAYS * Math.PI * 2, cx = Math.cos(an), cy = Math.sin(an), lim = reach ? reach.d : RL;
         for (let d = STEP; d < lim; d += STEP) {
@@ -118,21 +111,14 @@
     }
     iC.filter = 'blur(' + (D * 14).toFixed(1) + 'px)';
     iC.setTransform(D, 0, 0, D, 0, 0);
-    if (reach) {
-      const fade = smooth((RL - reach.d) / (RL * .3)), pull = Math.pow(1 - reach.d / RL, .5) * ink.a, n = Math.max(3, Math.ceil(reach.d / 7)), ext = (.3 + .7 * pull) * fade;   // jo tættere, jo længere rækker tråden
-      const ix = reach.x - (ink.x - reach.x) / reach.d * 14, iy = reach.y - (ink.y - reach.y) / reach.d * 14;            // tråden starter lidt inde i logoet, så den hænger sammen med det
+    if (reach) {                                                           // logoet buler blødt ud lige dér, hvor markøren rører det
+      const f = smooth(1 - reach.d / RL) * Math.min(1, ink.a * 1.6), n = 6;
+      const ux = (ink.x - reach.x) / reach.d, uy = (ink.y - reach.y) / reach.d, len = reach.d * .7 + 10;
       for (let i = 0; i <= n; i++) {
-        const u = i / n, wob = Math.sin(u * Math.PI) * Math.sin(now / 1000 * 3 + u * 5) * 6 * pull;
-        const r = (10 + 30 * Math.pow(1 - u, 1.3)) * (.55 + .45 * pull) * Math.min(1, ink.a * 1.6) * fade;   // vokser blødt frem, når man kommer inden for rækkevidde   // tyk ved logoet, tynd ved markøren
-        if (r > .5) { iC.beginPath(); iC.arc(ix + (ink.x - ix) * u * ext + wob, iy + (ink.y - iy) * u * ext, r, 0, Math.PI * 2); iC.fill(); }
+        const u = i / n, r = (24 - 12 * u) * f;
+        if (r > .5) { iC.beginPath(); iC.arc(reach.x + ux * (len * u * f - 12), reach.y + uy * (len * u * f - 12), r, 0, Math.PI * 2); iC.fill(); }
       }
     }
-    const R = 44 * ink.a, st = Math.min(1.8, 1 + speed * .0022), ang = Math.atan2(ink.vy, ink.vx);
-    if (R > .5) { iC.beginPath(); iC.ellipse(ink.x, ink.y, R * st, R / Math.sqrt(st), ang, 0, Math.PI * 2); iC.fill(); }
-    ink.drops.forEach(d => {
-      const age = (now - d.t0) / d.life, r = d.r * (1 - age) * (age < .12 ? age / .12 : 1);
-      if (r > .4) { iC.beginPath(); iC.arc(d.x, d.y + d.vy * age, r, 0, Math.PI * 2); iC.fill(); }
-    });
     const im = iC.getImageData(0, 0, gw, gh), dd = im.data;
     for (let i = 3; i < dd.length; i += 4) { const v = (dd[i] - 100) * 6; dd[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: blæk flyder sammen
     iC.setTransform(1, 0, 0, 1, 0, 0); iC.filter = 'none'; iC.putImageData(im, 0, 0);
