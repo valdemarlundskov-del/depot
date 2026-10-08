@@ -70,7 +70,7 @@
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
   // Formen tegnes i lav opløsning, forskydes blødt med et flydende felt (udstrækning + langsomme bølger) og skaleres op igen som ny maske.
-  let mS = null, mO = null, cS2 = null, cO = null, wImg = null, gS = null, gC = null;
+  let mS = null, mO = null, cS2 = null, cO = null, wImg = null;
   function applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur) {
     const a = .6 * Math.pow(Math.sin(Math.PI * clamp(zp)), 1.1);
     if (a < .015) return;
@@ -134,11 +134,15 @@
     if (want3d) parts.push(window.__thru3d !== undefined ? 1 : 0);
     return parts.reduce((a, b) => a + b, 0) / parts.length;
   }
+  let loadedAt = 0, pctDoneAt = 0;
   function homeReady(now) {
-    if (homeT0) return true;
-    const imgs = COL.every(c => c.im.complete), want3d = document.documentElement.dataset.thru3d === '1';
-    if ((imgs && fontsOk && pageOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) homeT0 = now;
-    return !!homeT0;
+    if (!loadedAt) {
+      const imgs = COL.every(c => c.im.complete), want3d = document.documentElement.dataset.thru3d === '1';
+      if ((imgs && fontsOk && pageOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) loadedAt = now;
+    }
+    // når alt er hentet, når procent-tallet 100 og toner væk; først derefter vokser det lille logo op til det store
+    if (loadedAt && !homeT0) { if (!pctEl) homeT0 = loadedAt; else if (pctDoneAt) homeT0 = pctDoneAt + 650; }
+    return !!homeT0 && now >= homeT0;
   }
   // man kan ikke scrolle videre, før alt bag logoet er hentet og logoet har vist, hvad der er bag det (ellers ødelægges effekten).
   // Siden starter altid i toppen. Gælder ikke, når man kommer tilbage via et link/tilbage-knap, har et #mål eller reduceret bevægelse.
@@ -172,12 +176,13 @@
     if (p >= 1) { if (doneFinal) return; doneFinal = true; } else doneFinal = false;
     const tIn = now - t0;
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
-    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1500) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
+    const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1400) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
     const reveal = loaderMode || reduce ? 1 : hr ? smooth(p / .1) : 0;                           // forsiden: logoet står helt sort, indtil man begynder at scrolle; så toner det sorte ud
-    if (pctEl) {                                                                               // procent-tallet under den pulserende prik
-      const share = hr ? 1 : loadedShare(); pctShown += (share - pctShown) * .12; if (hr && pctShown > .995) pctShown = 1;
+    if (pctEl) {                                                                               // procent-tallet under det lille, snurrende logo
+      const share = loadedAt ? 1 : loadedShare(); pctShown += (share - pctShown) * .1; if (loadedAt && pctShown > .995) pctShown = 1;
       pctEl.textContent = Math.round(pctShown * 100) + '%';
-      if (hr && pctShown >= 1 && !pctEl.classList.contains('done')) { pctEl.classList.add('done'); document.documentElement.classList.remove('thru-loading'); }
+      if (loadedAt && pctShown >= 1 && !pctDoneAt) { pctDoneAt = now + 350; setTimeout(() => pctEl.classList.add('done'), 350); }   // 100 % står et øjeblik og toner så væk
+      if (hr && now - homeT0 > 700) document.documentElement.classList.remove('thru-loading');                                 // menu og tekst kommer lidt efter
     }
     if (locked && hr && now - homeT0 > 1900) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
@@ -240,32 +245,20 @@
     cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM - D, dpr * tyM);
     cM.translate(ox, oy); cM.scale(k, k); cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd');
     applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
-    // forsiden: logoet starter som en lille sort cirkel (i logoets bredeste del), der ånder let, mens alt bag logoet hentes.
-    // Når alt er hentet, smelter cirklen over i logoet: logoformen vokser ud fra cirklen, og de to flyder sammen (blød "goo"-overgang),
-    // til hele logoet står der. Tegnes i lav opløsning: sløres og skærpes igen med en tærskel, så formerne smelter sammen.
+    // forsiden: logoet starter som et lille sort BK-logo, der pulserer og drejer én omgang om sig selv i takt med, at siden hentes.
+    // Når alt er hentet (og procent-tallet er tonet væk), vokser det op til det store logo og drejer en omgang mere.
+    if (!loaderMode && grow >= 1) window.__thruLoad = null;
     if (!loaderMode && grow < 1) {
-      const q = .25, gw = Math.max(64, Math.round(lm.width * q)), gh = Math.max(64, Math.round(lm.height * q));
-      if (!gS || gS.width !== gw || gS.height !== gh) { gS = mkc(); gS.width = gw; gS.height = gh; gC = gS.getContext('2d', { willReadFrequently: true }); }
-      const e = smooth(grow), R0 = FR * .62 * (hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2)), U = dpr * q * sM * k;
-      gC.setTransform(1, 0, 0, 1, 0, 0); gC.globalAlpha = 1; gC.clearRect(0, 0, gw, gh);
-      gC.filter = grow > 0 ? 'blur(' + (U * 26).toFixed(1) + 'px)' : 'none';
-      gC.setTransform(U, 0, 0, U, dpr * q * (sM * ox + txM), dpr * q * (sM * oy + tyM));
-      gC.fillStyle = '#000';
-      gC.globalAlpha = 1 - smooth((grow - .45) / .5); gC.beginPath(); gC.arc(FX, FY, R0 * (1 + .25 * e), 0, Math.PI * 2); gC.fill();
-      if (grow > 0) {
-        const sc = .12 + .88 * e; gC.globalAlpha = 1;
-        gC.translate(FX, FY); gC.scale(sc, sc); gC.translate(-FX, -FY); gC.fill(LOGO, 'evenodd');
-        const im = gC.getImageData(0, 0, gw, gh), d = im.data;
-        for (let i = 3; i < d.length; i += 4) { const v = (d[i] - 118) * 7; d[i] = v < 0 ? 0 : v > 255 ? 255 : v; }   // tærskel: formerne flyder sammen
-        gC.setTransform(1, 0, 0, 1, 0, 0); gC.putImageData(im, 0, 0);
-      }
-      gC.filter = 'none'; gC.globalAlpha = 1;
-      cM.setTransform(1, 0, 0, 1, 0, 0); cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalCompositeOperation = 'source-over';
-      const tl = smooth((grow - .78) / .22);                                                      // til sidst glider den over i den rigtige logoform
-      cM.globalCompositeOperation = 'destination-in'; cM.fillStyle = 'rgba(0,0,0,' + tl.toFixed(3) + ')'; cM.fillRect(0, 0, lm.width, lm.height);
-      cM.globalCompositeOperation = 'source-over'; cM.globalAlpha = 1 - tl;
-      cM.filter = 'blur(' + (blur * .45).toFixed(1) + 'px)'; cM.imageSmoothingEnabled = true; cM.imageSmoothingQuality = 'high';
-      cM.drawImage(gS, 0, 0, gw, gh, 0, 0, lm.width, lm.height); cM.filter = 'none'; cM.globalAlpha = 1;
+      const e = smooth(grow), pul = hr ? 1 : 1 + .06 * Math.sin(now / 1000 * 3.2), s0 = .17 * pul, sc = s0 + (1 - s0) * e;
+      const rot = ((pctEl ? pctShown : 1) + e) * Math.PI * 2;
+      const cx0 = sM * (ox + LWd / 2 * k) + txM, cy0 = sM * (oy + LHt / 2 * k) + tyM;
+      cM.setTransform(1, 0, 0, 1, 0, 0); cM.globalCompositeOperation = 'source-over'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0;
+      cM.clearRect(0, 0, lm.width, lm.height); cM.filter = 'blur(' + (blur * (.35 + .65 * e)).toFixed(1) + 'px)';
+      cM.setTransform(dpr * sM * k * sc, 0, 0, dpr * sM * k * sc, dpr * cx0, dpr * cy0); cM.scale(Math.cos(rot), 1); cM.translate(-LWd / 2, -LHt / 2);   // drejer om sin egen lodrette akse (som en mønt)
+      cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd'); cM.filter = 'none'; cM.setTransform(1, 0, 0, 1, 0, 0);
+      if (pctEl) { pctEl.style.left = cx0.toFixed(1) + 'px'; pctEl.style.top = (cy0 + LHt * k * s0 * .62 + 16).toFixed(1) + 'px'; }
+      // 3D-logoet (logo3d.min.js) står i det lille logos sted og drejer med, mens siden hentes; så går det over i det flade logo
+      window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: grow === 0, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
@@ -278,13 +271,11 @@
     const toneAmt = loaderMode ? 0 : smooth((rv - .1) / .6);                                       // 0..1: let mørk tone, så logoet kan læses over videoen
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
-    if (!loaderMode && reveal < 1) ctx.drawImage(la, 0, 0);                                     // forsiden: det sorte logo ligger nederst, til man scroller
-    if (!loaderMode && !instant && grow < 1) {
-      const pul = hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2), R = FR * .62 * k * pul, ccx = ox + FX * k, ccy = oy + FY * k, lw = R * 1.2, sc2 = lw / LWd;
-      ctx.setTransform(dpr * sc2, 0, 0, dpr * sc2, dpr * (ccx - lw / 2), dpr * (ccy - LHt * sc2 / 2));
-      ctx.globalAlpha = 1 - smooth(grow / .25); ctx.fillStyle = LIGHT; ctx.fill(LOGO, 'evenodd'); ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
-      if (pctEl) { pctEl.style.left = ccx.toFixed(1) + 'px'; pctEl.style.top = (ccy + R / pul * 1.12 + 18).toFixed(1) + 'px'; }
-    }
+    // mens siden hentes: det lille, drejende 3D-logo; når 100 % er tonet væk, går det over i det flade sorte logo, der vokser op
+    const L3 = !loaderMode && !instant && grow === 0 && m3 && window.__thruLoad && window.__thruLoad.on && window.__thruLoad.r3;
+    const flat = L3 ? (pctDoneAt ? smooth((now - pctDoneAt) / 380) : 0) : 1;
+    if (!loaderMode && reveal < 1) { ctx.globalAlpha = flat; ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // forsiden: det sorte logo ligger nederst, til man scroller
+    if (L3 && flat < 1) { ctx.globalAlpha = 1 - flat; try { ctx.drawImage(m3.canvas, 0, 0, cv.width, cv.height); } catch (err) {} ctx.globalAlpha = 1; }
     ctx.globalAlpha = (loaderMode ? intro : reveal) * (1 - fadeLt); if (ctx.globalAlpha > .003) ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // rummet toner frem ovenpå; intet skinner igennem kanterne før
     if (a3 > .003 && reveal > .003) {                                                                  // 3D-logoet, klippet af logoformen
       c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);
