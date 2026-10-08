@@ -180,3 +180,10 @@ html body .footer-top{order:1;border-bottom:0;padding-bottom:0;margin-bottom:0;}
 html body .foot-meta{order:2;margin:clamp(30px,4vw,52px) 0 0!important;padding-bottom:clamp(18px,2vw,24px)!important;border-bottom:1px solid var(--line-dark)!important;}
 html body .footer-bottom{order:3;margin-top:clamp(16px,1.8vw,22px);}
 html body .foot-mega{order:4;margin:clamp(28px,4vw,56px) calc(-1 * min(5.5vw,84px)) 0;gap:clamp(12px,1.8vw,32px);padding:0 min(2.4vw,36px);}
+
+/* ---------- forsiden mens den henter: kun den pulserende prik med BK-logoet og procent-tallet; menu og tekst kommer, når alt er hentet ---------- */
+.thru-pct{position:absolute;z-index:3;transform:translate(-50%,0);font-size:12px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums;color:var(--black);
+  pointer-events:none;transition:opacity .5s;}
+.thru-pct.done{opacity:0;}
+html .site-header,html .thru-title,html .thru-scroll{transition:opacity .8s ease;}
+html.thru-loading .site-header,html.thru-loading .thru-title,html.thru-loading .thru-scroll{opacity:0!important;}
