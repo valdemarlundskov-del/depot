@@ -182,8 +182,8 @@ html body .footer-bottom{order:3;margin-top:clamp(16px,1.8vw,22px);}
 html body .foot-mega{order:4;margin:clamp(28px,4vw,56px) calc(-1 * min(5.5vw,84px)) 0;gap:clamp(12px,1.8vw,32px);padding:0 min(2.4vw,36px);}
 
 /* ---------- forsiden mens den henter: kun den pulserende prik med BK-logoet og procent-tallet; menu og tekst kommer, når alt er hentet ---------- */
-.thru-pct{position:absolute;z-index:3;transform:translate(-50%,0);font-size:12px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums;color:var(--black);
-  pointer-events:none;transition:opacity .5s;}
+.thru-pct{position:fixed;z-index:600;top:clamp(22px,3vw,34px);right:min(5.5vw,84px);font-size:13px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums;
+  color:var(--black);pointer-events:none;transition:opacity .5s;}   /* procent-tallet oppe i højre hjørne, så logoet aldrig dækker det */
 .thru-pct.done{opacity:0;}
 html .site-header,html .thru-title,html .thru-scroll{transition:opacity .8s ease;}
 html.thru-loading .site-header,html.thru-loading .thru-title,html.thru-loading .thru-scroll{opacity:0!important;}
