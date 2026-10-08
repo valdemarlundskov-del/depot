@@ -104,7 +104,7 @@
     // logoets placering (bruges kun til at finde logoets kant; selve logoet ligger allerede i masken)
     iC.setTransform(D * sM * k, 0, 0, D * sM * k, D * (sM * ox + txM), D * (sM * oy + tyM));   // (logoet selv tegnes ikke i blæklaget: så har det præcis samme form og størrelse, med og uden magnet)
     // magneten: find det nærmeste punkt på logoet (stråler ud fra markøren i alle retninger); er det inden for rækkevidde, rækker blækket ud efter markøren som en tråd
-    const RL = Math.max(320, bw * sM);                                  // magnetens rækkevidde følger logoets størrelse
+    const RL = Math.max(280, bw * sM * .75);                            // magnetens rækkevidde følger logoets størrelse (kun tæt på logoet, ikke fra hele siden)
     let reach = null;
     if (ink.a > .05 && !iC.isPointInPath(LOGO, ink.x * D, ink.y * D, 'evenodd')) {
       const RAYS = 28, STEP = 10;
@@ -119,11 +119,11 @@
     iC.filter = 'blur(' + (D * 14).toFixed(1) + 'px)';
     iC.setTransform(D, 0, 0, D, 0, 0);
     if (reach) {
-      const pull = Math.pow(1 - reach.d / RL, .5) * ink.a, n = Math.max(3, Math.ceil(reach.d / 7)), ext = .3 + .7 * pull;   // jo tættere, jo længere rækker tråden
+      const fade = smooth((RL - reach.d) / (RL * .3)), pull = Math.pow(1 - reach.d / RL, .5) * ink.a, n = Math.max(3, Math.ceil(reach.d / 7)), ext = (.3 + .7 * pull) * fade;   // jo tættere, jo længere rækker tråden
       const ix = reach.x - (ink.x - reach.x) / reach.d * 14, iy = reach.y - (ink.y - reach.y) / reach.d * 14;            // tråden starter lidt inde i logoet, så den hænger sammen med det
       for (let i = 0; i <= n; i++) {
         const u = i / n, wob = Math.sin(u * Math.PI) * Math.sin(now / 1000 * 3 + u * 5) * 6 * pull;
-        const r = (10 + 30 * Math.pow(1 - u, 1.3)) * (.55 + .45 * pull) * Math.min(1, ink.a * 1.6);   // tyk ved logoet, tynd ved markøren
+        const r = (10 + 30 * Math.pow(1 - u, 1.3)) * (.55 + .45 * pull) * Math.min(1, ink.a * 1.6) * fade;   // vokser blødt frem, når man kommer inden for rækkevidde   // tyk ved logoet, tynd ved markøren
         if (r > .5) { iC.beginPath(); iC.arc(ix + (ink.x - ix) * u * ext + wob, iy + (ink.y - iy) * u * ext, r, 0, Math.PI * 2); iC.fill(); }
       }
     }
