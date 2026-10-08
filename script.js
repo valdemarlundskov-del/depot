@@ -63,7 +63,12 @@ if (menuBtn && nav) {
 // Custom cursor
 const cursor = $('#cursor');
 if (cursor && !window.matchMedia('(any-hover:none)').matches) {
+  const park = () => { cursor.classList.remove('show'); cursor.style.left = cursor.style.top = '-200px'; };   // skjult og uden for skærmen
   document.addEventListener('mousemove', e => {
+    // nogle browsere sender en musebevægelse med position (0,0) (fx når vinduet får fokus igen eller ved sideskift): den ignoreres,
+    // så logoet aldrig dukker op i øverste venstre hjørne
+    if (e.clientX <= 0 && e.clientY <= 0) return;
+    if (e.clientX < 0 || e.clientY < 0 || e.clientX > innerWidth || e.clientY > innerHeight) { park(); return; }
     // første gang (og når musen kommer ind på siden igen) springer markøren direkte hen til musen i stedet for at glide ind fra hjørnet
     const jump = !cursor.classList.contains('show');
     if (jump) cursor.style.transition = 'none';
@@ -76,8 +81,12 @@ if (cursor && !window.matchMedia('(any-hover:none)').matches) {
     el.addEventListener('mouseenter', () => cursor.classList.add('shrink'));
     el.addEventListener('mouseleave', () => cursor.classList.remove('shrink'));
   });
-  // når musen forlader siden, skjules markøren og flyttes ud af skærmen
-  document.addEventListener('mouseleave', () => { cursor.classList.remove('show'); cursor.style.left = cursor.style.top = '-200px'; });
+  // når musen forlader siden (eller vinduet mister fokus / fanen skjules), skjules markøren og flyttes ud af skærmen
+  document.addEventListener('mouseleave', park);
+  addEventListener('mouseout', e => { if (!e.relatedTarget && !e.toElement) park(); });
+  addEventListener('blur', park);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) park(); });
+  addEventListener('pagehide', park);
 }
 
 function cardHTML(p) {
