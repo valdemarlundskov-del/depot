@@ -64,8 +64,12 @@ if (menuBtn && nav) {
 const cursor = $('#cursor');
 if (cursor && !window.matchMedia('(any-hover:none)').matches) {
   document.addEventListener('mousemove', e => {
+    // første gang (og når musen kommer ind på siden igen) springer markøren direkte hen til musen i stedet for at glide ind fra hjørnet
+    const jump = !cursor.classList.contains('show');
+    if (jump) cursor.style.transition = 'none';
     cursor.style.left = e.clientX + 'px';
     cursor.style.top = e.clientY + 'px';
+    if (jump) { void cursor.offsetWidth; cursor.style.transition = ''; }
     cursor.classList.add('show');
   });
   $$('.cursor-target, a, button').forEach(el => {
