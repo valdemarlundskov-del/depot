@@ -245,15 +245,15 @@
     cM.setTransform(dpr * sM, 0, 0, dpr * sM, dpr * txM - D, dpr * tyM);
     cM.translate(ox, oy); cM.scale(k, k); cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd');
     applyWarp(zp, now, sM, txM, tyM, ox, oy, k, blur);                              // logoformen flyder og trækkes ud i kanterne, som om den blev slugt
-    // forsiden: logoet starter som et lille sort BK-logo, der pulserer og snurrer én omgang i takt med, at siden hentes.
-    // Når alt er hentet (og procent-tallet er tonet væk), vokser det op til det store logo og snurrer færdigt.
+    // forsiden: logoet starter som et lille sort BK-logo, der pulserer og drejer én omgang om sig selv i takt med, at siden hentes.
+    // Når alt er hentet (og procent-tallet er tonet væk), vokser det op til det store logo og drejer en omgang mere.
     if (!loaderMode && grow < 1) {
       const e = smooth(grow), pul = hr ? 1 : 1 + .06 * Math.sin(now / 1000 * 3.2), s0 = .17 * pul, sc = s0 + (1 - s0) * e;
       const rot = ((pctEl ? pctShown : 1) + e) * Math.PI * 2;
       const cx0 = sM * (ox + LWd / 2 * k) + txM, cy0 = sM * (oy + LHt / 2 * k) + tyM;
       cM.setTransform(1, 0, 0, 1, 0, 0); cM.globalCompositeOperation = 'source-over'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0;
       cM.clearRect(0, 0, lm.width, lm.height); cM.filter = 'blur(' + (blur * (.35 + .65 * e)).toFixed(1) + 'px)';
-      cM.setTransform(dpr * sM * k * sc, 0, 0, dpr * sM * k * sc, dpr * cx0, dpr * cy0); cM.rotate(rot); cM.translate(-LWd / 2, -LHt / 2);
+      cM.setTransform(dpr * sM * k * sc, 0, 0, dpr * sM * k * sc, dpr * cx0, dpr * cy0); cM.scale(Math.cos(rot), 1); cM.translate(-LWd / 2, -LHt / 2);   // drejer om sin egen lodrette akse (som en mønt)
       cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd'); cM.filter = 'none'; cM.setTransform(1, 0, 0, 1, 0, 0);
       if (pctEl) { pctEl.style.left = cx0.toFixed(1) + 'px'; pctEl.style.top = (cy0 + LHt * k * s0 * .62 + 16).toFixed(1) + 'px'; }
     }
