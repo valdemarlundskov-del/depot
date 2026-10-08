@@ -67,8 +67,8 @@
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
   // ---------- opløsning ved musen (forsiden) ----------
-  // Hvor markøren rører logoet, går logoformen i opløsning: den smuldrer til små pixels, der flimrer og spredes lidt udad,
-  // så man ser igennem (og senere ind i rummet bag). Stærkest under markøren, og helt væk et stykke derfra.
+  // Hvor markøren kommer tæt på logoets kant, bliver kanten bredere og går i opløsning: den bløde overgang tegnes som korn
+  // (lyse pixels inde i logoet, mørke pixels uden for det), som om formen smuldrer. Fader blødt ud et stykke fra markøren.
   const mkc = () => document.createElement('canvas');
   const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, a: 0 };
   // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe effekten)
@@ -81,36 +81,58 @@
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { ink.on = false; });
   const hash = (x, y, t) => { let h = (x * 374761393 + y * 668265263 + t * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  function boxBlur(g, w, h, r, tmp) {                                     // vandret + lodret glidende gennemsnit over cellegitteret (kanterne gentages)
+    const k = 1 / (2 * r + 1), cl = (v, m) => v < 0 ? 0 : v > m ? m : v;
+    for (let y = 0; y < h; y++) {
+      const o = y * w; let acc = 0;
+      for (let x = -r; x <= r; x++) acc += g[o + cl(x, w - 1)];
+      for (let x = 0; x < w; x++) { tmp[o + x] = acc * k; acc += g[o + cl(x + r + 1, w - 1)] - g[o + cl(x - r, w - 1)]; }
+    }
+    for (let x = 0; x < w; x++) {
+      let acc = 0;
+      for (let y = -r; y <= r; y++) acc += tmp[cl(y, h - 1) * w + x];
+      for (let y = 0; y < h; y++) { g[y * w + x] = acc * k; acc += tmp[cl(y + r + 1, h - 1) * w + x] - tmp[cl(y - r, h - 1) * w + x]; }
+    }
+  }
+  let gA = null, gB = null, gT = null;
   function applyInk(now, dt, bw, zp, sM) {
     const gate = 1 - smooth(zp / .18);
-    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 5);
+    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 4);
     if (ink.a < .01) return;
-    const fl = Math.min(1, dt * 14); ink.x += (ink.tx - ink.x) * fl; ink.y += (ink.ty - ink.y) * fl;   // følger markøren blødt
-    const R = Math.min(150, Math.max(70, bw * sM * .17)), C = 3;                                       // radius og pixelstørrelse (css-px)
+    const fl = Math.min(1, dt * 12); ink.x += (ink.tx - ink.x) * fl; ink.y += (ink.ty - ink.y) * fl;   // følger markøren blødt
+    const R = Math.min(170, Math.max(80, bw * sM * .2)), C = 2.5;                                      // radius og kornstørrelse (css-px)
     const x0 = Math.max(0, Math.floor((ink.x - R) * dpr)), y0 = Math.max(0, Math.floor((ink.y - R) * dpr));
     const x1 = Math.min(lm.width, Math.ceil((ink.x + R) * dpr)), y1 = Math.min(lm.height, Math.ceil((ink.y + R) * dpr));
-    if (x1 - x0 < 2 || y1 - y0 < 2) return;
-    cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1;
-    const src = cM.getImageData(x0, y0, x1 - x0, y1 - y0), sd = src.data, sw = x1 - x0;
-    const tick = Math.floor(now / 70), cs = C * dpr, er = new Path2D(), sp = new Path2D();
-    let any = false;
-    const gx0 = Math.floor((ink.x - R) / C), gx1 = Math.ceil((ink.x + R) / C), gy0 = Math.floor((ink.y - R) / C), gy1 = Math.ceil((ink.y + R) / C);
-    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
-      const cx = (gx + .5) * C, cy = (gy + .5) * C, dx = cx - ink.x, dy = cy - ink.y, d = Math.hypot(dx, dy) / R;
-      if (d >= 1) continue;
-      const px = Math.round(cx * dpr) - x0, py = Math.round(cy * dpr) - y0;
-      if (px < 0 || py < 0 || px >= sw || py >= y1 - y0) continue;
-      const al = sd[(py * sw + px) * 4 + 3]; if (al < 40) continue;                                   // kun hvor der er logo
-      const f = Math.pow(1 - d, 1.3) * ink.a, h = hash(gx, gy, tick);
-      if (h < f * .9) { er.rect(gx * cs, gy * cs, cs, cs); any = true; }                              // pixlen smuldrer væk
-      if (h < f * .4) {                                                                                // og nogle af dem flyver lidt udad
-        const h2 = hash(gy, gx, tick + 7), k = (6 + 34 * f * h2) / Math.max(1, d * R);
-        sp.rect(Math.round((cx + dx * k) / C) * cs, Math.round((cy + dy * k) / C) * cs, cs, cs);
+    const W = x1 - x0, H = y1 - y0; if (W < 4 || H < 4) return;
+    cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1; cM.globalCompositeOperation = 'source-over';
+    const img = cM.getImageData(x0, y0, W, H), d = img.data;
+    // cellegitter (én værdi pr. korn) med logoets dækning; sløres kraftigt, så kanten bliver bred nær markøren
+    const cs = C * dpr, gw = Math.ceil(W / cs), gh = Math.ceil(H / cs), n = gw * gh;
+    if (!gA || gA.length < n) { gA = new Float32Array(n); gB = new Float32Array(n); gT = new Float32Array(n); }
+    let edge = false;
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+      const px = Math.min(W - 1, Math.floor((gx + .5) * cs)), py = Math.min(H - 1, Math.floor((gy + .5) * cs)), v = d[(py * W + px) * 4 + 3] / 255;
+      gA[gy * gw + gx] = v; gB[gy * gw + gx] = v; if (v > .02 && v < .98) edge = true;
+    }
+    if (!edge) { let s0 = 0; for (let i = 0; i < n; i++) s0 += gA[i]; if (s0 < .5 || s0 > n - .5) return; }   // ingen kant i nærheden
+    const br = Math.max(2, Math.round(30 * ink.a / C));
+    boxBlur(gB, gw, gh, br, gT); boxBlur(gB, gw, gh, br, gT);
+    const tick = Math.floor(now / 110), ox0 = Math.floor(x0 / cs), oy0 = Math.floor(y0 / cs);
+    const mx = ink.x * dpr - x0, my = ink.y * dpr - y0, Rp = R * dpr;
+    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
+      const i = gy * gw + gx, cxp = (gx + .5) * cs, cyp = (gy + .5) * cs, r = Math.hypot(cxp - mx, cyp - my) / Rp;
+      if (r >= 1) continue;
+      const f = smooth(1 - r) * ink.a;                                                                   // styrke: størst under markøren
+      let a = gA[i] + (gB[i] - gA[i]) * f;                                                               // kanten bliver bredere
+      a = a < .5 ? .5 * Math.pow(2 * a, 1.6) : 1 - .5 * Math.pow(2 - 2 * a, 1.6);                         // lidt mere kontrast i kornet
+      const on = hash(gx + ox0, gy + oy0, tick) < a ? 255 : 0;
+      if (gA[i] <= .004 && on === 0 || gA[i] >= .996 && on === 255) continue;                            // intet at ændre
+      const ax0 = Math.floor(gx * cs), ay0 = Math.floor(gy * cs), ax1 = Math.min(W, Math.floor((gx + 1) * cs)), ay1 = Math.min(H, Math.floor((gy + 1) * cs));
+      for (let y = ay0; y < ay1; y++) for (let x = ax0; x < ax1; x++) {
+        const k = (y * W + x) * 4 + 3; d[k] = d[k] + (on - d[k]) * Math.min(1, f * 1.8);                   // blødt over i kornet mod kanten af cirklen
       }
     }
-    if (!any) return;
-    cM.globalCompositeOperation = 'destination-out'; cM.fillStyle = '#000'; cM.fill(er);
-    cM.globalCompositeOperation = 'source-over'; cM.fill(sp);
+    cM.putImageData(img, x0, y0);
     dirty = true;
   }
 
