@@ -76,7 +76,8 @@ if (cursor && !window.matchMedia('(any-hover:none)').matches) {
     el.addEventListener('mouseenter', () => cursor.classList.add('shrink'));
     el.addEventListener('mouseleave', () => cursor.classList.remove('shrink'));
   });
-  document.addEventListener('mouseleave', () => cursor.classList.remove('show'));
+  // når musen forlader siden, skjules markøren og flyttes ud af skærmen
+  document.addEventListener('mouseleave', () => { cursor.classList.remove('show'); cursor.style.left = cursor.style.top = '-200px'; });
 }
 
 function cardHTML(p) {
