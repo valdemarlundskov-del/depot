@@ -193,9 +193,13 @@ function journey() {
   let spreadT = 0, done = false, spreading = false, sk = 0, dxF = 0, x0F = 0;
 
   function size() {
-    vw = innerWidth; vh = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
-    renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
-    targets.forEach(x => { const r = x.sec.getBoundingClientRect(); x.cv.width = Math.round(r.width * dpr); x.cv.height = Math.round(r.height * dpr); });
+    const nw = innerWidth, nh = innerHeight, nd = Math.min(devicePixelRatio || 1, 1.5);
+    if (nw !== vw || nh !== vh || nd !== dpr) {
+      vw = nw; vh = nh; dpr = nd;
+      renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
+    }
+    // et lærred tømmes, når dets størrelse sættes, så det sker kun, når størrelsen faktisk ændrer sig (ellers blinker logoet)
+    targets.forEach(x => { const r = x.sec.getBoundingClientRect(), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr); if (x.cv.width !== w || x.cv.height !== h) { x.cv.width = w; x.cv.height = h; } });
     kick();
   }
   function frame(now) {
@@ -226,17 +230,17 @@ function journey() {
     renderer.render(scene, camera);
     // landing: logoet lander midt i feltet og bliver til det flade logo. Så glider "STUDIO" ind fra højre i én bevægelse; når teksten
     // rammer logoet, skubber den det med ud på plads til venstre uden at stoppe. Derefter bliver det stående, også når man scroller op;
-    // først når logoet er helt ude af syne, nulstilles det, så animationen kører forfra næste gang man kommer ned.
+    // først når hele footeren er ude af syne, nulstilles det, så animationen kører forfra næste gang man kommer ned.
     const land = t > .985;
-    if (done && br && br.top > vh + 20) { done = false; sk = 0; clearTimeout(spreadT); }
+    if (done && foot && foot.getBoundingClientRect().top > vh + 4) { done = false; sk = 0; spreading = false; clearTimeout(spreadT); }   // hele footeren er ude af syne: klar til at køre forfra
     if (land && !done && fm) {
       done = true; sk = 0;
       dxF = mega.clientWidth / 2 - (fm.offsetLeft + fm.offsetWidth / 2);
       x0F = vw * 1.1;                                                      // "STUDIO" starter helt ude til højre
-      clearTimeout(spreadT); spreadT = setTimeout(() => { spreading = true; kick(); }, 280);
+      clearTimeout(spreadT); spreadT = setTimeout(() => { spreading = true; kick(); }, 140);
     }
     if (!done) spreading = false;
-    if (spreading && sk < 1) sk = Math.min(1, sk + dt / 1.9);
+    if (spreading && sk < 1) sk = Math.min(1, sk + dt / 1.15);
     if (foot) foot.classList.toggle('fm-landed', done);
     if (fm) {
       const e = sk < .5 ? 4 * sk * sk * sk : 1 - Math.pow(-2 * sk + 2, 3) / 2;   // blød start og slutning, fuld fart når teksten rammer logoet

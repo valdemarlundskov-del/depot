@@ -124,17 +124,30 @@
 
   // forsiden: logoet starter lille og sort og venter, til billederne (og 3D-logoet) er hentet. Så vokser det op i fuld størrelse,
   // og det sorte toner ud, så man kan se ind i rummet bag logoet. Sikkerhedsnet: senest efter 6 sekunder.
-  let homeT0 = 0, fontsOk = !document.fonts; const tStart = performance.now();
+  let homeT0 = 0, fontsOk = !document.fonts, pageOk = document.readyState === 'complete';
+  addEventListener('load', () => { pageOk = true; }); const tStart = performance.now();
   if (document.fonts) document.fonts.ready.then(() => { fontsOk = true; });
+  // hvor meget af siden er hentet (0..1): billederne bag logoet, sidens øvrige billeder, skrifterne, 3D-logoet og resten af siden
+  function loadedShare() {
+    const eager = [...document.images].filter(i => i.loading !== 'lazy'), want3d = document.documentElement.dataset.thru3d === '1';
+    const parts = [COL.filter(c => c.im.complete).length / Math.max(1, COL.length), eager.filter(i => i.complete).length / Math.max(1, eager.length), fontsOk ? 1 : 0, pageOk ? 1 : 0];
+    if (want3d) parts.push(window.__thru3d !== undefined ? 1 : 0);
+    return parts.reduce((a, b) => a + b, 0) / parts.length;
+  }
   function homeReady(now) {
     if (homeT0) return true;
     const imgs = COL.every(c => c.im.complete), want3d = document.documentElement.dataset.thru3d === '1';
-    if ((imgs && fontsOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) homeT0 = now;
+    if ((imgs && fontsOk && pageOk && (!want3d || window.__thru3d !== undefined)) || now - tStart > 10000) homeT0 = now;
     return !!homeT0;
   }
   // man kan ikke scrolle videre, før alt bag logoet er hentet og logoet har vist, hvad der er bag det (ellers ødelægges effekten).
   // Siden starter altid i toppen. Gælder ikke, når man kommer tilbage via et link/tilbage-knap, har et #mål eller reduceret bevægelse.
   const lockScroll = !loaderMode && !reduce && !internalNav && !location.hash;
+  let pctEl = null, pctShown = 0;
+  if (lockScroll) {
+    pctEl = document.createElement('span'); pctEl.className = 'thru-pct'; pctEl.setAttribute('aria-hidden', 'true'); pctEl.textContent = '0%'; sec.appendChild(pctEl);
+    document.documentElement.classList.add('thru-loading');                                   // menu, tekst og logo vises først, når alt er hentet
+  }
   let locked = false;
   const LOCK_KEYS = new Set([' ', 'Spacebar', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'End', 'Home']);
   const stopEv = e => { if (locked) e.preventDefault(); };
@@ -161,6 +174,11 @@
     const instant = reduce || internalNav, hr = !loaderMode && (instant || homeReady(now));
     const grow = loaderMode || instant ? 1 : hr ? smooth((now - homeT0) / 1500) : 0;              // forsiden: den lille cirkel udvider sig til hele logoet
     const reveal = loaderMode || reduce ? 1 : hr ? smooth(p / .1) : 0;                           // forsiden: logoet står helt sort, indtil man begynder at scrolle; så toner det sorte ud
+    if (pctEl) {                                                                               // procent-tallet under den pulserende prik
+      const share = hr ? 1 : loadedShare(); pctShown += (share - pctShown) * .12; if (hr && pctShown > .995) pctShown = 1;
+      pctEl.textContent = Math.round(pctShown * 100) + '%';
+      if (hr && pctShown >= 1 && !pctEl.classList.contains('done')) { pctEl.classList.add('done'); document.documentElement.classList.remove('thru-loading'); }
+    }
     if (locked && hr && now - homeT0 > 1900) unlock();                                            // logoet har vist, hvad der er bag det: fri scroll
     const intro = instant ? 1 : loaderMode ? easeOut(tIn / 1700) : grow;                           // logoet afsløres ved indlæsning
     const nar = vw < 700;
@@ -261,6 +279,12 @@
     ctx.globalAlpha = loaderMode ? 1 - clamp((p - .4) / .1) : 1 - smooth((zp - .9) / .1); ctx.fillStyle = LIGHT; ctx.fillRect(0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
     if (!loaderMode && reveal < 1) ctx.drawImage(la, 0, 0);                                     // forsiden: det sorte logo ligger nederst, til man scroller
+    if (!loaderMode && !instant && grow < 1) {
+      const pul = hr ? 1 : 1 + .07 * Math.sin(now / 1000 * 3.2), R = FR * .62 * k * pul, ccx = ox + FX * k, ccy = oy + FY * k, lw = R * 1.2, sc2 = lw / LWd;
+      ctx.setTransform(dpr * sc2, 0, 0, dpr * sc2, dpr * (ccx - lw / 2), dpr * (ccy - LHt * sc2 / 2));
+      ctx.globalAlpha = 1 - smooth(grow / .25); ctx.fillStyle = LIGHT; ctx.fill(LOGO, 'evenodd'); ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
+      if (pctEl) { pctEl.style.left = ccx.toFixed(1) + 'px'; pctEl.style.top = (ccy + R / pul * 1.12 + 18).toFixed(1) + 'px'; }
+    }
     ctx.globalAlpha = (loaderMode ? intro : reveal) * (1 - fadeLt); if (ctx.globalAlpha > .003) ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // rummet toner frem ovenpå; intet skinner igennem kanterne før
     if (a3 > .003 && reveal > .003) {                                                                  // 3D-logoet, klippet af logoformen
       c3.setTransform(1, 0, 0, 1, 0, 0); c3.globalCompositeOperation = 'source-over'; c3.clearRect(0, 0, l3.width, l3.height);
@@ -289,7 +313,7 @@
       ctx.fillStyle = gr; ctx.fillRect(0, 0, cv.width, 130 * dpr);
     }
     // tekst: forsvinder ét bogstav ad gangen fra venstre mod højre, så snart man begynder at scrolle
-    const to = 1 - clamp(p / .05), q = clamp(p / .085);
+    const to = 1 - clamp(p / .02), q = clamp(p / .035);                     // teksten forsvinder hurtigt, så logoet kan stå for sig selv
     if (titleEl) {
       titleEl.style.opacity = intro.toFixed(3);
       if (Math.abs(q - lastQ) > .0005 || intro < 1) {
