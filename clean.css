@@ -169,9 +169,8 @@ html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger alt
 html body .pns{height:215vh;}
 @media(max-width:1180px){html body .pns{height:225vh;}}
 @media(prefers-reduced-motion:reduce){html body .pns{height:auto;}}
-/* teamet: ingen fast fuld skærmhøjde (gav tomrum), og prikkerne under billederne kun på mobil, hvor man swiper */
+/* teamet: ingen fast fuld skærmhøjde (gav tomrum) */
 html body .tm{min-height:0;}
-@media(min-width:701px){html body .mh-dots{display:none;}}
 
 /* ---------- footer: status og lokal tid over stregen; © og links under stregen; BK STUDIO stort helt nede i bunden,
    så kun den øverste halvdel ses (modern.js sætter den negative bundmargen ud fra logoets højde) ---------- */
@@ -187,3 +186,7 @@ html body .foot-mega{order:4;margin:clamp(28px,4vw,56px) calc(-1 * min(5.5vw,84p
 .thru-pct.done{opacity:0;}
 html .site-header,html .thru-title,html .thru-scroll{transition:opacity .8s ease;}
 html.thru-loading .site-header,html.thru-loading .thru-title,html.thru-loading .thru-scroll{opacity:0!important;}
+
+/* arkivets billedvisning: pilene er hinandens spejlbillede og står ud for billedets midte (ikke midten af billede + billedtekst) */
+html body .lb-next{border-radius:14px 20px 15px 22px / 22px 15px 20px 14px;}
+@media(min-width:701px){html body .lb-nav{margin-bottom:34px;}}
