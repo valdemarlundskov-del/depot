@@ -1,9 +1,9 @@
 // BK Studio — shared site script
 const projects = [
-  {id:'porsche924', title:'PORSCHE 924', category:'Fotografi', year:'2026', span:'p1', summary:'Fotografi af en klassisk Porsche 924 — et privat projekt, hvor vi fokuserede på detaljer, linjer og bilens rå, tidløse stil.', cover:'images/porsche924/DSC03359.webp', hero:'images/porsche924/DSC03358.webp', location:'Danmark', originLogo:'images/logo/Porsche_Logo.jpg', gallery:[
+  {id:'porsche924', title:'PORSCHE 924', category:'Fotografi', year:'2026', span:'p1', summary:'Fotografi af en klassisk Porsche 924 — et privat projekt, hvor vi fokuserede på detaljer, linjer og bilens rå, tidløse stil.', cover:'images/porsche924/DSC03359.webp', hero:'images/porsche924/DSC03358.webp', location:'Danmark', originLogo:'images/logo/porsche-logo.webp', gallery:[
     'images/porsche924/DSC03358.webp','images/porsche924/DSC03359.webp','images/porsche924/DSC03308.webp','images/porsche924/DSC03314.webp','images/porsche924/DSC03315.webp','images/porsche924/DSC03317.webp','images/porsche924/DSC03318.webp','images/porsche924/DSC03319.webp','images/porsche924/DSC03327.webp','images/porsche924/DSC03334.webp','images/porsche924/DSC03336.webp','images/porsche924/DSC03342.webp','images/porsche924/DSC03343.webp','images/porsche924/DSC03349.webp','images/porsche924/DSC03361.webp','images/porsche924/DSC03363.webp'
   ]},
-  {id:'vildbjerg', latest:true, title:'VILDBJERG', category:'Fotografi / Content', year:'2026', span:'p2', summary:'Foto og content fra Vildbjerg Cup — vi dokumenterede stemningen, kampene og menneskerne på og omkring banen under turneringen.', cover:'images/vildbjerg/DSC04203.webp', hero:'images/vildbjerg/DSC04124.webp', location:'Vildbjerg', originLogo:'images/logo/vildbjerg_cup_logo.png', gallery:[
+  {id:'vildbjerg', latest:true, title:'VILDBJERG', category:'Fotografi / Content', year:'2026', span:'p2', summary:'Foto og content fra Vildbjerg Cup — vi dokumenterede stemningen, kampene og menneskerne på og omkring banen under turneringen.', cover:'images/vildbjerg/DSC04203.webp', hero:'images/vildbjerg/DSC04124.webp', location:'Vildbjerg', originLogo:'images/logo/vildbjerg-cup-logo.webp', gallery:[
     'images/vildbjerg/DSC04124.webp','images/vildbjerg/DSC04164.webp','images/vildbjerg/DSC04133.webp','images/vildbjerg/DSC04138.webp','images/vildbjerg/DSC04178.webp','images/vildbjerg/DSC04183.webp','images/vildbjerg/DSC04193.webp','images/vildbjerg/DSC04197.webp','images/vildbjerg/DSC04203.webp','images/vildbjerg/DSC04209.webp','images/vildbjerg/DSC04225.webp','images/vildbjerg/DSC04234.webp','images/vildbjerg/DSC04240.webp','images/vildbjerg/DSC04394.webp','images/vildbjerg/DSC04403.webp'
   ]},
   {id:'thailand', title:'THAILAND', category:'Fotografi', year:'2026', span:'p3', home:false, summary:'Rejsefotografi fra Thailand — mennesker, steder og øjeblikke fanget undervejs.', cover:'images/thailand/DSC03429.webp', hero:'images/thailand/DSC03544.webp', location:'Thailand', gallery:[
@@ -80,7 +80,7 @@ function cardHTML(p) {
     <div class="frame">
       <img src="${p.cover.replace('images/', 'images/thumbs/')}" alt="${p.title} — ${p.category}" loading="lazy" decoding="async" onerror="useProjectImageFallback(this, '${p.id}')">
       <div class="veil"></div>
-      ${p.originLogo ? `<div class="project-origin" aria-label="Logo for ${p.title}"><img src="${p.originLogo}" alt="${p.title} logo" onerror="this.parentElement.classList.add('logo-missing')"></div>` : ''}
+      ${p.originLogo ? `<div class="project-origin" aria-label="Logo for ${p.title}"><img src="${p.originLogo}" loading="lazy" decoding="async" alt="${p.title} logo" onerror="this.parentElement.classList.add('logo-missing')"></div>` : ''}
       <div class="meta"><div><h3>${p.title}</h3><p class="cat">${p.category}</p></div><p class="yr">${p.year}</p></div>
     </div>
   </a>`;

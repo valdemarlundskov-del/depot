@@ -104,13 +104,18 @@
   refresh(); setInterval(refresh, 15000);
 
   // undersiderne: 3D-logoet (logo3d.min.js) hentes først, når footeren eller karussellen nærmer sig, så det kan følge med og lande i footeren
-  if (!document.querySelector('[data-thru]') && !matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
-    let gl = false; try { const c = document.createElement('canvas'); gl = !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) {}
-    const near = [document.querySelector('footer'), document.querySelector('.w3d')].filter(Boolean);
-    if (gl && near.length) {
-      const jo = new IntersectionObserver(function (es) { if (es.some(e => e.isIntersecting)) { jo.disconnect(); import('/logo3d.min.js').catch(function () {}); } }, { rootMargin: '1400px 0px' });
+  // (venter til siden og dens billeder er hentet, og springes over ved dataspare-tilstand)
+  const sd = navigator.connection && navigator.connection.saveData;
+  if (!document.querySelector('[data-thru]') && !sd && !matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    const watch = function () {
+      let gl = false; try { const x = document.createElement('canvas').getContext('webgl'); gl = !!x; const l = x && x.getExtension('WEBGL_lose_context'); if (l) l.loseContext(); } catch (e) {}
+      const near = [document.querySelector('footer'), document.querySelector('.w3d')].filter(Boolean);
+      if (!gl || !near.length) return;
+      const jo = new IntersectionObserver(function (es) { if (es.some(e => e.isIntersecting)) { jo.disconnect(); import('/logo3d.min.js').catch(function () {}); } }, { rootMargin: '1000px 0px' });
       near.forEach(n => jo.observe(n));
-    }
+    };
+    const idle = function () { (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(watch, { timeout: 1500 }); };
+    if (document.readyState === 'complete') idle(); else addEventListener('load', idle, { once: true });
   }
 
   // 3D-logoet: three.js (logo3d.min.js) hentes først, når logoet nærmer sig skærmen
