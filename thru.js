@@ -66,74 +66,80 @@
   }
   const boxSize = (w, h) => { const n = w < 700, asp = LWd / LHt; const bw = Math.min(w * (n ? .86 : .56), h * (n ? .5 : .66) * asp); return [bw, bw / asp]; };
 
-  // ---------- opløsning ved musen (forsiden) ----------
-  // Hvor markøren kommer tæt på logoets kant, bliver kanten bredere og går i opløsning: den bløde overgang tegnes som korn
-  // (lyse pixels inde i logoet, mørke pixels uden for det), som om formen smuldrer. Fader blødt ud et stykke fra markøren.
+  // ---------- liquid ved hover (forsiden) ----------
+  // Markøren er som en finger i vand: den trækker logoets form med sig, og efterlader ringe, der brer sig, svinger og dør ud. Smalt og blødt.
+  // Virker på logo-masken (formen), så det også ses, mens logoet står helt sort.
+  let liquidOff = false, mxp = -1e4, myp = -1e4, hov = 0, lastSp = null, lastP = null, vxs = 0, vys = 0, idleAt = 0, gWp = null;
+  const rip = [];
   const mkc = () => document.createElement('canvas');
-  const ink = { on: false, x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, a: 0 };
+  let LQ = null;                                        // arbejdsdata (genbruges)
   // lyttes på hele vinduet (tekst, menu og andre lag over åbningen må ikke stoppe effekten)
   addEventListener('pointermove', e => {
     if (reduce || loaderMode || e.pointerType === 'touch') return;
-    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
-    if (x < 0 || y < 0 || x > rc.width || y > rc.height) { ink.on = false; return; }
-    if (!ink.on || ink.a < .02) { ink.x = x; ink.y = y; }
-    ink.on = true; ink.tx = x; ink.ty = y; dirty = true;
+    const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top, now = performance.now();
+    if (x < 0 || y < 0 || x > rc.width || y > rc.height) { mxp = myp = -1e4; lastP = lastSp = null; return; }
+    if (lastP) { vxs += ((x - lastP.x) - vxs) * .45; vys += ((y - lastP.y) - vys) * .45; }
+    lastP = { x, y }; mxp = x; myp = y;
+    if (!lastSp || Math.hypot(x - lastSp.x, y - lastSp.y) > 14) {
+      const d = lastSp ? Math.hypot(x - lastSp.x, y - lastSp.y) : 14;
+      rip.push({ x, y, t0: now, a: Math.min(1, Math.max(.3, d / 26)) }); lastSp = { x, y };
+      if (rip.length > 16) rip.shift();
+    }
+    dirty = true;
   }, { passive: true });
-  document.documentElement.addEventListener('pointerleave', () => { ink.on = false; });
-  const hash = (x, y, t) => { let h = (x * 374761393 + y * 668265263 + t * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-  function boxBlur(g, w, h, r, tmp) {                                     // vandret + lodret glidende gennemsnit over cellegitteret (kanterne gentages)
-    const k = 1 / (2 * r + 1), cl = (v, m) => v < 0 ? 0 : v > m ? m : v;
+  document.documentElement.addEventListener('pointerleave', () => { mxp = myp = -1e4; lastP = lastSp = null; });
+  function applyLiquid(now, ox, oy, bw, bh, zp) {
+    if (liquidOff) return;
+    const gate = 1 - clamp((zp - .04) / .22);
+    const pad = 44, inside = mxp > ox - pad && mxp < ox + bw + pad && myp > oy - pad && myp < oy + bh + pad;
+    hov += ((inside ? 1 : 0) - hov) * .2; vxs *= .87; vys *= .87;
+    for (let i = rip.length - 1; i >= 0; i--) if (now - rip[i].t0 > 1700) rip.splice(i, 1);
+    if (inside && now - idleAt > 700) { idleAt = now; rip.push({ x: mxp, y: myp, t0: now, a: .34 }); if (rip.length > 16) rip.shift(); }   // en svag ring ind imellem, så det bliver ved med at leve
+    if (gate < .02 || (!rip.length && Math.hypot(vxs, vys) < .05)) return;
+    const R = 105, cx = inside ? mxp : (rip.length ? rip[rip.length - 1].x : mxp), cy = inside ? myp : (rip.length ? rip[rip.length - 1].y : myp);
+    const x0 = Math.max(0, Math.floor((cx - R) * dpr)), y0 = Math.max(0, Math.floor((cy - R) * dpr));
+    const w = Math.min(cv.width - x0, Math.ceil(2 * R * dpr)), h = Math.min(cv.height - y0, Math.ceil(2 * R * dpr));
+    if (w < 30 || h < 30) return;
+    let src;
+    try { cM.setTransform(1, 0, 0, 1, 0, 0); src = cM.getImageData(x0, y0, w, h); } catch (err) { liquidOff = true; return; }        // åbnes siden direkte fra en fil, må billedet ikke læses: så springes effekten over
+    const sd = src.data, out = ctx.createImageData(w, h), od = out.data;
+    const st = 6, gw = Math.ceil(w / st) + 2, gh = Math.ceil(h / st) + 2;
+    if (!LQ || LQ.n < gw * gh) LQ = { n: gw * gh, ux: new Float32Array(gw * gh), uy: new Float32Array(gw * gh), sh: new Float32Array(gw * gh) };
+    const { ux, uy, sh } = LQ;
+    const live = rip.map(s => { const age = (now - s.t0) / 1000; return { x: s.x, y: s.y, r0: 62 * age, wd: 12 + age * 9, amp: s.a * Math.pow(1 - age / 1.7, 2) * 12.5 * gate }; });
+    const dk = 2.7 * gate;
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+      const px = (x0 + i * st) / dpr, py = (y0 + j * st) / dpr;
+      let Ux = 0, Uy = 0, S = 0;
+      const dx0 = px - cx, dy0 = py - cy, dd = Math.hypot(dx0, dy0);
+      const g = Math.exp(-(dd * dd) / (2 * 34 * 34));
+      Ux += vxs * dk * g; Uy += vys * dk * g;                                         // trækkes med markøren
+      for (const s of live) {
+        const rx = px - s.x, ry = py - s.y, d = Math.hypot(rx, ry) || 1e-3, q = (d - s.r0) / s.wd, env = Math.exp(-q * q);
+        if (env < .02) continue;
+        const o = Math.cos(q * 2.3) * env * s.amp; Ux += rx / d * o; Uy += ry / d * o; S += Math.sin(q * 2.3) * env * s.amp * .014;
+      }
+      const um = Math.hypot(Ux, Uy); if (um > 24) { Ux *= 24 / um; Uy *= 24 / um; }              // loft, så intet rives i stykker
+      const wnd = Math.min(1, Math.max(0, (R - dd) / (R * .4)));                       // blød afkant, så effekten aldrig får en kant
+      ux[j * gw + i] = Ux * wnd; uy[j * gw + i] = Uy * wnd; sh[j * gw + i] = S * wnd;
+    }
     for (let y = 0; y < h; y++) {
-      const o = y * w; let acc = 0;
-      for (let x = -r; x <= r; x++) acc += g[o + cl(x, w - 1)];
-      for (let x = 0; x < w; x++) { tmp[o + x] = acc * k; acc += g[o + cl(x + r + 1, w - 1)] - g[o + cl(x - r, w - 1)]; }
-    }
-    for (let x = 0; x < w; x++) {
-      let acc = 0;
-      for (let y = -r; y <= r; y++) acc += tmp[cl(y, h - 1) * w + x];
-      for (let y = 0; y < h; y++) { g[y * w + x] = acc * k; acc += tmp[cl(y + r + 1, h - 1) * w + x] - tmp[cl(y - r, h - 1) * w + x]; }
-    }
-  }
-  let gA = null, gB = null, gT = null;
-  function applyInk(now, dt, bw, zp, sM) {
-    const gate = 1 - smooth(zp / .18);
-    ink.a += ((ink.on ? 1 : 0) * gate - ink.a) * Math.min(1, dt * 4);
-    if (ink.a < .01) return;
-    const fl = Math.min(1, dt * 12); ink.x += (ink.tx - ink.x) * fl; ink.y += (ink.ty - ink.y) * fl;   // følger markøren blødt
-    const R = Math.min(170, Math.max(80, bw * sM * .2)), C = 2.5;                                      // radius og kornstørrelse (css-px)
-    const x0 = Math.max(0, Math.floor((ink.x - R) * dpr)), y0 = Math.max(0, Math.floor((ink.y - R) * dpr));
-    const x1 = Math.min(lm.width, Math.ceil((ink.x + R) * dpr)), y1 = Math.min(lm.height, Math.ceil((ink.y + R) * dpr));
-    const W = x1 - x0, H = y1 - y0; if (W < 4 || H < 4) return;
-    cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1; cM.globalCompositeOperation = 'source-over';
-    const img = cM.getImageData(x0, y0, W, H), d = img.data;
-    // cellegitter (én værdi pr. korn) med logoets dækning; sløres kraftigt, så kanten bliver bred nær markøren
-    const cs = C * dpr, gw = Math.ceil(W / cs), gh = Math.ceil(H / cs), n = gw * gh;
-    if (!gA || gA.length < n) { gA = new Float32Array(n); gB = new Float32Array(n); gT = new Float32Array(n); }
-    let edge = false;
-    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
-      const px = Math.min(W - 1, Math.floor((gx + .5) * cs)), py = Math.min(H - 1, Math.floor((gy + .5) * cs)), v = d[(py * W + px) * 4 + 3] / 255;
-      gA[gy * gw + gx] = v; gB[gy * gw + gx] = v; if (v > .02 && v < .98) edge = true;
-    }
-    if (!edge) { let s0 = 0; for (let i = 0; i < n; i++) s0 += gA[i]; if (s0 < .5 || s0 > n - .5) return; }   // ingen kant i nærheden
-    const br = Math.max(2, Math.round(30 * ink.a / C));
-    boxBlur(gB, gw, gh, br, gT); boxBlur(gB, gw, gh, br, gT);
-    const tick = Math.floor(now / 110), ox0 = Math.floor(x0 / cs), oy0 = Math.floor(y0 / cs);
-    const mx = ink.x * dpr - x0, my = ink.y * dpr - y0, Rp = R * dpr;
-    for (let gy = 0; gy < gh; gy++) for (let gx = 0; gx < gw; gx++) {
-      const i = gy * gw + gx, cxp = (gx + .5) * cs, cyp = (gy + .5) * cs, r = Math.hypot(cxp - mx, cyp - my) / Rp;
-      if (r >= 1) continue;
-      const f = smooth(1 - r) * ink.a;                                                                   // styrke: størst under markøren
-      let a = gA[i] + (gB[i] - gA[i]) * f;                                                               // kanten bliver bredere
-      a = a < .5 ? .5 * Math.pow(2 * a, 1.6) : 1 - .5 * Math.pow(2 - 2 * a, 1.6);                         // lidt mere kontrast i kornet
-      const on = hash(gx + ox0, gy + oy0, tick) < a ? 255 : 0;
-      if (gA[i] <= .004 && on === 0 || gA[i] >= .996 && on === 255) continue;                            // intet at ændre
-      const ax0 = Math.floor(gx * cs), ay0 = Math.floor(gy * cs), ax1 = Math.min(W, Math.floor((gx + 1) * cs)), ay1 = Math.min(H, Math.floor((gy + 1) * cs));
-      for (let y = ay0; y < ay1; y++) for (let x = ax0; x < ax1; x++) {
-        const k = (y * W + x) * 4 + 3; d[k] = d[k] + (on - d[k]) * Math.min(1, f * 1.8);                   // blødt over i kornet mod kanten af cirklen
+      const gy = y / st, j = Math.floor(gy), fy = gy - j;
+      for (let x = 0; x < w; x++) {
+        const gx = x / st, i = Math.floor(gx), fx = gx - i, k = j * gw + i;
+        const a00 = (1 - fx) * (1 - fy), a10 = fx * (1 - fy), a01 = (1 - fx) * fy, a11 = fx * fy;
+        const Ux = ux[k] * a00 + ux[k + 1] * a10 + ux[k + gw] * a01 + ux[k + gw + 1] * a11;
+        const Uy = uy[k] * a00 + uy[k + 1] * a10 + uy[k + gw] * a01 + uy[k + gw + 1] * a11;
+        const S = sh[k] * a00 + sh[k + 1] * a10 + sh[k + gw] * a01 + sh[k + gw + 1] * a11;
+        let sx = x - Ux * dpr, sy = y - Uy * dpr;
+        sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
+        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = (iy * w + ix) * 4, p2 = p + w * 4;
+        const b00 = (1 - tx) * (1 - ty), b10 = tx * (1 - ty), b01 = (1 - tx) * ty, b11 = tx * ty, sc = 1 + S, o = (y * w + x) * 4;
+        for (let c = 0; c < 3; c++) od[o + c] = (sd[p + c] * b00 + sd[p + 4 + c] * b10 + sd[p2 + c] * b01 + sd[p2 + 4 + c] * b11) * sc;
+        od[o + 3] = sd[p + 3] * b00 + sd[p + 7] * b10 + sd[p2 + 3] * b01 + sd[p2 + 7] * b11;
       }
     }
-    cM.putImageData(img, x0, y0);
-    dirty = true;
+    cM.setTransform(1, 0, 0, 1, 0, 0); cM.putImageData(out, x0, y0); dirty = true;
   }
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
@@ -329,7 +335,7 @@
       window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: true, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
-    if (!loaderMode && grow >= 1 && !reduce) applyInk(now, dtm / 1000, bw, zp, sM);   // logoet går i opløsning, hvor markøren rører det
+    if (!loaderMode && grow >= 1 && !reduce) applyLiquid(now, ox, oy, bw, bh, zp);   // liquid: markøren er som en finger i vand i logoets form
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
 
