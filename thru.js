@@ -148,6 +148,7 @@
   // Siden starter altid i toppen. Gælder ikke, når man kommer tilbage via et link/tilbage-knap, har et #mål eller reduceret bevægelse.
   const lockScroll = !loaderMode && !reduce && !internalNav && !location.hash;
   let pctEl = null, pctShown = 0;
+  if (!lockScroll) document.documentElement.classList.remove('thru-loading');
   if (lockScroll) {
     pctEl = document.createElement('span'); pctEl.className = 'thru-pct'; pctEl.setAttribute('aria-hidden', 'true'); pctEl.textContent = '0%'; sec.appendChild(pctEl);
     document.documentElement.classList.add('thru-loading');                                   // menu, tekst og logo vises først, når alt er hentet
@@ -256,7 +257,6 @@
       cM.clearRect(0, 0, lm.width, lm.height); cM.filter = 'blur(' + (blur * (.35 + .65 * e)).toFixed(1) + 'px)';
       cM.setTransform(dpr * sM * k * sc, 0, 0, dpr * sM * k * sc, dpr * cx0, dpr * cy0); cM.scale(Math.cos(rot), 1); cM.translate(-LWd / 2, -LHt / 2);   // drejer om sin egen lodrette akse (som en mønt)
       cM.fillStyle = '#000'; cM.fill(LOGO, 'evenodd'); cM.filter = 'none'; cM.setTransform(1, 0, 0, 1, 0, 0);
-      if (pctEl) { pctEl.style.left = cx0.toFixed(1) + 'px'; pctEl.style.top = (cy0 + LHt * k * s0 * .62 + 16).toFixed(1) + 'px'; }
       // 3D-logoet (logo3d.min.js) står i det lille logos sted og drejer med, mens siden hentes; så går det over i det flade logo
       window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: grow === 0, rot, s: sc, cx: cx0, cy: cy0 });
     }
@@ -273,7 +273,10 @@
     if (!srcEl && !m3) { ctx.globalAlpha = intro * (1 - baseFade); ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // før reelen er klar: logoet som en sort form
     // mens siden hentes: det lille, drejende 3D-logo; når 100 % er tonet væk, går det over i det flade sorte logo, der vokser op
     const L3 = !loaderMode && !instant && grow === 0 && m3 && window.__thruLoad && window.__thruLoad.on && window.__thruLoad.r3;
-    const flat = L3 ? (pctDoneAt ? smooth((now - pctDoneAt) / 380) : 0) : 1;
+    // mens siden hentes, er det lille 3D-logo det eneste, der vises: det flade logo vises ikke, mens man venter på 3D
+    // (kun hvis 3D ikke kan vises, eller ikke er klar, når alt andet er hentet)
+    const wait3d = !loaderMode && !instant && grow === 0 && !L3 && !loadedAt && document.documentElement.dataset.thru3d === '1';
+    const flat = L3 ? (pctDoneAt ? smooth((now - pctDoneAt) / 380) : 0) : wait3d ? 0 : 1;
     if (!loaderMode && reveal < 1) { ctx.globalAlpha = flat; ctx.drawImage(la, 0, 0); ctx.globalAlpha = 1; }   // forsiden: det sorte logo ligger nederst, til man scroller
     if (L3 && flat < 1) { ctx.globalAlpha = 1 - flat; try { ctx.drawImage(m3.canvas, 0, 0, cv.width, cv.height); } catch (err) {} ctx.globalAlpha = 1; }
     ctx.globalAlpha = (loaderMode ? intro : reveal) * (1 - fadeLt); if (ctx.globalAlpha > .003) ctx.drawImage(lt, 0, 0); ctx.globalAlpha = 1;   // rummet toner frem ovenpå; intet skinner igennem kanterne før
