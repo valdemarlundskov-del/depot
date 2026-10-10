@@ -12,7 +12,7 @@
      esbuild src/logo3d.js --bundle --minify --format=esm --outfile=logo3d.min.js */
 import {
   WebGLRenderer, Scene, PerspectiveCamera, Group, Mesh, ExtrudeGeometry, MeshPhysicalMaterial,
-  PMREMGenerator, DirectionalLight, SRGBColorSpace, ACESFilmicToneMapping, Color
+  PMREMGenerator, DirectionalLight, SRGBColorSpace, ACESFilmicToneMapping, Color, Shape, Path
 } from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -40,16 +40,23 @@ function stage(canvas, color, keep) {
 function loadLogo(st, src) {
   return fetch(src).then(r => r.text()).then(txt => {
     const data = new SVGLoader().parse(txt), shapes = [];
-    data.paths.forEach(p => SVGLoader.createShapes(p).forEach(s => shapes.push(s)));
+    // omridset samples jævnt og glattes, så samlingerne mellem de 508 små kurver ikke giver knæk (= streger langs kanten i 3D)
+    const ring = c => {
+      let p = c.getSpacedPoints(Math.max(32, Math.round(c.getLength() / 4)));
+      if (p.length > 2 && p[0].distanceTo(p[p.length - 1]) < 1e-3) p.pop();
+      for (let it = 0; it < 4; it++) { const n = p.length; p = p.map((v, i) => { const a = p[(i - 1 + n) % n], b = p[(i + 1) % n]; return v.clone().multiplyScalar(2).add(a).add(b).multiplyScalar(.25); }); }
+      return p;
+    };
+    data.paths.forEach(p => SVGLoader.createShapes(p).forEach(s => { const sh = new Shape(ring(s)); sh.holes = s.holes.map(h => new Path(ring(h))); shapes.push(sh); }));
     // runde, bløde sider: en dyb, afrundet kant (som en småsten) i stedet for en lige væg med en lille fas.
-    // Konturen har 508 korte kurver, så få segmenter pr. kurve er rigeligt; samme tykkelse og omrids som før.
-    let geo = new ExtrudeGeometry(shapes, { depth: 30, bevelEnabled: true, bevelThickness: 36, bevelSize: 9, bevelSegments: 14, curveSegments: 5 });
+    // Samme tykkelse og omrids som før.
+    let geo = new ExtrudeGeometry(shapes, { depth: 30, bevelEnabled: true, bevelThickness: 36, bevelSize: 9, bevelSegments: 20, curveSegments: 1 });
     // bløde normaler: punkterne lægges sammen, så lyset glider jævnt over siderne uden synlige facetter
     geo.deleteAttribute('normal'); geo.deleteAttribute('uv'); geo = mergeVertices(geo, .05); geo.computeVertexNormals();
     geo.computeBoundingBox();
     const zc = (geo.boundingBox.min.z + geo.boundingBox.max.z) / 2, half = geo.boundingBox.max.z - zc;
     geo.translate(-LWd / 2, -LHt / 2, -zc);
-    const mat = new MeshPhysicalMaterial({ color: st.color, metalness: .15, roughness: .26, clearcoat: 1, clearcoatRoughness: .12 });
+    const mat = new MeshPhysicalMaterial({ color: st.color, metalness: .15, roughness: .34, clearcoat: 1, clearcoatRoughness: .24 });   // lidt blødere refleksioner: ingen skarpe lysstreger på kanten
     const mesh = new Mesh(geo, mat); mesh.scale.set(1, -1, 1);                               // SVG har y nedad
     st.group.add(mesh);
     return half;                                                                              // halv tykkelse (SVG-enheder)
