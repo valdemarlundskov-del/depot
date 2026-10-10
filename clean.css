@@ -59,7 +59,7 @@ html.thru-lock,html.thru-lock body{overflow:hidden!important;overscroll-behavior
 
 /* ---------- tal-sektionen + karussellen på én fælles sort flade med det levende BK-monogram bagved (clean.js) ---------- */
 .flow-wrap{position:relative;background:var(--black);isolation:isolate;}
-.mono-field{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;}
+.mono-field{position:sticky;top:0;width:100%;height:100vh;height:100lvh;margin-bottom:-100vh;margin-bottom:-100lvh;display:block;pointer-events:none;z-index:0;}   /* skærmhøjt lærred, der står stille, mens fladen scroller forbi */
 .flow-wrap>.w3d{position:relative;z-index:1;background:transparent!important;}
 
 /* ---------- "Nyopstartet": tal i stedet for showreel (tallene tæller op, når de kommer frem; clean.js) ---------- */

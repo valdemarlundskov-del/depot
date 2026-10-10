@@ -16,6 +16,7 @@ import {
 } from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -40,7 +41,11 @@ function loadLogo(st, src) {
   return fetch(src).then(r => r.text()).then(txt => {
     const data = new SVGLoader().parse(txt), shapes = [];
     data.paths.forEach(p => SVGLoader.createShapes(p).forEach(s => shapes.push(s)));
-    const geo = new ExtrudeGeometry(shapes, { depth: 70, bevelEnabled: true, bevelThickness: 16, bevelSize: 8, bevelSegments: 10, curveSegments: 40 });
+    // runde, bløde sider: en dyb, afrundet kant (som en småsten) i stedet for en lige væg med en lille fas.
+    // Konturen har 508 korte kurver, så få segmenter pr. kurve er rigeligt; samme tykkelse og omrids som før.
+    let geo = new ExtrudeGeometry(shapes, { depth: 30, bevelEnabled: true, bevelThickness: 36, bevelSize: 9, bevelSegments: 14, curveSegments: 5 });
+    // bløde normaler: punkterne lægges sammen, så lyset glider jævnt over siderne uden synlige facetter
+    geo.deleteAttribute('normal'); geo.deleteAttribute('uv'); geo = mergeVertices(geo, .05); geo.computeVertexNormals();
     geo.computeBoundingBox();
     const zc = (geo.boundingBox.min.z + geo.boundingBox.max.z) / 2, half = geo.boundingBox.max.z - zc;
     geo.translate(-LWd / 2, -LHt / 2, -zc);
