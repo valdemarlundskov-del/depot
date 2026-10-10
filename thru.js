@@ -97,7 +97,8 @@
   let lqS = null, lqC = null, lqO = null, lqOC = null;
   function applyLiquid(now, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur, toMask = true) {
     if (liquidOff) return null;
-    const gate = 1 - clamp((zp - .04) / .22);
+    if (zp > .002) return null;                                                     // kun mens logoet står stille: når man zoomer ind, forvrænges formen, og et liquid-område ville ses som en firkant
+    const gate = 1;
     const pad = 44, inside = mxp > ox - pad && mxp < ox + bw + pad && myp > oy - pad && myp < oy + bh + pad;
     hov += ((inside ? 1 : 0) - hov) * .2; vxs *= .87; vys *= .87;
     for (let i = rip.length - 1; i >= 0; i--) if (now - rip[i].t0 > 1700) rip.splice(i, 1);
