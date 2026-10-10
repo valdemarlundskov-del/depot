@@ -92,39 +92,30 @@
     pdirty = true;
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { mxp = myp = -1e4; lastP = lastSp = null; });
-  // Arbejder i css-opløsning på et lille lærred i hukommelsen: logoformen tegnes direkte dér (ingen tilbagelæsning fra grafikkortet),
-  // forvrænges og lægges ind over masken. Kanten er blød, så den lavere opløsning ses ikke.
-  let lqS = null, lqC = null, lqO = null, lqOC = null;
-  function applyLiquid(now, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur, toMask = true) {
-    if (liquidOff) return null;
-    if (zp > .002) return null;                                                     // kun mens logoet står stille: når man zoomer ind, forvrænges formen, og et liquid-område ville ses som en firkant
-    const gate = 1;
+  // Liquid bruger præcis de samme pixels som logoet på skærmen: når forsiden står stille, gemmes logo-masken én gang i hukommelsen,
+  // og kun området om markøren forvrænges og tegnes igen (i skærmens egne pixels, så det aldrig kan ses som en firkant).
+  let maskA = null, maskW = 0, maskH = 0, baseCv = null, baseOK = false, lastPatch = null, G = null, pdirty = false, pc = null, pcc = null, pImg = null;
+  const DARKRGB = (() => { const c = mkc().getContext('2d'); c.fillStyle = DARK; c.fillRect(0, 0, 1, 1); return c.getImageData(0, 0, 1, 1).data; })();
+  function liquidField(now, ox, oy, bw, bh) {
+    if (liquidOff || !maskA) return null;
     const pad = 44, inside = mxp > ox - pad && mxp < ox + bw + pad && myp > oy - pad && myp < oy + bh + pad;
     hov += ((inside ? 1 : 0) - hov) * .2; vxs *= .87; vys *= .87;
     for (let i = rip.length - 1; i >= 0; i--) if (now - rip[i].t0 > 1700) rip.splice(i, 1);
     if (inside && now - idleAt > 700) { idleAt = now; rip.push({ x: mxp, y: myp, t0: now, a: .34 }); if (rip.length > 16) rip.shift(); }   // en svag ring ind imellem, så det bliver ved med at leve
-    if (gate < .02 || (!rip.length && Math.hypot(vxs, vys) < .05)) return null;
+    if (!rip.length && Math.hypot(vxs, vys) < .05) return null;
     const R = 105, cx = inside ? mxp : (rip.length ? rip[rip.length - 1].x : mxp), cy = inside ? myp : (rip.length ? rip[rip.length - 1].y : myp);
-    const X0 = Math.max(0, Math.floor(cx - R)), Y0 = Math.max(0, Math.floor(cy - R));
-    const w = Math.min(Math.ceil(vw) - X0, 2 * R), h = Math.min(Math.ceil(vh) - Y0, 2 * R);
+    const x0 = Math.max(0, Math.floor((cx - R) * dpr)), y0 = Math.max(0, Math.floor((cy - R) * dpr));
+    const w = Math.min(maskW - x0, Math.ceil(2 * R * dpr)), h = Math.min(maskH - y0, Math.ceil(2 * R * dpr));
     if (w < 30 || h < 30) return null;
-    if (!lqS || lqS.width !== w || lqS.height !== h) {
-      lqS = mkc(); lqO = mkc(); lqS.width = lqO.width = w; lqS.height = lqO.height = h;
-      lqC = lqS.getContext('2d', { willReadFrequently: true }); lqOC = lqO.getContext('2d', { willReadFrequently: true });
-    }
-    // logoformen i området, med samme bløde kant som masken
-    const Dq = w + 2000;
-    lqC.setTransform(1, 0, 0, 1, 0, 0); lqC.clearRect(0, 0, w, h);
-    lqC.shadowColor = '#000'; lqC.shadowBlur = blur / dpr; lqC.shadowOffsetX = Dq; lqC.shadowOffsetY = 0;
-    lqC.setTransform(sM, 0, 0, sM, txM - X0 - Dq, tyM - Y0); lqC.translate(ox, oy); lqC.scale(k, k); lqC.fillStyle = '#000'; lqC.fill(LOGO, 'evenodd');
-    const sd = lqC.getImageData(0, 0, w, h).data, out = lqOC.createImageData(w, h), od = out.data;
+    if (!pc || pc.width !== w || pc.height !== h) { pc = mkc(); pc.width = w; pc.height = h; pcc = pc.getContext('2d'); pImg = pcc.createImageData(w, h); }
+    const od = pImg.data;
     const st = 6, gw = Math.ceil(w / st) + 2, gh = Math.ceil(h / st) + 2;
     if (!LQ || LQ.n < gw * gh) LQ = { n: gw * gh, ux: new Float32Array(gw * gh), uy: new Float32Array(gw * gh) };
     const { ux, uy } = LQ;
-    const live = rip.map(s => { const age = (now - s.t0) / 1000; return { x: s.x, y: s.y, r0: 62 * age, wd: 12 + age * 9, amp: s.a * Math.pow(1 - age / 1.7, 2) * 12.5 * gate }; });
-    const dk = 2.7 * gate;
+    const live = rip.map(s => { const age = (now - s.t0) / 1000; return { x: s.x, y: s.y, r0: 62 * age, wd: 12 + age * 9, amp: s.a * Math.pow(1 - age / 1.7, 2) * 12.5 }; });
+    const dk = 2.7;
     for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
-      const px = X0 + i * st, py = Y0 + j * st;
+      const px = (x0 + i * st) / dpr, py = (y0 + j * st) / dpr;
       let Ux = 0, Uy = 0;
       const dx0 = px - cx, dy0 = py - cy, dd = Math.hypot(dx0, dy0);
       const g = Math.exp(-(dd * dd) / (2 * 34 * 34));
@@ -136,8 +127,9 @@
       }
       const um = Math.hypot(Ux, Uy); if (um > 24) { Ux *= 24 / um; Uy *= 24 / um; }              // loft, så intet rives i stykker
       const wnd = Math.min(1, Math.max(0, (R - dd) / (R * .4)));                       // blød afkant, så effekten aldrig får en kant
-      ux[j * gw + i] = Ux * wnd; uy[j * gw + i] = Uy * wnd;
+      ux[j * gw + i] = Ux * wnd * dpr; uy[j * gw + i] = Uy * wnd * dpr;
     }
+    const r0 = DARKRGB[0], g0 = DARKRGB[1], b0 = DARKRGB[2];
     for (let y = 0; y < h; y++) {
       const gy = y / st, j = Math.floor(gy), fy = gy - j;
       for (let x = 0; x < w; x++) {
@@ -145,35 +137,24 @@
         const a00 = (1 - fx) * (1 - fy), a10 = fx * (1 - fy), a01 = (1 - fx) * fy, a11 = fx * fy;
         const Ux = ux[kk] * a00 + ux[kk + 1] * a10 + ux[kk + gw] * a01 + ux[kk + gw + 1] * a11;
         const Uy = uy[kk] * a00 + uy[kk + 1] * a10 + uy[kk + gw] * a01 + uy[kk + gw + 1] * a11;
-        let sx = x - Ux, sy = y - Uy;
-        sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
-        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = (iy * w + ix) * 4 + 3, p2 = p + w * 4;
-        od[(y * w + x) * 4 + 3] = sd[p] * (1 - tx) * (1 - ty) + sd[p + 4] * tx * (1 - ty) + sd[p2] * (1 - tx) * ty + sd[p2 + 4] * tx * ty;
+        let sx = x0 + x - Ux, sy = y0 + y - Uy;
+        sx = sx < 0 ? 0 : sx > maskW - 1.001 ? maskW - 1.001 : sx; sy = sy < 0 ? 0 : sy > maskH - 1.001 ? maskH - 1.001 : sy;
+        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = iy * maskW + ix, p2 = p + maskW;
+        const o = (y * w + x) * 4;
+        od[o] = r0; od[o + 1] = g0; od[o + 2] = b0;
+        od[o + 3] = maskA[p] * (1 - tx) * (1 - ty) + maskA[p + 1] * tx * (1 - ty) + maskA[p2] * (1 - tx) * ty + maskA[p2 + 1] * tx * ty;
       }
     }
-    lqOC.putImageData(out, 0, 0);
-    if (toMask) {
-      cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1; cM.globalCompositeOperation = 'source-over';
-      cM.clearRect(X0 * dpr, Y0 * dpr, w * dpr, h * dpr); cM.imageSmoothingEnabled = true; cM.drawImage(lqO, 0, 0, w, h, X0 * dpr, Y0 * dpr, w * dpr, h * dpr);
-    }
+    pcc.putImageData(pImg, 0, 0);
     pdirty = true;
-    return { x: X0, y: Y0, w, h };
+    return { x: x0, y: y0, w, h };
   }
-
-
-
-  // hurtig vej, mens forsiden står stille: kun området om markøren tegnes igen (oven på en gemt kopi af det stillestående billede)
-  let baseCv = null, baseOK = false, lastPatch = null, G = null, pdirty = false, pc = null, pcc = null;
   function fastLiquid(now) {
-    if (lastPatch) { const r = lastPatch; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(baseCv, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr); lastPatch = null; }
-    const r = applyLiquid(now, G.ox, G.oy, G.bw, G.bh, 0, G.sM, G.txM, G.tyM, G.k, G.blur, false);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+    if (lastPatch) { const r = lastPatch; ctx.drawImage(baseCv, r.x, r.y, r.w, r.h, r.x, r.y, r.w, r.h); lastPatch = null; }   // det gamle område tilbage
+    const r = liquidField(now, G.ox, G.oy, G.bw, G.bh);
     if (!r) return;
-    if (!pc || pc.width !== r.w || pc.height !== r.h) { pc = mkc(); pc.width = r.w; pc.height = r.h; pcc = pc.getContext('2d'); }
-    pcc.globalCompositeOperation = 'source-over'; pcc.clearRect(0, 0, r.w, r.h); pcc.drawImage(lqO, 0, 0);
-    pcc.globalCompositeOperation = 'source-in'; pcc.fillStyle = DARK; pcc.fillRect(0, 0, r.w, r.h); pcc.globalCompositeOperation = 'source-over';
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.fillStyle = LIGHT; ctx.fillRect(r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr);
-    ctx.imageSmoothingEnabled = true; ctx.drawImage(pc, 0, 0, r.w, r.h, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr);
+    ctx.fillStyle = LIGHT; ctx.fillRect(r.x, r.y, r.w, r.h); ctx.drawImage(pc, r.x, r.y);                  // samme farver og pixels som resten af logoet
     lastPatch = r;
   }
 
@@ -374,7 +355,6 @@
     LB = { x: sM * ox + txM, y: sM * oy + tyM, w: bw * sM, h: bh * sM };
     G = { ox, oy, bw, bh, sM, txM, tyM, k, blur };
     still = !loaderMode && p <= 0 && grow >= 1 && !!homeT0 && now - homeT0 > 2200 && !locked;   // står helt stille: tegnes først igen, når noget ændrer sig
-    if (!loaderMode && grow >= 1 && !reduce && !still) applyLiquid(now, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur);   // (står siden stille, tegnes liquid i den hurtige vej nedenfor)   // liquid: markøren er som en finger i vand i logoets form
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
     if (needT) { cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over'; }
 
@@ -441,6 +421,13 @@
     if (still && !reduce) {
       if (!baseCv || baseCv.width !== cv.width || baseCv.height !== cv.height) { baseCv = mkc(); baseCv.width = cv.width; baseCv.height = cv.height; }
       const bc = baseCv.getContext('2d'); bc.setTransform(1, 0, 0, 1, 0, 0); bc.clearRect(0, 0, baseCv.width, baseCv.height); bc.drawImage(cv, 0, 0);
+      // logo-masken gemmes én gang (kun alfa), så liquid kan bruge præcis de samme pixels
+      try {
+        const mc = mkc(); mc.width = lm.width; mc.height = lm.height; const mx = mc.getContext('2d', { willReadFrequently: true }); mx.drawImage(lm, 0, 0);
+        const d = mx.getImageData(0, 0, mc.width, mc.height).data; maskW = mc.width; maskH = mc.height;
+        if (!maskA || maskA.length !== maskW * maskH) maskA = new Uint8ClampedArray(maskW * maskH);
+        for (let i = 0, j = 3; i < maskA.length; i++, j += 4) maskA[i] = d[j];
+      } catch (err) { liquidOff = true; }
       baseOK = true; lastPatch = null; fastLiquid(now);
     } else baseOK = false;
   }
