@@ -305,8 +305,10 @@
       const hv = held(c) ? 1 : 0, depth = (co + 1) / 2;
       const x = Rx * s, z = Rz * co, y = -Ky * co + Math.sin(t * .0011 + i * 1.7) * 7;
       c.style.transform = 'translate(-50%,-50%) translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,' + z.toFixed(1) + 'px) rotateY(' + (s * 24).toFixed(1) + 'deg)';
-      c.style.setProperty('--sh', (hv ? 1 : .5 + .5 * depth).toFixed(3));
-      const bl = (hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2); c.style.setProperty('--bl', bl.toFixed(2) + 'px'); c.style.setProperty('--bs', (1 + bl * .014).toFixed(3));
+      // lys og slør afrundes til trin og sættes kun, når de ændrer sig (slør, der ændrer sig hvert billede, er tungt for browseren)
+      const shv = (Math.round((hv ? 1 : .5 + .5 * depth) * 25) / 25).toFixed(2), bl = Math.round((hv ? 0 : Math.pow(1 - depth, 1.4) * 4.2) * 2) / 2;
+      if (c._sh !== shv) { c._sh = shv; c.style.setProperty('--sh', shv); }
+      if (c._bl !== bl) { c._bl = bl; c.style.setProperty('--bl', bl + 'px'); c.style.setProperty('--bs', (1 + bl * .014).toFixed(3)); }
       c.style.zIndex = Math.round(depth * 100);
     }
   }

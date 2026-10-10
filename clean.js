@@ -36,39 +36,46 @@
       const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#f7f7f5'; x.fillRect(0, 0, c.width, c.height);
       spr = c;
     }
+    // lærredet er kun skærmhøjt og står "sticky" i fladen (et lærred på hele den høje flade gør siden tung);
+    // mønsteret forskydes med scroll, så logoerne følger siden
+    let GAP = 54, ROW = 46.8;
     function resize() {
-      dpr = Math.min(devicePixelRatio || 1, 1.5); W = wrap.clientWidth; H = wrap.clientHeight;
-      if (H > 1500) dpr = Math.min(dpr, 1.25);
+      dpr = Math.min(devicePixelRatio || 1, 1.5); W = wrap.clientWidth; H = cv.clientHeight || innerHeight;
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-      const gap = W < 700 ? 40 : 54; SZ = W < 700 ? 13 : 16; pts = [];
-      for (let r = 0, y = gap / 2; y < H + gap; r++, y += gap * .866)                   // forskudte rækker, som et monogram-mønster
-        for (let x = (r % 2 ? gap / 2 : 0) + gap / 4; x < W + gap; x += gap) pts.push({ x, y, a: 0, s: 1, o: 0 });
+      GAP = W < 700 ? 40 : 54; ROW = GAP * .866; SZ = W < 700 ? 13 : 16; pts = [];
+      for (let r = 0, y = 0; y < H + 3 * ROW; r++, y += ROW)                                 // forskudte rækker, som et monogram-mønster
+        for (let x = (r % 2 ? GAP / 2 : 0) + GAP / 4; x < W + GAP; x += GAP) pts.push({ x, y, r, a: 0, s: 1, o: 0 });
       sprite(); kick();
     }
     function frame() {
       raf = 0; if (!vis || !spr) return;
       on += (onT - on) * .12;
+      const wr = wrap.getBoundingClientRect(), cr = cv.getBoundingClientRect(), P = 2 * ROW;
+      const shift = ((cr.top - wr.top) % P + P) % P;                                          // hvor langt fladen er scrollet forbi lærredets top
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-      const R = W < 700 ? 170 : 260, sw = SZ * dpr, sh = sw * spr.height / spr.width;
+      const R = W < 700 ? 170 : 260, sw = SZ * dpr, sh = sw * spr.height / spr.width, y0 = ROW / 2 - shift;
       let moving = Math.abs(onT - on) > .002;
       for (const p of pts) {
-        const dx = mx - p.x, dy = my - p.y, d = Math.hypot(dx, dy), f = reduce ? 0 : on * Math.max(0, 1 - d / R), e = f * f * (3 - 2 * f);
+        const py = p.y + y0; if (py < -GAP || py > H + GAP) continue;
+        const dx = mx - p.x, dy = my - py, d = Math.hypot(dx, dy), f = reduce ? 0 : on * Math.max(0, 1 - d / R), e = f * f * (3 - 2 * f);
         // vinkel: drej mod markøren (korteste vej), ellers tilbage til 0
         let ta = e > .001 ? Math.atan2(dy, dx) + Math.PI / 2 : 0, da = ta - p.a;
         da = Math.atan2(Math.sin(da), Math.cos(da)); const tA = p.a + da * (e > .001 ? Math.min(1, .25 + e) : 1);
         const na = p.a + (tA - p.a) * .18, ns = p.s + ((1 + 1.6 * e) - p.s) * .16, no = p.o + ((.07 + .6 * e) - p.o) * .16;
         if (Math.abs(na - p.a) > .0005 || Math.abs(ns - p.s) > .0005 || Math.abs(no - p.o) > .0005) moving = true;
         p.a = na; p.s = ns; p.o = no;
-        ctx.globalAlpha = p.o; ctx.setTransform(p.s, 0, 0, p.s, p.x * dpr, p.y * dpr); ctx.rotate(p.a);
+        ctx.globalAlpha = p.o; ctx.setTransform(p.s, 0, 0, p.s, p.x * dpr, py * dpr); ctx.rotate(p.a);
         ctx.drawImage(spr, -sw / 2, -sh / 2, sw, sh);
       }
       ctx.globalAlpha = 1;
       if (moving) raf = requestAnimationFrame(frame);
     }
     function kick() { if (!raf && vis) raf = requestAnimationFrame(frame); }
-    wrap.addEventListener('pointermove', e => { const r = wrap.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; onT = 1; kick(); });
+    wrap.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; onT = 1; kick(); });
     wrap.addEventListener('pointerleave', () => { onT = 0; kick(); });
     new IntersectionObserver(es => { vis = es[0].isIntersecting; kick(); }, { rootMargin: '100px' }).observe(wrap);
+    addEventListener('scroll', () => { if (vis) kick(); }, { passive: true });          // mønsteret følger siden, når man scroller
+    addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(resize, 120); });
     if ('ResizeObserver' in window) { let rt = 0; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(resize, 120); }).observe(wrap); }
     img.onload = () => { sprite(); kick(); }; img.src = 'images/logo/bk-blob.svg';
     resize();

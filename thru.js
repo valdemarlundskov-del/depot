@@ -69,6 +69,7 @@
   // ---------- liquid ved hover (forsiden) ----------
   // Markøren er som en finger i vand: den trækker logoets form med sig, og efterlader ringe, der brer sig, svinger og dør ud. Smalt og blødt.
   // Virker på logo-masken (formen), så det også ses, mens logoet står helt sort.
+  let LB = null;                                        // logoets placering (sættes i draw), så musen kun reagerer i nærheden
   let liquidOff = false, mxp = -1e4, myp = -1e4, hov = 0, lastSp = null, lastP = null, vxs = 0, vys = 0, idleAt = 0, gWp = null;
   const rip = [];
   const mkc = () => document.createElement('canvas');
@@ -80,66 +81,99 @@
     if (x < 0 || y < 0 || x > rc.width || y > rc.height) { mxp = myp = -1e4; lastP = lastSp = null; return; }
     if (lastP) { vxs += ((x - lastP.x) - vxs) * .45; vys += ((y - lastP.y) - vys) * .45; }
     lastP = { x, y }; mxp = x; myp = y;
+    // langt fra logoet sker der intet: ingen ringe og ingen ny tegning
+    const near = LB && x > LB.x - 150 && x < LB.x + LB.w + 150 && y > LB.y - 150 && y < LB.y + LB.h + 150;
+    if (!near) { if (rip.length || hov > .01) pdirty = true; return; }
     if (!lastSp || Math.hypot(x - lastSp.x, y - lastSp.y) > 14) {
       const d = lastSp ? Math.hypot(x - lastSp.x, y - lastSp.y) : 14;
       rip.push({ x, y, t0: now, a: Math.min(1, Math.max(.3, d / 26)) }); lastSp = { x, y };
       if (rip.length > 16) rip.shift();
     }
-    dirty = true;
+    pdirty = true;
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => { mxp = myp = -1e4; lastP = lastSp = null; });
-  function applyLiquid(now, ox, oy, bw, bh, zp) {
-    if (liquidOff) return;
+  // Arbejder i css-opløsning på et lille lærred i hukommelsen: logoformen tegnes direkte dér (ingen tilbagelæsning fra grafikkortet),
+  // forvrænges og lægges ind over masken. Kanten er blød, så den lavere opløsning ses ikke.
+  let lqS = null, lqC = null, lqO = null, lqOC = null;
+  function applyLiquid(now, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur, toMask = true) {
+    if (liquidOff) return null;
     const gate = 1 - clamp((zp - .04) / .22);
     const pad = 44, inside = mxp > ox - pad && mxp < ox + bw + pad && myp > oy - pad && myp < oy + bh + pad;
     hov += ((inside ? 1 : 0) - hov) * .2; vxs *= .87; vys *= .87;
     for (let i = rip.length - 1; i >= 0; i--) if (now - rip[i].t0 > 1700) rip.splice(i, 1);
     if (inside && now - idleAt > 700) { idleAt = now; rip.push({ x: mxp, y: myp, t0: now, a: .34 }); if (rip.length > 16) rip.shift(); }   // en svag ring ind imellem, så det bliver ved med at leve
-    if (gate < .02 || (!rip.length && Math.hypot(vxs, vys) < .05)) return;
+    if (gate < .02 || (!rip.length && Math.hypot(vxs, vys) < .05)) return null;
     const R = 105, cx = inside ? mxp : (rip.length ? rip[rip.length - 1].x : mxp), cy = inside ? myp : (rip.length ? rip[rip.length - 1].y : myp);
-    const x0 = Math.max(0, Math.floor((cx - R) * dpr)), y0 = Math.max(0, Math.floor((cy - R) * dpr));
-    const w = Math.min(cv.width - x0, Math.ceil(2 * R * dpr)), h = Math.min(cv.height - y0, Math.ceil(2 * R * dpr));
-    if (w < 30 || h < 30) return;
-    let src;
-    try { cM.setTransform(1, 0, 0, 1, 0, 0); src = cM.getImageData(x0, y0, w, h); } catch (err) { liquidOff = true; return; }        // åbnes siden direkte fra en fil, må billedet ikke læses: så springes effekten over
-    const sd = src.data, out = ctx.createImageData(w, h), od = out.data;
+    const X0 = Math.max(0, Math.floor(cx - R)), Y0 = Math.max(0, Math.floor(cy - R));
+    const w = Math.min(Math.ceil(vw) - X0, 2 * R), h = Math.min(Math.ceil(vh) - Y0, 2 * R);
+    if (w < 30 || h < 30) return null;
+    if (!lqS || lqS.width !== w || lqS.height !== h) {
+      lqS = mkc(); lqO = mkc(); lqS.width = lqO.width = w; lqS.height = lqO.height = h;
+      lqC = lqS.getContext('2d', { willReadFrequently: true }); lqOC = lqO.getContext('2d', { willReadFrequently: true });
+    }
+    // logoformen i området, med samme bløde kant som masken
+    const Dq = w + 2000;
+    lqC.setTransform(1, 0, 0, 1, 0, 0); lqC.clearRect(0, 0, w, h);
+    lqC.shadowColor = '#000'; lqC.shadowBlur = blur / dpr; lqC.shadowOffsetX = Dq; lqC.shadowOffsetY = 0;
+    lqC.setTransform(sM, 0, 0, sM, txM - X0 - Dq, tyM - Y0); lqC.translate(ox, oy); lqC.scale(k, k); lqC.fillStyle = '#000'; lqC.fill(LOGO, 'evenodd');
+    const sd = lqC.getImageData(0, 0, w, h).data, out = lqOC.createImageData(w, h), od = out.data;
     const st = 6, gw = Math.ceil(w / st) + 2, gh = Math.ceil(h / st) + 2;
-    if (!LQ || LQ.n < gw * gh) LQ = { n: gw * gh, ux: new Float32Array(gw * gh), uy: new Float32Array(gw * gh), sh: new Float32Array(gw * gh) };
-    const { ux, uy, sh } = LQ;
+    if (!LQ || LQ.n < gw * gh) LQ = { n: gw * gh, ux: new Float32Array(gw * gh), uy: new Float32Array(gw * gh) };
+    const { ux, uy } = LQ;
     const live = rip.map(s => { const age = (now - s.t0) / 1000; return { x: s.x, y: s.y, r0: 62 * age, wd: 12 + age * 9, amp: s.a * Math.pow(1 - age / 1.7, 2) * 12.5 * gate }; });
     const dk = 2.7 * gate;
     for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
-      const px = (x0 + i * st) / dpr, py = (y0 + j * st) / dpr;
-      let Ux = 0, Uy = 0, S = 0;
+      const px = X0 + i * st, py = Y0 + j * st;
+      let Ux = 0, Uy = 0;
       const dx0 = px - cx, dy0 = py - cy, dd = Math.hypot(dx0, dy0);
       const g = Math.exp(-(dd * dd) / (2 * 34 * 34));
       Ux += vxs * dk * g; Uy += vys * dk * g;                                         // trækkes med markøren
       for (const s of live) {
         const rx = px - s.x, ry = py - s.y, d = Math.hypot(rx, ry) || 1e-3, q = (d - s.r0) / s.wd, env = Math.exp(-q * q);
         if (env < .02) continue;
-        const o = Math.cos(q * 2.3) * env * s.amp; Ux += rx / d * o; Uy += ry / d * o; S += Math.sin(q * 2.3) * env * s.amp * .014;
+        const o = Math.cos(q * 2.3) * env * s.amp; Ux += rx / d * o; Uy += ry / d * o;
       }
       const um = Math.hypot(Ux, Uy); if (um > 24) { Ux *= 24 / um; Uy *= 24 / um; }              // loft, så intet rives i stykker
       const wnd = Math.min(1, Math.max(0, (R - dd) / (R * .4)));                       // blød afkant, så effekten aldrig får en kant
-      ux[j * gw + i] = Ux * wnd; uy[j * gw + i] = Uy * wnd; sh[j * gw + i] = S * wnd;
+      ux[j * gw + i] = Ux * wnd; uy[j * gw + i] = Uy * wnd;
     }
     for (let y = 0; y < h; y++) {
       const gy = y / st, j = Math.floor(gy), fy = gy - j;
       for (let x = 0; x < w; x++) {
-        const gx = x / st, i = Math.floor(gx), fx = gx - i, k = j * gw + i;
+        const gx = x / st, i = Math.floor(gx), fx = gx - i, kk = j * gw + i;
         const a00 = (1 - fx) * (1 - fy), a10 = fx * (1 - fy), a01 = (1 - fx) * fy, a11 = fx * fy;
-        const Ux = ux[k] * a00 + ux[k + 1] * a10 + ux[k + gw] * a01 + ux[k + gw + 1] * a11;
-        const Uy = uy[k] * a00 + uy[k + 1] * a10 + uy[k + gw] * a01 + uy[k + gw + 1] * a11;
-        const S = sh[k] * a00 + sh[k + 1] * a10 + sh[k + gw] * a01 + sh[k + gw + 1] * a11;
-        let sx = x - Ux * dpr, sy = y - Uy * dpr;
+        const Ux = ux[kk] * a00 + ux[kk + 1] * a10 + ux[kk + gw] * a01 + ux[kk + gw + 1] * a11;
+        const Uy = uy[kk] * a00 + uy[kk + 1] * a10 + uy[kk + gw] * a01 + uy[kk + gw + 1] * a11;
+        let sx = x - Ux, sy = y - Uy;
         sx = sx < 0 ? 0 : sx > w - 1.001 ? w - 1.001 : sx; sy = sy < 0 ? 0 : sy > h - 1.001 ? h - 1.001 : sy;
-        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = (iy * w + ix) * 4, p2 = p + w * 4;
-        const b00 = (1 - tx) * (1 - ty), b10 = tx * (1 - ty), b01 = (1 - tx) * ty, b11 = tx * ty, sc = 1 + S, o = (y * w + x) * 4;
-        for (let c = 0; c < 3; c++) od[o + c] = (sd[p + c] * b00 + sd[p + 4 + c] * b10 + sd[p2 + c] * b01 + sd[p2 + 4 + c] * b11) * sc;
-        od[o + 3] = sd[p + 3] * b00 + sd[p + 7] * b10 + sd[p2 + 3] * b01 + sd[p2 + 7] * b11;
+        const ix = sx | 0, iy = sy | 0, tx = sx - ix, ty = sy - iy, p = (iy * w + ix) * 4 + 3, p2 = p + w * 4;
+        od[(y * w + x) * 4 + 3] = sd[p] * (1 - tx) * (1 - ty) + sd[p + 4] * tx * (1 - ty) + sd[p2] * (1 - tx) * ty + sd[p2 + 4] * tx * ty;
       }
     }
-    cM.setTransform(1, 0, 0, 1, 0, 0); cM.putImageData(out, x0, y0); dirty = true;
+    lqOC.putImageData(out, 0, 0);
+    if (toMask) {
+      cM.setTransform(1, 0, 0, 1, 0, 0); cM.filter = 'none'; cM.shadowColor = 'transparent'; cM.shadowBlur = 0; cM.shadowOffsetX = 0; cM.globalAlpha = 1; cM.globalCompositeOperation = 'source-over';
+      cM.clearRect(X0 * dpr, Y0 * dpr, w * dpr, h * dpr); cM.imageSmoothingEnabled = true; cM.drawImage(lqO, 0, 0, w, h, X0 * dpr, Y0 * dpr, w * dpr, h * dpr);
+    }
+    pdirty = true;
+    return { x: X0, y: Y0, w, h };
+  }
+
+
+
+  // hurtig vej, mens forsiden står stille: kun området om markøren tegnes igen (oven på en gemt kopi af det stillestående billede)
+  let baseCv = null, baseOK = false, lastPatch = null, G = null, pdirty = false, pc = null, pcc = null;
+  function fastLiquid(now) {
+    if (lastPatch) { const r = lastPatch; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(baseCv, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr); lastPatch = null; }
+    const r = applyLiquid(now, G.ox, G.oy, G.bw, G.bh, 0, G.sM, G.txM, G.tyM, G.k, G.blur, false);
+    if (!r) return;
+    if (!pc || pc.width !== r.w || pc.height !== r.h) { pc = mkc(); pc.width = r.w; pc.height = r.h; pcc = pc.getContext('2d'); }
+    pcc.globalCompositeOperation = 'source-over'; pcc.clearRect(0, 0, r.w, r.h); pcc.drawImage(lqO, 0, 0);
+    pcc.globalCompositeOperation = 'source-in'; pcc.fillStyle = DARK; pcc.fillRect(0, 0, r.w, r.h); pcc.globalCompositeOperation = 'source-over';
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.fillStyle = LIGHT; ctx.fillRect(r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr);
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(pc, 0, 0, r.w, r.h, r.x * dpr, r.y * dpr, r.w * dpr, r.h * dpr);
+    lastPatch = r;
   }
 
   // ---------- forvrængning ved zoom: logoformen flyder og trækkes ud mod kanterne (glat, pixel for pixel; billederne bag rører vi ikke) ----------
@@ -178,7 +212,7 @@
     cM.clearRect(0, 0, lm.width, lm.height); cM.drawImage(mO, 0, 0, w, h, 0, 0, lm.width, lm.height);
   }
 
-  let lastNow = 0, doneFinal = false;
+  let lastNow = 0, doneFinal = false, still = false;
   let dpr = 1, vw = 0, vh = 0, visible = true;
   let t0 = performance.now(), finished = false;
   const la = document.createElement('canvas'), lm = document.createElement('canvas'), lt = document.createElement('canvas'), l3 = document.createElement('canvas');
@@ -289,14 +323,15 @@
     cA.fillStyle = DARK; cA.fillRect(0, 0, la.width, la.height);
     // lag T: showreelen (eller første billede af den), "cover"-beskåret til hele skærmen og klippet af logoformen.
     // Den står stille på skærmen, mens logoformen vokser, så den fylder hele skærmen, når man er kommet igennem.
-    cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'source-over'; cT.clearRect(0, 0, lt.width, lt.height);
+    const needT = loaderMode || reveal > .003;                                              // rummet bag logoet tegnes kun, når det kan ses (ikke mens logoet står sort)
+    if (needT) { cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'source-over'; cT.clearRect(0, 0, lt.width, lt.height); }
     cT.setTransform(dpr, 0, 0, dpr, 0, 0);
     const vready = vid && vidReady && vid.readyState >= 2 && vid.videoWidth > 0;
     const srcEl = loaderMode ? (poster.complete && poster.naturalWidth ? poster : null) : 1;
     // 3D-logoet sidder i logoet ved start, glider bagud og snurrer, når man scroller, og bliver, til siden dækker det
     const a3 = m3 ? 1 : 0;                                                                   // 3D-logoet bliver, til siden nedefra dækker det
     const io = 1;                                                                           // billederne bliver: de glider op og dækkes af siden, der kommer nedefra
-    if (!loaderMode) {
+    if (!needT) { /* intet */ } else if (!loaderMode) {
       cT.fillStyle = DARK; cT.fillRect(0, 0, vw, vh);
       if (io > .003) {
         const e = smooth(zp), lift = Math.max(0, p - .36) * vh * .9;
@@ -335,9 +370,12 @@
       window.__thruLoad = Object.assign(window.__thruLoad || {}, { on: true, rot, s: sc, cx: cx0, cy: cy0 });
     }
     const dtm = lastNow ? Math.min(64, now - lastNow) : 16; lastNow = now;
-    if (!loaderMode && grow >= 1 && !reduce) applyLiquid(now, ox, oy, bw, bh, zp);   // liquid: markøren er som en finger i vand i logoets form
+    LB = { x: sM * ox + txM, y: sM * oy + tyM, w: bw * sM, h: bh * sM };
+    G = { ox, oy, bw, bh, sM, txM, tyM, k, blur };
+    still = !loaderMode && p <= 0 && grow >= 1 && !!homeT0 && now - homeT0 > 2200 && !locked;   // står helt stille: tegnes først igen, når noget ændrer sig
+    if (!loaderMode && grow >= 1 && !reduce && !still) applyLiquid(now, ox, oy, bw, bh, zp, sM, txM, tyM, k, blur);   // (står siden stille, tegnes liquid i den hurtige vej nedenfor)   // liquid: markøren er som en finger i vand i logoets form
     cA.setTransform(1, 0, 0, 1, 0, 0); cA.globalCompositeOperation = 'destination-in'; cA.drawImage(lm, 0, 0); cA.globalCompositeOperation = 'source-over';
-    cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over';
+    if (needT) { cT.setTransform(1, 0, 0, 1, 0, 0); cT.globalCompositeOperation = 'destination-in'; cT.drawImage(lm, 0, 0); cT.globalCompositeOperation = 'source-over'; }
 
     // sammensæt: hvid baggrund → showreelen i logoformen (vokser, til den fylder skærmen) → let mørk tone → BK STUDIO i lys skrift oven på.
     // Når vinduet fylder skærmen, toner lærredets udgave ud, og den almindelige video bagved tager over (samme billede, så der ingen overgang er).
@@ -398,6 +436,12 @@
     }
     if (hintEl) hintEl.style.opacity = (to * intro).toFixed(3);
     if (vid) { vid.style.opacity = fadeLt.toFixed(3); if (vidReady && vid.paused && !vidHold && visible) vid.play().catch(() => {}); }
+    // står siden stille: gem billedet (uden liquid), så musen kun behøver at tegne sit lille område igen
+    if (still && !reduce) {
+      if (!baseCv || baseCv.width !== cv.width || baseCv.height !== cv.height) { baseCv = mkc(); baseCv.width = cv.width; baseCv.height = cv.height; }
+      const bc = baseCv.getContext('2d'); bc.setTransform(1, 0, 0, 1, 0, 0); bc.clearRect(0, 0, baseCv.width, baseCv.height); bc.drawImage(cv, 0, 0);
+      baseOK = true; lastPatch = null; fastLiquid(now);
+    } else baseOK = false;
   }
 
   // menuens farve følger scenen
@@ -421,8 +465,9 @@
     if (finished) return;
     requestAnimationFrame(loop);
     if (!visible) return;
-    if (reduce && !dirty) return;
-    draw(now); dirty = false;
+    if (still && baseOK && !dirty) { if (pdirty) { pdirty = false; fastLiquid(now); } return; }   // står stille: kun musens lille område tegnes igen
+    if ((reduce || still) && !dirty && !pdirty) return;                            // intet ændrer sig: spring tegningen over (sparer CPU/GPU)
+    dirty = false; pdirty = false; draw(now);
     if (loaderMode && performance.now() - t0 > 900 + 1600 + 80) finish();          // indlæsningen er færdig: siden er afsløret
   }
   if (loaderMode) {
