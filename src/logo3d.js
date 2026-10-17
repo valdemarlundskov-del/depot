@@ -198,7 +198,9 @@ function journey() {
   const add = (sec, parent, before, kind) => {
     if (!sec || !parent) return;
     const cv = document.createElement('canvas'); cv.className = 'bk3d-layer bk3d-' + kind; cv.setAttribute('aria-hidden', 'true');
-    parent.insertBefore(cv, before || null); targets.push({ sec, cv, ctx: cv.getContext('2d'), vis: false, kind });
+    // karussellen vipper og ligger lidt bagud i 3D: dens lag er større end sektionen (pad), så logoet aldrig skæres af ved kanten
+    const pad = kind === 'ring' ? 80 : 0;
+    parent.insertBefore(cv, before || null); targets.push({ sec, cv, ctx: cv.getContext('2d'), vis: false, kind, pad });
   };
   const w3 = document.querySelector('.w3d'), ring = w3 && w3.querySelector('.w3d-stage');
   add(w3, ring, ring && ring.firstChild, 'ring');
@@ -220,7 +222,7 @@ function journey() {
       renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
     }
     // et lærred tømmes, når dets størrelse sættes, så det sker kun, når størrelsen faktisk ændrer sig (ellers blinker logoet)
-    targets.forEach(x => { const r = x.sec.getBoundingClientRect(), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr); if (x.cv.width !== w || x.cv.height !== h) { x.cv.width = w; x.cv.height = h; } });
+    targets.forEach(x => { const r = x.sec.getBoundingClientRect(), w = Math.round((r.width + 2 * x.pad) * dpr), h = Math.round((r.height + 2 * x.pad) * dpr); if (x.cv.width !== w || x.cv.height !== h) { x.cv.width = w; x.cv.height = h; } });
     kick();
   }
   function frame(now) {
@@ -276,7 +278,7 @@ function journey() {
       const r = x.sec.getBoundingClientRect(), c = x.ctx;
       c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, x.cv.width, x.cv.height);
       c.globalAlpha = x.kind === 'foot' ? fade : 1;
-      if (c.globalAlpha > .003) c.drawImage(gl, -r.left * dpr, -r.top * dpr, vw * dpr, vh * dpr);
+      if (c.globalAlpha > .003) c.drawImage(gl, (x.pad - r.left) * dpr, (x.pad - r.top) * dpr, vw * dpr, vh * dpr);
       c.globalAlpha = 1;
     });
     if (ang !== goal || (spreading && sk < 1)) raf = requestAnimationFrame(frame);

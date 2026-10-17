@@ -161,7 +161,10 @@ html.bk3d-on footer.fm-landed .foot-mega .fm-blob{opacity:1;}
 /* "STUDIO" glider ind fra højre og skubber logoet ud til venstre (logo3d.min.js styrer bevægelsen) */
 html.bk3d-on footer{overflow-x:clip;}
 html.bk3d-on footer .foot-mega .fm-word{position:relative;z-index:1;opacity:0;filter:brightness(0) invert(1);}
-.bk3d-ring{transform:translateZ(-30px);}
+/* laget ligger lidt bagud (mellem de bagerste og forreste kort); skaleret tilbage, så logoet har sin rigtige størrelse og plads,
+   og 80px større end sektionen hele vejen rundt, så logoet aldrig skæres af ved sektionens kant (logo3d.js tegner med samme margen) */
+.bk3d-ring{inset:-80px;width:auto;height:auto;transform-origin:50% calc(var(--rc,max(47vh,330px)) + 80px);transform:translateZ(-30px) scale(1.01765);}
+@media(max-width:900px){.bk3d-ring{transform-origin:50% calc(var(--rc,max(46vh,330px)) + 80px);}}
 html body .w3d-title{transform:translate3d(0,-50%,12px);}   /* titlen ligger altid foran 3D-logoet */
 
 /* ---------- mindre luft mellem sektionerne (før ca. 140 px i top og bund = næsten 290 px mellem to sektioner) ---------- */
