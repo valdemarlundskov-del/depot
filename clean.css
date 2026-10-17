@@ -33,7 +33,9 @@ html body.hdr-hide:not(.menu-open):not(.drop-open) header.site-header{transform:
 .proc-c .pr h3{font-size:clamp(22px,2.2vw,34px)!important;}
 .proc-c .pr p{max-width:none;margin-top:auto;font-size:15px;}
 .proc-c .pr-n{align-self:flex-start;}
-.proc-c .pr:hover{padding-left:clamp(22px,2.4vw,34px)!important;transform:translateY(-6px);}
+.proc-c .pr:hover{padding-left:clamp(22px,2.4vw,34px)!important;transform:translateY(-6px);background:var(--black);color:var(--white);}   /* sort kort med hvid tekst (før blev teksten hvid på lys baggrund og forsvandt) */
+.proc-c .pr:hover h3,.proc-c .pr:hover p{color:var(--white);}
+.proc-c .pr:hover p{color:var(--grey-100,#d9d9d6);}
 @media(max-width:820px){
   .proc-c .proc-rows{grid-template-columns:1fr;padding-top:0;padding-left:30px;}
   .proc-c .proc-rows::before{left:8px;right:auto;top:0;bottom:0;width:2px;height:auto;transform:scaleY(0);transform-origin:50% 0;}
@@ -194,3 +196,12 @@ html.thru-loading .site-header,html.thru-loading .thru-title,html.thru-loading .
 /* arkivets billedvisning: pilene er hinandens spejlbillede og står ud for billedets midte (ikke midten af billede + billedtekst) */
 html body .lb-next{border-radius:14px 20px 15px 22px / 22px 15px 20px 14px;}
 @media(min-width:701px){html body .lb-nav{margin-bottom:34px;}}
+
+/* holdets kort: rækken står stille, mens musen er over et kort; kortet løfter sig roligt, og billedet zoomer let ind (ingen vip, intet hop) */
+html body .tm-grid:has(.tcard:hover),html body .tm-grid:has(.tcard:hover) .tm-img img{animation-play-state:paused;}
+html body .tm:has(.tcard:hover) .mh-dots i{animation-play-state:paused;}
+html body .tm .tcard{transform:none;transition:transform .6s var(--ease-out);}
+html body .tm .tcard:hover{transform:translateY(-6px);}
+html body .tm .tm-img{overflow:hidden;}
+html body .tm .tm-img img{transition:filter .6s var(--ease-out),scale .8s var(--ease-out);}
+html body .tm .tcard:hover .tm-img img{scale:1.05;}

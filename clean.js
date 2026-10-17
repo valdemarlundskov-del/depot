@@ -91,7 +91,7 @@
 
     // kort, der vipper efter musen
     if (fine && !reduce) {
-      $$('.tcard').forEach(card => {
+      $$('.tilt-card').forEach(card => {                                       // (holdets kort vipper ikke længere: de løfter sig roligt, se clean.css)
         card.classList.add('tilt');
         let raf = 0, ev = null;
         const max = card.classList.contains('tcard') ? 5 : 8;

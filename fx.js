@@ -285,13 +285,4 @@
     el.addEventListener('mouseleave', () => { el.style.transform = ''; });
   });
 
-  // 3D-tilt på teamkort
-  $$('.tcard').forEach(el => {
-    el.addEventListener('mousemove', e => {
-      const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-      el.style.transform = `perspective(1000px) rotateY(${(x * 6).toFixed(2)}deg) rotateX(${(-y * 6).toFixed(2)}deg)`;
-    });
-    el.addEventListener('mouseleave', () => { el.style.transform = ''; });
-  });
-
 })();
